@@ -1,0 +1,940 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                  BASIC FUNCTION LIBRARY  :  Speech and Noise Management
+// Initial Version                                         :  2011-02-16   Cecil Wilson
+// Added SpeechNoiseMgmtEn  functions					   :  2011-02-22   Cecil Wilson/MieMie Thein
+// Rename function into SpeechNoiseMgmnt				   :  2011-02-23   Meike Doose and Frauke Schall
+// Inlcude MXXXStart values	and correct values for SNMEn   :  2011-03-01   Meike Doose
+// Updated Function structure with single Remapping Funct  :  2011-03-02   Meike Doose
+// Removed Package LIB workaround 						   :  2011-03-03   Cecil Wilson
+// Inlcude spass dependencies in SLSet, EnSet and SLGet, EnGet function  :  2011-03-15   Meike Doose	
+// Include SpeechInNoise only	Get and Set				   :  2011-03-16   Meike Doose	
+// Rename SL_Get and SL_Set function into SL_S/Get_Strength : 2011-03-16   Meike Doose			
+// Include hi:d8FClaDecFnyOff for SpeechinNoise only		: 2011-03-18   Meike Doose		
+// Change of Speech in NOise only settings for unchecked	: 2011-03-24   Meike Doose		
+// Change of Speech in NOise only settings for checked (include Car)	: 2011-03-25	Meike Doose	
+// Change of preliminary settings into final settings 		: 2011-04-06   Meike Doose
+// Change of settings for SpeechinNoise only				: 2011-04-13   Meike Doose 
+// Add broadbandRB											: 2011-05-04   Meike Doose
+// SpeechNoiseMgmnt1DD - SpeechNoiseMgmnt4DD added			: 2011-05-12   Meike Doose
+// Include println into SpeechNoiseMgmntDD					: 2011-05-13   Meike Doose
+// update for new Spass setting                             : 2011-06-03   Nadine Seubert
+// update for new Spass setting for Multichannel adjustments: 2011-06-08   Nadine Seubert
+// add MacroHiVar7Hp for SpassMode in SpeechNoiseMgmntSL_Set_Strength and SpeechNoiseMgmntEn_Set and SpeechNoiseMgmnt1DD_Set_Entry : 2011-07-21 Meike Doose
+// Add println for easy debugging						    : 2011-09-06   Chuah LayYuan
+// Delete LDNR En because of Xcel roots						: 2012-02-02   Meike Steinbuß	
+// Updated description, removed setting of the d8PhlNruSpassMode in the SNM checkbox, slider and dropdown
+// and added new function, Set_PhlNruSpassMode to set the mode.	: 2012-03-05   Jenny Lin
+// removed the setting of d8SwMacroNoiseFloorEnHp in DD2-DD4.	: 2012-03-06   Jenny Lin
+// Added comments on Additional controls set for posfit due to 
+// the activation of FOG Test Settings at BestFit (FANCY always on)	: 2012-03-19 Jenny Lin 
+// Speech in noise, comment out the check SPASS check since it should be taken care in 
+// SPASS checkbox and updated the Set_PhlNruSpassMode to set the Sl, DD controls.												: 2012-04-03 Jenny Lin
+// Updated macros to the state on 2012-02-08   			: 2012-04-13 Jenny Lin
+// Removed dependency of SPASS since all d8ClaDecXxxOff controls are one or two hierachies below the 
+// SpassEn, FnyEn, VadEn. This means, if Fancy/Vad and Spass are off, the ClaDec-controls 
+// won't turn them on. (as advice by Jens)					: 2012-05-04  Frauke/Jenny 
+// new FANCY strength default if Spass == on  (d8MFnyStart = 8 or higher)	: 2012-05-21 Frauke
+// set d8FClaDecSpassOff to 36 (instead of 37)				: 2012-05-24 Frauke
+// Deleted lines relating to d8SwMacroNoiseFloorEnHp        : 2012-06-13 Alastair
+// SpeechNoiseMgmnt1,2,3,4DD_Get_Entry: removed 'return -1' line :   : 2012-06-13 Alastair
+// *********************************************CODE FREEZE*******************************************************
+// CR56232: Turn on classification based noise reduction also for class SiQ 	: 2012-08-03 Frauke
+// ER55700: wrong Speech and Noise Multi slider setting							: 2012-08-31 Frauke
+// FR59582: SpeechNoiseMgmnt1DD_Get_Entry(), SpeechNoiseMgmnt2DD_Get_Entry(), 
+//          SpeechNoiseMgmnt3DD_Get_Entry() and SpeechNoiseMgmnt4DD_Get_Entry() 
+//          functions altered to return remapped DD menu position indexes.      : 2013-01-11 Al
+   FR59582: SpeechNoiseMgmnt1DD_Set_Entry(), SpeechNoiseMgmnt2DD_Set_Entry(), 
+//          SpeechNoiseMgmnt3DD_Set_Entry() and SpeechNoiseMgmnt4DD_Set_Entry() 
+//          functions altered so that their inputs are remapped DD menu position indexes.   : 2013-01-11 Al
+// Update comments based on peer review										: 2013-07-29 Raymond
+// Revert back to d8MVadStart, d8MFnyStart (int).						: 2013-10-24 Jenny
+// Sifit 7.3 Updates														:2013-11-29 Mang Yew
+// update on setpos to remove unused return argument							: 2014-03-04 Mang Yew
+// Sifit 7.4 Peer Review Code clean up											: 2014-11-14 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+
+	package Lib BasicLibrary_SpeechNoiseMgmnt
+	{
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the Slider positions wrt 70x PP
+* 		remapped_pos	Slider Position w.r.t. PP700
+* 			10			0
+* 			20			1
+* 			30			2
+* 			40			3
+* 			50			4
+* 			60			5
+* 			70			6 
+-----------------------------------------------------------------------------------------------------------------*/ 
+	public function void SpeechNoiseMgmntSL_Set_Strength(int remapped_pos)
+	{
+		println('[HAL]BLIB:SpeechNoiseMgmntSL_Set_Strength  remapped_pos='+remapped_pos);
+		
+		switch (remapped_pos){
+			
+			case 10:{
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+				{	// implementation with Spass
+					hi:d8MFnyStart = 8; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadStart = 2;
+				}
+				else
+				{													// implementation without Spass
+					hi:d8MFnyStart = 2; 
+					hi:d8MVadStart = 2;
+					if (hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY_auto_nf )
+					{
+						hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY;			
+					}
+				}
+			}				
+			case 20:{
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+				{	// implementation with Spass
+					hi:d8MFnyStart = 8; //new Fny strength default for Spass  (8 or higher)							
+					hi:d8MVadStart = 3;
+				}
+				else
+				{
+					hi:d8MFnyStart = 3; 								// implementation without Spass
+					hi:d8MVadStart = 3;
+				    if (hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY_auto_nf )
+				    {
+						hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY;			
+					}
+				}
+			}
+			case 30:{
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+				{	// implementation with Spass
+					hi:d8MFnyStart = 8; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadStart = 5;   
+				}
+				else{
+					hi:d8MFnyStart = 5; 								// implementation without Spass
+					hi:d8MVadStart = 5;   
+					if (hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY_auto_nf )
+					{
+						hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY;
+						
+					}
+				}
+			}
+			case 40:{
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+				{	// implementation with Spass
+					hi:d8MFnyStart = 8;  //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadStart = 7;
+				}
+				else
+				{
+					hi:d8MFnyStart = 7; 								// implementation without Spass
+					hi:d8MVadStart = 7;
+					if (hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY_auto_nf )
+					{
+						hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY;	
+					}
+				}
+			}
+			case 50:{
+				hi:d8MFnyStart = 9;  //new Fny strength default for Spass  (8 or higher)
+				hi:d8MVadStart = 9;
+				if (hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY_auto_nf )
+				{
+					hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY;
+					
+				}
+			}
+			case 60:{
+				hi:d8MFnyStart = 11;  //new Fny strength default for Spass  (8 or higher)
+				hi:d8MVadStart = 11;
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY)
+				{	// without Spass
+					hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY_auto_nf;
+				}
+			}
+			case 70:{
+				hi:d8MFnyStart = 13;  //new Fny strength default for Spass  (8 or higher)
+				hi:d8MVadStart = 13;
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY)
+				{	// without Spass
+					hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY_auto_nf;				
+				}
+			}
+			default:{  // Does not make sense to CXX but for implementation CHECK
+				println('ERROR: Slider position out of SPEC/Range');
+				assertion(false, "[MacroError] Undefined state of Snm Slider Strength 
+							BasicLibrary_SpeechNoiseMgmnt.SpeechnNoiseMgmntSL_Set_Strength!");
+			}
+		}	
+				
+	}
+		
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the Slider positions wrt 70x PP
+* 		remapped_pos	Slider Position w.r.t. PP700
+* 			10			0
+* 			20			1
+* 			30			2
+* 			40			3
+* 			50			4
+* 			60			5
+* 			70			6      
+-----------------------------------------------------------------------------------------------------------------*/  
+	public function int SpeechNoiseMgmntSL_Get_Strength(){
+		if (hi:d8MVadStart == 2)
+		{		
+	  		println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Strength, remapped_pos =  10");
+	  		return 10;
+		}		
+		else if(hi:d8MVadStart == 3)
+		{ 
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Strength, remapped_pos =  20");
+			return 20;
+		}
+		else if(hi:d8MVadStart == 5)
+		{ 
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Strength, remapped_pos =  30");
+			return 30;
+		}	
+		else if(hi:d8MVadStart == 7)
+		{ 
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Strength, remapped_pos =  40");
+			return 40;
+		}
+		else if(hi:d8MVadStart == 9)
+		{ 
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Strength, remapped_pos =  50");
+			return 50;
+		}
+ 		else if(hi:d8MVadStart == 11)
+ 		{ 
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Strength, remapped_pos =  60");
+			return 60;
+		}
+ 		else if(hi:d8MVadStart == 13)
+ 		{ 
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Strength, remapped_pos =  70");
+			return 70;
+		}
+		else
+		{
+			println('ERROR: Slider position out of SPEC/Range');
+			assertion(false, "[MacroError] Undefined state of Snm Slider Strength 
+							BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Get_Strength!");
+			return -1;
+		}
+	}
+		
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the CheckBox positions     
+----------------------------------------------------------------------------------------------------------------*/ 
+    public function bool SpeechNoiseMgmntEn_Get()
+    {      	
+    	if (hi:d9FNruVadEn == d9FNruVadEn.on)
+    	{	
+    		println("[HAL]BLIB:SpeechNoiseMgmntEn_Get = true ");
+    		return true;	
+    	}
+    	else
+    	{
+    		println("[HAL]BLIB:SpeechNoiseMgmntEn_Get = false ");
+    		return false;
+    	}
+    }
+
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI controls based on the Status of CheckBox    
+-----------------------------------------------------------------------------------------------------------------*/ 
+	public function void SpeechNoiseMgmntEn_Set(int pos)
+	{
+		// Additional controls set for PostFit due to the activation of FOG Test Settings at BestFit (FANCY always on)
+    	hi:d9FNruFnyEn = d9FNruFnyEn.on;
+
+    	// VAD On/Off depends on the SNM checkbox.
+   		if(pos==1){
+   			hi:d9FNruVadEn = d9FNruVadEn.on; 
+    		if(hi:d8PhlNruSpassMode != d8PhlNruSpassMode.SPASS)
+    		{		// if Spass is disabled, we need to define what d8PhlNruSpassMode is set to, this depends on the slider position
+				if(BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_MaxStrength()== true)
+				{
+					hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY_auto_nf; // if SNM slider Step 6 or 7 with auto noise floor on
+    			}
+    			else
+    			{
+    				hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY;
+    			}
+    		} // if Spass is enabled, d8PhlNruSpassMode should be set to Spass, which is done in the BLIB.Spass.. So DONT change it here
+    	}
+		else
+		{
+			hi:d9FNruVadEn = d9FNruVadEn.off;
+			if(hi:d8PhlNruSpassMode != d8PhlNruSpassMode.SPASS)
+			{
+				hi:d8PhlNruSpassMode = d8PhlNruSpassMode.off;
+			}	 // if Spass is enabled, d8PhlNruSpassMode should be set to Spass, which is done in the BLIB.Spass.. So DONT change it here				
+		}
+
+		println("[HAL]BLIB:SpeechNoiseMgmntEn_Set, pos =  " + pos);	
+	}
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Return true if speech and noise manager on max strength
+-----------------------------------------------------------------------------------------------------------------*/ 
+	public function bool SpeechNoiseMgmnt_MaxStrength()
+	{
+		if(hi:d8FNruMultiAdjEn == d8FNruMultiAdjEn.off && hi:d8MVadStart >= 11 
+		|| hi:d8FNruMultiAdjEn == d8FNruMultiAdjEn.on && hi:d8MVadBand[0]>= 13)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the radio button positions     
+-----------------------------------------------------------------------------------------------------------------*/  
+    public function int SpeechNoiseMgmntBroadbandRB_Get_Entry()
+    {      	
+    	if (hi:d8FNruMultiAdjEn == d8FNruMultiAdjEn.off)
+    	{	
+    		println("[HAL]BLIB:SpeechNoiseMgmntBroadbandRB_Get_Entry, retval = 0 ");
+    		return 0;
+    	}
+    	else
+    	{
+    		println("[HAL]BLIB:SpeechNoiseMgmntBroadbandRB_Get_Entry, retval = 1 ");
+    		return 1;
+    	}  	
+    }
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI controls based on the Status of radio button    
+-----------------------------------------------------------------------------------------------------------------*/ 
+    public function void SpeechNoiseMgmntBroadbandRB_Set_Entry(int pos)
+    { 
+        if(pos==0)
+        {
+			hi:d8FNruMultiAdjEn = d8FNruMultiAdjEn.off; //broadband
+    	}
+		else{
+			hi:d8FNruMultiAdjEn = d8FNruMultiAdjEn.on; //multichannel
+		}
+		
+		if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY || hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY_auto_nf)
+		{
+			if(BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_MaxStrength() == true)
+			{
+				hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY_auto_nf;
+			}
+			else
+			{
+				hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY;
+			}
+		}
+		println("[HAL]BLIB:SpeechNoiseMgmntBroadbandRB_Set_Entry, pos =  " + pos);	
+	}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the remapped drop down menue positions     
+-----------------------------------------------------------------------------------------------------------------*/  
+    public function int SpeechNoiseMgmnt1DD_Get_Entry()
+    {      	
+		if ( hi:d8MVadBand[0] == 0)
+		{ 			
+  			println("[HAL]BLIB:SpeechNoiseMgmnt1DD_Get_Entry, pos =  10");
+  			return 10;
+		}		
+		else if(hi:d8MVadBand[0] == 5)
+		{ 	
+			println("[HAL]BLIB:SpeechNoiseMgmnt1DD_Get_Entry, pos =  20");
+  			return 20;
+		}
+		else if(hi:d8MVadBand[0] == 9)
+		{ 	
+			println("[HAL]BLIB:SpeechNoiseMgmnt1DD_Get_Entry, pos =  30");
+  			return 30;
+		}
+		else if(hi:d8MVadBand[0] == 13)
+		{ 	
+		 	println("[HAL]BLIB:SpeechNoiseMgmnt1DD_Get_Entry, pos =  40");
+  			return 40;
+		}
+		else
+		{
+			println('ERROR: DropDown position out of SPEC/Range');
+			assertion(false, "[MacroError] Undefined state of Snm Dd
+							BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt1DD_Get_Entry!");	
+			return -1;
+	    } 		
+    }
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI controls based on the Status of dropdown menue
+-----------------------------------------------------------------------------------------------------------------*/ 
+	public function void SpeechNoiseMgmnt1DD_Set_Entry(int pos_wrt_basic_fcn)
+	{
+        switch (pos_wrt_basic_fcn)
+        {
+			case 10:{ 
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+				{	// implementation with Spass
+					hi:d8MFnyBand[0] = 8; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadBand[0] = 0;
+				}
+				else
+				{
+					hi:d8MFnyBand[0] = 0;
+					hi:d8MVadBand[0] = 0;
+					if (hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY_auto_nf ){
+						hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY;
+					}
+				}
+			}
+			case 20:{
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+				{	// implementation with Spass
+					hi:d8MFnyBand[0] = 8; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadBand[0] = 5;
+				}
+				else
+				{
+					hi:d8MFnyBand[0] = 5;
+					hi:d8MVadBand[0] = 5;
+					if (hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY_auto_nf )
+					{
+						hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY;					
+					}
+				}
+			}
+			case 30:{
+				hi:d8MFnyBand[0] = 9; //new Fny strength default for Spass  (8 or higher)
+				hi:d8MVadBand[0] = 9;
+					if (hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY_auto_nf )
+					{
+						hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY;		
+					}
+			}
+			case 40:{
+				hi:d8MFnyBand[0] = 13; //new Fny strength default for Spass  (8 or higher)
+				hi:d8MVadBand[0] = 13;
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.FANCY)
+				{	// implementation without Spass  && hi:d9FNruVadEn == d9FNruVadEn.on
+					hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY_auto_nf;	
+				}
+			}
+			default:{
+				println('ERROR: DropDownMenu position out of SPEC/Range');
+				assertion(false, "[MacroError] Undefined state of Snm Dd 
+							BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt1DD_Set_Entry!");	
+			}
+		}
+		
+		println("[HAL]BLIB:SpeechNoiseMgmnt1DD_Set_Entry, pos =  " + pos_wrt_basic_fcn);
+		
+		}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the drop down menue positions     
+----------------------------------------------------------------------------------------------------------------------------*/  			
+    public function int SpeechNoiseMgmnt2DD_Get_Entry()
+    {      	
+		if ( hi:d8MVadBand[1] == 0)
+		{ 			
+  			println("[HAL]BLIB:SpeechNoiseMgmnt2DD_Get_Entry, pos =  10");
+  			return 10;
+		}		
+		else if(hi:d8MVadBand[1] == 5)
+		{ 	
+			println("[HAL]BLIB:SpeechNoiseMgmnt2DD_Get_Entry, pos =  20");
+  			return 20;
+		 }
+		 else if(hi:d8MVadBand[1] == 9)
+		 { 					
+		 	println("[HAL]BLIB:SpeechNoiseMgmnt2DD_Get_Entry, pos =  30");
+  			return 30;
+		 }
+		 else if(hi:d8MVadBand[1] == 13)
+		 { 	
+		 	println("[HAL]BLIB:SpeechNoiseMgmnt2DD_Get_Entry, pos =  40");
+  			return 40;
+		 }
+		else
+		{
+			println('ERROR: DropDown position out of SPEC/Range');
+			assertion(false, "[MacroError] Undefined state of Snm Dd
+						BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt2DD_Get_Entry!");	
+			return -1;
+	    }		
+	}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI controls based on the Status of dropdown menue
+-----------------------------------------------------------------------------------------------------------------*/ 
+	public function void SpeechNoiseMgmnt2DD_Set_Entry(int pos)
+	{
+        switch (pos){
+			case 10:{ 
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+				{	// implementation with Spass
+					hi:d8MFnyBand[1] = 8; //new Fny strength default for Spass (8 or higher)
+					hi:d8MVadBand[1] = 0;
+				}
+				else
+				{
+					hi:d8MFnyBand[1] = 0;
+					hi:d8MVadBand[1] = 0;
+				}
+			}
+			case 20:{
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+				{	// implementation with Spass
+					hi:d8MFnyBand[1] = 8; //new Fny strength default for Spass (8 or higher)
+					hi:d8MVadBand[1] = 5;
+				}
+				else
+				{
+					hi:d8MFnyBand[1] = 5;
+					hi:d8MVadBand[1] = 5;
+				}
+			}
+			case 30:{
+					hi:d8MFnyBand[1] = 9; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadBand[1] = 9;
+			}
+			case 40:{
+					hi:d8MFnyBand[1] = 13; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadBand[1] = 13;
+			}
+			default:{  // Does not make sense to CXX but for implementation CHECK
+				println('ERROR: DropDownMenue position out of SPEC/Range');
+				assertion(false, "[MacroError] Undefined state of Snm Dd 
+						BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt2DD_Set_Entry!");
+			}
+		}
+		
+		println("[HAL]BLIB:SpeechNoiseMgmnt2DD_Set_Entry, pos =  " + pos);
+		
+		}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the drop down menue positions     
+----------------------------------------------------------------------------------------------------------------------------*/  			
+	public function int SpeechNoiseMgmnt3DD_Get_Entry()
+	{      	
+		if ( hi:d8MVadBand[2] == 0)
+		{ 			
+  			println("[HAL]BLIB:SpeechNoiseMgmnt3DD_Get_Entry, pos =  10");
+  			return 10;
+		}		
+		else if(hi:d8MVadBand[2] == 5)
+		{ 	
+			println("[HAL]BLIB:SpeechNoiseMgmnt3DD_Get_Entry, pos =  20");
+  			return 20;
+		}
+		else if(hi:d8MVadBand[2] == 9)
+		{ 	
+			println("[HAL]BLIB:SpeechNoiseMgmnt3DD_Get_Entry, pos =  30");
+  			return 30;
+		}
+		else if(hi:d8MVadBand[2] == 13)
+		{ 	
+			println("[HAL]BLIB:SpeechNoiseMgmnt3DD_Get_Entry, pos =  40");
+  			return 40;
+		}
+		else
+		{
+			println('ERROR: DropDown position out of SPEC/Range');
+			assertion(false, "[MacroError] Undefined state of Snm Dd
+						BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt3DD_Get_Entry!");	
+			return -1;
+	    }
+    }
+
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI controls based on the Status of dropdown menue
+-----------------------------------------------------------------------------------------------------------------*/ 
+	public function void SpeechNoiseMgmnt3DD_Set_Entry(int pos){
+        
+        switch (pos){
+			case 10:{ 
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+				{	// implementation with Spass
+					hi:d8MFnyBand[2] = 8; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadBand[2] = 0;
+				}
+				else
+				{
+					hi:d8MFnyBand[2] = 0;
+					hi:d8MVadBand[2] = 0;
+				}
+			}
+			case 20:{
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+				{	// implementation with Spass
+					hi:d8MFnyBand[2] = 8; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadBand[2] = 5;
+				}
+				else{
+					hi:d8MFnyBand[2] = 5;
+					hi:d8MVadBand[2] = 5;
+				}
+			}
+			case 30:{
+					hi:d8MFnyBand[2] = 9; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadBand[2] = 9;
+			}
+			case 40:{
+					hi:d8MFnyBand[2] = 13; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadBand[2] = 13;
+			}
+			default:{
+				println('ERROR: DropDownMenue position out of SPEC/Range');
+				assertion(false, "[MacroError] Undefined state of Snm Dd 
+							BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt3DD_Set_Entry!");	
+			}
+		}		
+		println("[HAL]BLIB:SpeechNoiseMgmnt3DD_Set_Entry, pos =  " + pos);
+		
+		}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the drop down menue positions     
+----------------------------------------------------------------------------------------------------------------------------*/  			
+	public function int SpeechNoiseMgmnt4DD_Get_Entry()
+	{      	
+		if ( hi:d8MVadBand[3] == 0)
+		{ 			
+  			println("[HAL]BLIB:SpeechNoiseMgmnt4DD_Get_Entry, pos =  10");
+  			return 10;
+		}		
+		else if(hi:d8MVadBand[3] == 5)
+		{ 	
+			println("[HAL]BLIB:SpeechNoiseMgmnt4DD_Get_Entry, pos =  20");
+  			return 20;
+		}
+		else if(hi:d8MVadBand[3] == 9)
+		{ 	
+			println("[HAL]BLIB:SpeechNoiseMgmnt4DD_Get_Entry, pos =  30");
+  			return 30;
+		}
+		else if(hi:d8MVadBand[3] == 13)
+		{ 	
+			println("[HAL]BLIB:SpeechNoiseMgmnt4DD_Get_Entry, pos =  40");
+  			return 40;
+		}
+		else
+		{
+			println('[HAL]BLIB:SpeechNoiseMgmnt4DD_Get_Entry, !!ERROR: DropDown position out of SPEC/Range!!');
+			assertion(false, "[MacroError] Undefined state of Snm Dd
+						BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt4DD_Get_Entry!");	
+			return -1;
+	    }
+   
+	}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI controls based on the Status of dropdown menue
+-----------------------------------------------------------------------------------------------------------------*/ 
+	public function void SpeechNoiseMgmnt4DD_Set_Entry(int pos)
+	{
+        switch (pos){
+			case 10:{ 
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+				{	// implementation with Spass
+					hi:d8MFnyBand[3] = 8; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadBand[3] = 0;
+				}
+				else
+				{
+					hi:d8MFnyBand[3] = 0;
+					hi:d8MVadBand[3] = 0;
+				}
+			}
+			case 20:{
+				if(hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+				{	// implementation with Spass
+					hi:d8MFnyBand[3] = 8; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadBand[3] = 5;
+				}
+				else
+				{
+					hi:d8MFnyBand[3] = 5;
+					hi:d8MVadBand[3] = 5;
+				}
+			}
+			case 30:{
+					hi:d8MFnyBand[3] = 9; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadBand[3] = 9;
+			}
+			case 40:{
+					hi:d8MFnyBand[3] = 13; //new Fny strength default for Spass  (8 or higher)
+					hi:d8MVadBand[3] = 13;
+				}
+			default:{
+				println('ERROR: DropDownMenue position out of SPEC/Range');
+				assertion(false, "[MacroError] Undefined state of Snm Dd 
+							BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt4DD_Set_Entry!");	
+			} 
+		}
+		
+		println("[HAL]BLIB:SpeechNoiseMgmnt4DD_Set_Entry, pos =  " + pos);
+		
+	}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI controls based on the Status of CheckBox    
+-----------------------------------------------------------------------------------------------------------------*/ 
+	public function void SpeechNoiseMgmnt_SpeechInNoiseEn_Set(int pos)
+	{
+    	// SiQ = 32, SiN = 16, N = 8, M = 4, C = 2, Q = 1
+        if(pos==1)
+        {
+			hi:d8FClaDecVadOff = 45; // 45 means that VAD is turned off in classes: SiQ + N + M + Q						
+			hi:d8FClaDecFnyOff = 45; // 45 means that FANCY is turned off in classes: SiQ + N + M + Q		
+			hi:d8FClaDecSpassOff = 45; // 45 means that SPASS is turned off in classes: SiQ + N + M + Q						
+    	}
+		else
+		{ 							
+			hi:d8FClaDecVadOff = 4;  // 4 means that VAD is turned off in classes: M
+			hi:d8FClaDecFnyOff = 4;// 4 means that FNY is turned off in classes: M
+			hi:d8FClaDecSpassOff = 4; // 4 means that SPASS is turned off in classes:  M						
+		}
+		println("[HAL]BLIB:SpeechNoiseMgmnt_SpeechInNoiseEn_Set, pos =  " + pos);		
+	}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the CheckBox positions     
+----------------------------------------------------------------------------------------------------------------------------*/  			
+	public function bool SpeechNoiseMgmnt_SpeechInNoiseEn_Get()
+	{      	
+		if (hi:d8FClaDecVadOff == 45)
+		{	
+			println("[HAL]BLIB:SpeechNoiseMgmnt_SpeechInNoiseEn_Get = true ");
+			return true;	
+		}
+		else
+		{
+			println("[HAL]BLIB:SpeechNoiseMgmnt_SpeechInNoiseEn_Get = false ");
+			return false;		
+		}
+	}
+//------------------------------------------------Sifit 7.3------------------------------------------------------
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the SnM slider Sw controls based on Cxx input position and returns the Slider positions
+-----------------------------------------------------------------------------------------------------------------*/ 
+	public function void SpeechNoiseMgmntSL_Set_Sw(int pos)
+	{
+		println("[HAL]BLIB:SpeechNoiseMgmntSL_Set_Sw, pos = " + pos);
+		switch (pos)
+		{
+			case 0:
+			{
+				hi:d8SwMacroSnmSlHp = 0;
+			}
+			case 1:
+			{
+				hi:d8SwMacroSnmSlHp = 1;
+			}
+			case 2:
+			{
+				hi:d8SwMacroSnmSlHp = 2;
+			}
+			case 3:
+			{
+				hi:d8SwMacroSnmSlHp = 3;
+			}
+			case 4:
+			{
+				hi:d8SwMacroSnmSlHp = 4;
+			}
+			case 5:
+			{
+				hi:d8SwMacroSnmSlHp = 5;
+			}
+			case 6:
+			{
+				hi:d8SwMacroSnmSlHp = 6;
+			}
+			default:
+			{
+				println('ERROR: Slider position out of SPEC/Range pos = -1');
+				assertion(false, "[MacroError] Undefined state of Snm Slider 
+						BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Set_Sw!");
+			}
+		}
+			
+	}
+	
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the Slider positions wrt 70x PP
+* 		remapped_pos	Slider Position w.r.t. PP700
+* 			10			0
+* 			20			1
+* 			30			2
+* 			40			3
+* 			50			4
+* 			60			5
+* 			70			6      
+-----------------------------------------------------------------------------------------------------------------*/  
+	public function int SpeechNoiseMgmntSL_Get_Sw()
+	{
+		if (hi:d8SwMacroSnmSlHp == 0)
+		{
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Sw, pos = 0 ");
+			return 0;
+		}
+		else if (hi:d8SwMacroSnmSlHp == 1)
+		{
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Sw, pos = 1 ");
+			return 1;
+		}
+		else if (hi:d8SwMacroSnmSlHp == 2)
+		{
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Sw, pos = 2 ");
+			return 2;
+		}
+		else if (hi:d8SwMacroSnmSlHp == 3)
+		{
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Sw, pos = 3 ");
+			return 3;
+		}
+		else if (hi:d8SwMacroSnmSlHp == 4)
+		{
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Sw, pos = 4 ");
+			return 4;
+		}	
+		else if (hi:d8SwMacroSnmSlHp == 5)
+		{
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Sw, pos = 5 ");
+			return 5;
+		}
+		else if (hi:d8SwMacroSnmSlHp == 6)
+		{
+			println("[HAL]BLIB:SpeechNoiseMgmntSL_Get_Sw, pos = 6 ");
+			return 6;
+		}
+		else
+		{
+			println('ERROR: Slider position out of SPEC/Range pos = -1');
+			assertion(false, "[MacroError] Undefined state of Snm Slider 
+						BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Get_Sw!");
+			return -1;
+		}
+
+	}
+	
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI SW settings and returns the CheckBox positions     
+----------------------------------------------------------------------------------------------------------------*/ 
+  	public function bool SpeechNoiseMgmntEn_Get_Sw()
+  	{      	
+    	if (hi:d8SwMacroSnmEnHp == d8SwMacroSnmEnHp.on)
+    	{	
+    		println("[HAL]BLIB:SpeechNoiseMgmntEn_Get_Sw = true ");
+    		return true;	
+    	}
+    	else
+    	{
+    		println("[HAL]BLIB:SpeechNoiseMgmntEn_Get_Sw = false ");
+    		return false;
+    	}
+    }
+    
+   /*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI SW controls based on the Status of CheckBox    
+-----------------------------------------------------------------------------------------------------------------*/ 
+	public function void SpeechNoiseMgmntEn_Set_Sw(int pos)
+	{
+   		if(pos == 1)
+   		{
+   			hi:d8SwMacroSnmEnHp = d8SwMacroSnmEnHp.on;
+   		} 
+    	else
+    	{
+			hi:d8SwMacroSnmEnHp = d8SwMacroSnmEnHp.off;				
+		}
+
+		println("[HAL]BLIB:SpeechNoiseMgmntEn_Set_Sw, pos =  " + pos);	
+	}
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the radio button positions     
+-----------------------------------------------------------------------------------------------------------------*/  
+    public function int SpeechNoiseMgmntBroadbandRB_Get_Entry_Sw()
+    {      	
+    	if (hi:d8SwMacroSnmRbHp == 0)
+    	{	
+    		println("[HAL]BLIB:SpeechNoiseMgmntBroadbandRB_Get_Entry_Sw, retval =  0");
+    		return 0;
+    	}
+    	else
+    	{
+    		println("[HAL]BLIB:SpeechNoiseMgmntBroadbandRB_Get_Entry_Sw, retval =  1");
+    		return 1;    		
+    	}  	
+    	
+    }
+	
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI controls based on the Status of radio button    
+-----------------------------------------------------------------------------------------------------------------*/ 
+    public function void SpeechNoiseMgmntBroadbandRB_Set_Entry_Sw(int pos)
+    { 
+        if(pos==0)
+        {
+			hi:d8SwMacroSnmRbHp = 0;
+			println("[HAL]BLIB:SpeechNoiseMgmntBroadbandRB_Set_Entry_Sw, pos =  broadband");
+    	}
+		else
+		{
+			hi:d8SwMacroSnmRbHp = 1; 
+			println("[HAL]BLIB:SpeechNoiseMgmntBroadbandRB_Set_Entry_Sw, pos =  multichannel");	
+		}
+	}
+	
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI Sw controls based on the Status of CheckBox    
+-----------------------------------------------------------------------------------------------------------------*/ 
+	public function void SpeechNoiseMgmnt_SpeechInNoiseEn_Set_Sw(int pos)
+	{
+        if(pos==1)
+        {
+			hi:d8SwMacroSnmSinEnHp = d8SwMacroSnmSinEnHp.on;					
+    	}
+		else
+		{ 							
+			hi:d8SwMacroSnmSinEnHp = d8SwMacroSnmSinEnHp.off;					
+		}
+		println("[HAL]BLIB:SpeechNoiseMgmnt_SpeechInNoiseEn_Set_Sw, pos =  " + pos);		
+	}
+	
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI Sw control settings and returns the CheckBox positions     
+----------------------------------------------------------------------------------------------------------------------------*/  			
+	public function bool SpeechNoiseMgmnt_SpeechInNoiseEn_Get_Sw()
+	{      	
+		if (hi:d8SwMacroSnmSinEnHp == d8SwMacroSnmSinEnHp.on)
+		{	
+			println("[HAL]BLIB:SpeechNoiseMgmnt_SpeechInNoiseEn_Get_Sw = true ");
+			return true;	
+		}
+		else
+		{
+			println("[HAL]BLIB:SpeechNoiseMgmnt_SpeechInNoiseEn_Get_Sw = false ");
+			return false;		
+		}
+	}
+
+/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY   Speech Noise Mgmnt  
+-----------------------------------------------------------------------------------------------------------------*/			
+	}
+}

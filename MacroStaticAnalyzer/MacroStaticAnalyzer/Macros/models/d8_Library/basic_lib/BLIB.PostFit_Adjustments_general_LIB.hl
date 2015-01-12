@@ -1,0 +1,40 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY 	:   PostFitAdjustments
+// Initial version  	                                       						: 2012-02-02 Nadine Seubert
+// Moved the FBC and Fancy adjustment to BLIB_FBC and BLIB_SpeechNoiseMgmnt			: 2012-03-19 Jenny Lin
+// Renamed function to ClassifierCtrls												: 2012-04-09 Nadia Neugeborn
+// Cleaned up the macro																: 2012-04-18 Nadia Neugeborn
+// FirstFit peer review																: 2012-07-17 Nadia & Judith
+********************************************************CODE FREEZE*************************************************
+// Fixed ER55460: Classifier controlled noise reduction in aux only & mixed modes   : 2012-08-27 Cecil Wilson
+*/
+/*---------------------------------------------------------------------------------------------------------------$$*/
+
+namespace shs_sat {
+	
+	using shs_sat.*;
+
+	package  Lib PostFitAdjustments_general{
+	    
+/*$---------------------------------------------------------------------------------------------------------------*/
+//   BASIC LIBRARY Function:   ClassifierCtrls
+//   Input      :  
+//   Ouput      : 
+//   Description: due to the activation of FOG Test Settings at BestFit we have to activate some Classifier controls again
+/*-----------------------------------------------------------------------------------------------------------------$*/		
+		public function void ClassifierCtrls(){
+        	       	
+        		   // This function is only valid for the PostFit
+        		   // After FirstFit these controls should be never changed again
+        		   // Note: ok to set d8PCtrlSpassEnable & d8PCtrlFineEnable for lower PPs because if the feature is off these ctrls don't matter
+                   hi:d8PClaEn = d8PClaEn.on;
+                   hi:d8PCtrlFineEnable = d8PCtrlFineEnable.enabled; 
+/* D8-D9 rename ***                   hi:d8PCtrlMicEnable = d8PCtrlMicEnable.enabled; */
+				   // Fancy VAD SPASS controls are set via InputMode					
+        }	// close PostFitAdjustments_general.PostFitAdjustments()
+
+/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY PostFitAdjustments
+-----------------------------------------------------------------------------------------------------------------*/			
+	}	//package PostFitAdjustments
+}	//namespace shs.sat

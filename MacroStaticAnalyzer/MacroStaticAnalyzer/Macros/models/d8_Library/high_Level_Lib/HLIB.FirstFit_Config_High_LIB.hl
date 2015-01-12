@@ -1,0 +1,186 @@
+//---------------------------------------------------------------------------------------------------------------
+// first draft                                          			: 2013-06-10 Raymond
+// Remove compression settings for TerzoFit									
+// CR61993: Remove FCO settings for PostFit_MainConfig()			: 2013-07-08 Raymond
+// Added HLIB for PostFit_RemOn_CommonConfig 						: 2013-07-10 Mie Mie
+// FR61555: Added HLIB for SpeechFocusCar_Set_Default 				: 2013-07-10 Mie Mie 
+// ER62632: Added FCO_Set_Default to PostFit_MainConfig()			: 2013-07-22 Raymond
+//--------------------------------------------------------- 7.3 --------------------------------------------------
+// Sifit 7.3 Updates for Noise Reduction							: 2013-11-29 Mang Yew
+// Added BWNC setDefault function call								: 2013-12-26 Raymond
+// Sifit 7.3 update for SnM SiN function for TerzoFit to set
+// Sw Macro Var for FF												: 2013-12-30 Mang Yew
+// deleted setting firstfit default for e2e							: 2014-02-10 Mie Mie
+// FR64913: Replace ConnexxFit with BinaxFit							: 2014-02-27 Raymond
+// Added Intelizoom setDefault call                                     : 2014-03
+// Moved SS,SNM,SPASS to Noise Reduction							: 2014-03-24 Mang Yew
+// FR66291 call HLIB.IntelliZoomEn_Set_Default and remove call to set IntelliZoom off from TerzoFit. : 2014-04-16 Jenny
+// Sifit7.3 Peer review (FCO only, SoundBrilliance)									: 2014-04-21 Jenny, Jeline
+// Sifit 7.3 Peer Review NR											: 2014-04-23 Mang Yew
+//ER67710 SoundBalance control volume range incorrect default to 0dB after apply FF. : 2014-06-06 Jenny/MangYew
+//--------------------------------------------------------- 7.4 -----------------------------------------------------
+// For 7.4 removed Noiser from PostFit_MainConfig() and added Noiser to ExtendedConfig() :2014-05-15 Judith
+//----------------------------------------------------------------------------------------------------------------
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_FirstFit_Config
+	{
+	/*---------------------------------------------------------------------------------------------------------------*
+//   FirstFit	:  PostFit_MainConfig
+//   Input		:  none
+//   Ouput      :  Default settings are set (for program 1), except for Beeps, PowerOnDelay and e2e
+//   Description:  All of the needed features are set after FirstFit (based on the MRS)
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void PostFit_MainConfig ()
+		{
+		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~MicMode Setting ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//			
+		// MicMode is set to Default again here because of AutoFit, it will not change the behaviour of FirstFit
+			High_Level_Library_Mic_Mode.MicMode_Set_Default ();
+			println ("[HAL]: FirstFit - Mic Mode is set again in PostFit, in case AutoFit was run");
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~MPO Setting ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//				
+			High_Level_Library_MPO.Special_Mpo_Setting_for_HP_Receiver_702 ();
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~FCO Setting ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+			// FCO set by CXX in PostFit (CR61993), Macros just need OFF FCO if PP75.
+			High_Level_Library_FCO.FCO_Set_Default();			
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Classifier~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//				
+			// activate eTemplate Classifier Control settings again			
+			PostFitAdjustments_general.ClassifierCtrls ();
+			println ("[HAL]: FirstFit - Classifier Controls are set");
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~SoundManagement Adjustments~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+			// Call default function for SoundBrilliance set in Input Mode.
+			High_Level_Library_SoundBriliance.SoundBriliance_Set_Default ();
+			println ("[HAL]: FirstFit - SoundBrilliance is set");
+
+			// Call default function for EWindScreen
+			High_Level_Library_EWindScreen.EWindScreen_Set_Default ();
+			println ("[HAL]: FirstFit - eWindScreen is set");
+			
+			// Call default function for Noise Reduction (including default settings for  // Sifit 7.3
+			//Speech and Noise Management, SPASS and Sound Smoothing and Noise Reduction checkbox and slider
+			High_Level_Library_NoiseReduction.NoiseReduction_Set_Default ();
+			println ("[HAL]: FirstFit - Noise Reduction is set");
+			
+			// Call default function for BWNC
+			// Has dependency on EWindScreen controls, must be placed after EWindScreen_Set_Default()
+			High_Level_Library_BWNC.BWNCEn_Set_Default();
+			println ("[HAL]: FirstFit - BWNC is set");
+			
+			// Call default function for IntelliZoom
+			High_Level_Library_IntelliZoom.IntelliZoomEn_Set_Default();
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~BinaxFit Specific settings~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//				
+			if (fit:SelectableFormula == SelectableFormula.BinaxFit)
+			{
+				hi:d8SwMacroConnexxFitEn = d8SwMacroConnexxFitEn.on;
+			}
+			else
+			{
+				hi:d8SwMacroConnexxFitEn = d8SwMacroConnexxFitEn.off;
+			}
+
+			// Set Compression Type and Compression Concept (ALM or XcelAmp)
+			High_Level_Library_Compression.Compression_Set_Default ();
+			println ("[HAL]: FirstFit - Compression Type and Compression Concept (ALM/XcelAmp) is set");
+			// NOTE: FBC and Compression need to come here, after d8SwMacroConnexxFitEn is set 
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Input Modes~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//						
+			// Call default function for InputMode (including SoundBrilliance)
+			High_Level_Library_InputMode.InputModeDD_Set_Default ();
+			println ("[HAL]: FirstFit - Input Mode is set");
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~THI controls (weight & learning/logging)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//		
+			// Call default function for THI		
+			High_Level_Library_THI.THI_Set_Default ();
+			println ("[HAL]: FirstFit - THI Weight is set");
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~CBFS controls~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//		
+			// Call default function for CBFS
+			High_Level_Library_CBFS.CBFS_Set_Default ();
+			println ("[HAL]: FirstFit - CBFS is set");
+
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~SpeechFocus (Car) checkbox setting~~~~~~~NOT USED IN D9~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+			//High_Level_Library_SpeechFocusEn.SpeechFocusCar_Set_Default ();     // not used in d9
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~TerzoFit Specific settings~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+			if (fit:SelectableFormula == SelectableFormula.Gain3)
+			{
+				//Deactivate SoundBriliance (already deactivated)
+
+				//Deactivate eWindScreen
+				High_Level_Library_EWindScreen.eWindScreenEn_Set (0);
+				println ("[HAL]: FirstFit - SelectableFormula.Gain3, eWindScreen - OFF");
+
+				// Call default function for Noise Reduction (including default settings for 
+				//Speech and Noise Management, SPASS and Sound Smoothing)
+				High_Level_Library_NoiseReduction.NoiseReduction_Set_Default_TerzoFit ();
+				println ("[HAL]: FirstFit - SelectableFormula.Gain3, Noise Reduction is set");
+				
+				// Deactivate BWNC
+				// Has dependency on EWindScreen controls, must be placed after EWindScreen_Set()
+				High_Level_Library_BWNC.BWNCEn_Set (0);
+				println ("[HAL]: FirstFit - SelectableFormula.Gain3, BWNC - OFF");
+				
+				// FR66291 IntelliZoom - NOT CHANGED in Terzo Fit
+			}
+		} // closes High_Level_Library_FirstFit_Config.PostFit_MainConfig
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   FirstFit	:  PostFit_ExtendedConfig
+//   Input		:  none
+//   Ouput      :  Default settings are set (for program 1), except for Beeps, PowerOnDelay and e2e
+//   Description:  All of the needed features are set after FirstFit (based on the MRS)
+//					All these features resides in Connexx -> Configuration tab. Apart from FirstFit, these packages should
+//					not be changed, unless specified.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void PostFit_ExtendedConfig ()
+		{
+		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~System Sounds~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//		
+		// Call default function for System Sounds
+			High_Level_Library_Beep.Beeps_Set_Default ();
+			println ("[HAL]: FirstFit - System Sounds are set");
+
+			//ER67710 SoundBalance control volume range incorrect default to 0dB after apply FF
+			BasicLibrary_SoundBalance.Set_Default_SoundBalance_SCRange();
+			 
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Power On Delay~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//		
+			// Call default function for Power On Delay
+			High_Level_Library_PowerOnDelay.PowerOnDelay_SetDefault ();
+			println ("[HAL]: FirstFit - Power On Delay is set");
+			
+						//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Tinnitus~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//	
+			// Call default function for the Tinnitus settings 
+			High_Level_Library_Noiser.Noiser_Set_Default ();
+			println ("[HAL]: FirstFit - Tinnitus is set");
+			
+
+
+		} // closes High_Level_Library_FirstFit_Config.PostFit_ExtendedConfig
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   FirstFit	:  PostFit_RemOn_CommonConfig
+//   Input		:  none
+//   Ouput      :  Default settings (based on MRS) are set for program 1
+//   Description:  To set all the common settings between Postfit and RemOn 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void PostFit_RemOn_CommonConfig ()
+		{
+			//**Important: PostFit_ExtendedConfig needs to be run first before PostFit_MainConfig because of FR61555
+
+			High_Level_Library_FirstFit_Config.PostFit_ExtendedConfig();
+			println ("[HAL]: FirstFit - PostFit_ExtendedConfig applied");
+			
+			High_Level_Library_FirstFit_Config.PostFit_MainConfig();
+			println ("[HAL]: FirstFit - PostFit_MainConfig applied");	
+			
+		} // closes High_Level_Library_FirstFit_Config.PostFit_RemOn_CommonConfig
+				
+	} // High_Level_Library_FirstFit_Config
+} // namespace shs.sat

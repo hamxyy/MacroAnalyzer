@@ -1,0 +1,177 @@
+/*-----------------------------------------------------------------------------------------------------------------
+//                            HIGH LEVEL PRICEPOINT LIBRARY : Compression 
+-------------------------------------------------------------------------------------------------------------------
+// Initial version                                          							: 2011-08-18 Nadia Neugeborn
+// Deteled retval, pos alone is sufficient												: 2011-11-28 Nadia Neugeborn
+// Reworked Compression_Set_Default and added function for PS							: 2012-03-20 Nadia Neugeborn
+// Added Compression_Set_SyllabicDual() and rework Compression_Set_Default to call 
+// function. 																			: 2012-04-04 Jenny Lin
+// Peer review - FirstFit																: 2012-07-18 Nadia & Judith
+//***********************************************CODE FREEZE*********************************************************
+// FR53491 implemented compression radio buttons										: 2012-07-25 Nadia Neugeborn
+// CR56505 updated compression getPos and defaults										: 2012-07-30 Nadia Neugeborn
+// CR51742: Fix of logChanCount - replace workarounds									: 2012-08-20 Nadia Neugeborn
+// CompressionMethod_Get() re-worked so that the new index '2' corresponds to Pp300 
+// and Pp100 Xcel fit. (Pp300 & 100 Devices currently not relased yet)                  : 2012-11-23 Al Manders
+// For Nitro devices changed default set compression methode from syllabic to
+// dual (all PP)  																		: 2013-04-11 Sonia
+// FR61464: Updated CompressionMethod_Set (int pos) to include remapped_pos==41. 
+// (for PP75 devices)   																: 2013-04-19 Al
+// Updated compression based on RP20. mini-peer review with Al							: 2013-07-17 Jenny & AL
+// ******SIFIT7.2_PEERREVIEWED: 					  									: 2013-07-31 Jenny,Judith,Al,Raymond
+// Update ID number in Set_ProgramSelection function									: 2013-10-29 Sonia Stasiak
+// Updated comments	for Set_ProgramSelection D9											: 2013-11-01 Sonia Stasiak
+// Updated Set_Program Selection with d9SwMacroProgramIdHp control instead of ID		: 2013-12-17 Sonia Stasiak
+//------------------------------------------------7.3----------------------------------------------------------------
+// FRE64913: Replace ConnexxFit with BinaxFit											: 2014-02-27 Raymond
+// Comment update for Program Selection													: 2014-03-19 Sonia
+// PEER REVIEW CXX 7.3																	: 2014-05-06 Sonia, Mie Mie, Jenny
+// Added new Induction Loop (T) program into Set_ProgramSelection function				: 2014-07-30 Sonia
+// FR68941 to disable CK/CR when tinnitus is ON and Pure. 
+// Therefore Radiobutton is to disable as well											: 2014-09-02 Mang Yew
+// Re-write Set_ProgramSelection to call BLib.Is<program>								: 2014-09-16 Sonia
+// Code cleanup and commented redundant CompressionAgcType_Set_For_REMParamOff() 		: 2014-09-18 Sultan
+/*$$---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package Lib High_Level_Library_Compression
+	{
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Higher Level PP LIBRARY Function:    CompressionMethodIsEnabled
+		//   Input      : void
+		// 	 Output		: <bool>
+		//   Description: Check if Compression Method should be enabled or greyed-out
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool CompressionMethodIsEnabled ()
+		{		
+			bool retVal = BasicLibrary_Noiser.Noiser_IsOnAndPure() == false; 				
+			return retVal;
+		}
+		
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Higher Level PP LIBRARY Function:    CompressionMethod_Set
+		//   Input      :  <int> Compression concept position from Cxx
+		//   Ouput      :  <void>
+		//   Description:  Sets the desired compression method controls
+		//				   10 = ALM  (PP700/PP500/PP300)
+		//				   20 = XCEL  (PP100)
+		//				   30 = SIRION  (PP75)
+		//				   50 = TRADITIONAL  (ALL PP)
+		// ******SIFIT7.2_PEERREVIEWED
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void CompressionMethod_Set (int pos)
+		{
+			// NOT use by CXX. Only use by PreFit/PostFit/RecalcPostFit/RemParamOn to set the Compression for the formula.
+			int remapped_pos = Mid_Level_Library_Compression.CompressionMethodRB_Remapping(pos);
+			BasicLibrary_Compression.Compression_Method_Set (remapped_pos);
+
+			// Set compression type to syllabic for traditional compression EXCEPT SuperPowerHI (BTE/Custom)
+			// Proprietary formula and Traditional for SuperPowerHI = DUAL
+			if (remapped_pos == 50 &&
+				cap:SuperPowerHI == SuperPowerHI.NoSuperPower)
+			{
+				BasicLibrary_Compression.Compression_Set (0); // (0: syllabic, 1: dual)
+			}
+			else
+			{
+				BasicLibrary_Compression.Compression_Set (1); // (0: syllabic, 1: dual)					}
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Higher Level PP LIBRARY Function:    CompressionMethod_Get
+		//   Input      : <none>
+		// 	 Output		: <int> Returns the Connexx pos based on HI control
+		//   Description:  Gets the Compression Concept radiobutton state    
+		// ******SIFIT7.2_PEERREVIEWED
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int CompressionMethod_Get ()
+		{
+			// use by CXX to display MPV accordingly
+			int pos = -1;
+			int a = -1;
+			// Get the current position with respect to the Basic function  
+			int pos_wrt_basic_fcn = BasicLibrary_Compression.Compression_Method_Get ();
+			
+			// This function returns the Maxmimum number of steps for this UI
+			int maxstep = 2; // hardcoded. 3 options in CXX.
+			
+			while (a < maxstep)
+			{ //  Test each position from 0 to maximum available for this device
+				++ a; // a=a+1
+				if (pos_wrt_basic_fcn == Mid_Level_Library_Compression.CompressionMethodRB_Remapping (a))
+				{
+					pos = a;
+					break;
+				}
+			}
+			return pos;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   High Level PP LIBRARY Function:    Compression_Set_SyllabicDual()
+		//   Input		:  <int> Compression type (1 = dual or syllabic = 0)
+		//   Ouput      :  none
+		//   Description:  Sets compression type based on the device and the number of channels
+		//				   This functions is used for Test Settings
+		// ******SIFIT7.2_PEERREVIEWED
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Compression_Set_SyllabicDual (int agcType)
+		{
+			// Set compression type			
+			BasicLibrary_Compression.Compression_Set (agcType);
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   High Level PP LIBRARY Function:    Compression_Set_Default()
+		//   Input		:  none
+		//   Ouput      :  <int> Compression type (1 = dual or syllabic = 0)
+		//   Description:  Sets compression type based on the device and the number of channels
+		// ******SIFIT7.2_PEERREVIEWED
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Compression_Set_Default ()
+		{
+			int agcCC = -1;
+
+			// Get Compression Method: ALM or XcelAmp or CxxFit Sirion
+			agcCC = Mid_Level_Library_Compression.Compression_Method_Default();
+
+			// Set Compression Method, ALM or XcelAmp controls 
+			High_Level_Library_Compression.CompressionMethod_Set (agcCC);
+		}
+
+		/*---------------------------------------------------------------------------------------------------------*
+		//	HIGH LEVEL LIBRARY - Compression_Set_ProgramSelection
+		//	Description	:	Function is setting Compression for all listening situation. 
+		/*---------------------------------------------------------------------------------------------------------*/
+		public function void Compression_Set_ProgramSelection ()
+		{
+			println('[HAL]HLIB.Compression_Set_ProgramSelection ID = '+ BasicLibrary_CommUtil.CurrentProg ());
+			
+			if (BasicLibrary_ProgramSelection.IsTV() == true ||
+				BasicLibrary_ProgramSelection.IsInductionLoopmT() == true ||
+				BasicLibrary_ProgramSelection.IsInductionLoopT() == true)
+			{ 
+				// Compression Type set to DUAL
+				BasicLibrary_Compression.Compression_Set (1);
+			}			
+		}
+		
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   High Level PP LIBRARY Function:    CompressionAgcType_Set_For_REMParamOff()
+		//   Input		:  none
+		//   Ouput      :  <int> Compression type (1 = dual or syllabic = 0)
+		//   Description:  Sets compression type based on the device and the number of channels
+		-----------------------------------------------------------------------------------------------------------------$*/
+		//		public function void CompressionAgcType_Set_For_REMParamOff()
+		//		{
+		//			if(fit:SelectableFormula != SelectableFormula.BinaxFit){
+		//				High_Level_Library_Compression.Compression_Set_SyllabicDual(0);	//(1 = dual or syllabic = 0)
+		//			}
+		//		} // Closing High_Level_Library_Compression.CompressionAgcType_Set_For_REMParamOff()				
+	}
+
+}

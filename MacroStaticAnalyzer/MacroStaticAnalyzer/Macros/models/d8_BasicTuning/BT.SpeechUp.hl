@@ -1,0 +1,52 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Basic Tuning: BasicTuning_SpeechUpBu
+// Initial Version                						     						:2011-08-18 Chuah LayYuan
+// Updated SetPos and IsEnable														:2011-11-21 Frauke Schall
+// Updated SetPos (3dB broadband, partial: for test purposes)						:2012-01-13 Frauke Schall
+// Updated SetPos (3dB broadband, complete: for test purposes)						:2011-01-18 Frauke Schall
+// Updated SetPos (if possible, apply LevLow first, else try LevMed first)			:2011-02-31 Frauke Schall
+// Updated SetPos																	:2012-02-01 Frauke Schall
+// Updated IsEnabled (grey out if curve cannot be applied)							:2012-02-01 Frauke Schall
+// Changed ApplyMultipleOffsets_LowAndMed_Partial to ...Complete					:2012-02-08 Frauke Schall
+// Updated IsEnabled to complete													:2012-02-12 Frauke Schall
+// Added println in IsEnabled														:2012-02-10	Frauke Schall
+// *********************************************CODE FREEZE*******************************************************
+//  ER58296: BATU - Express Tuning Offsets for Speech and Own Voice lead to "dead ends" : 2012-10-08 Nadine Seubert
+// FR68941 to disable Basic Tuning Button when tinnitus is ON and Pure				:2014-09-02 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat {
+	using shs_sat.*;
+
+	package MixedMode BasicTuning_SpeechUpBu{	
+		application function bool IsVisible(){
+			return true;
+		}
+		
+		application function bool IsEnabled()
+		{
+			bool retVal = false;
+			retVal = High_Level_Library_BasicTuning.SpeechUpBuIsEnabled();
+			println('[HAL]: BT.BasicTuning_SpeechUpBu-IsEnabled = ' + retVal);
+			return retVal;
+		}
+
+		application function int MaxPos(){
+			return 1;    	
+		}
+		
+	 	application function bool IsEnabledPos(int pos){	
+	 		return true;
+	 	}
+	 		
+	 	application function int GetPos(){	
+			return 1; 	//Always return 1	 
+	 	}
+	 	
+		application function void SetPos(int pos){
+			println('[HAL]: BT.BasicTuning_SpeechUpBu-SetPos');
+			CL_CurveLibrary.ApplyOffset_LevAll_Complete("BT_SpeechLowLevelUp");
+		}
+		
+	}// closes MixedMode BasicTuning_SpeechUpBu
+}//namespace shs.sat
+// end of file

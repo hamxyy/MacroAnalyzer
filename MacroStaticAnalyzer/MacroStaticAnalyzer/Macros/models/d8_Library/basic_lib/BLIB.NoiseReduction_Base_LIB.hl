@@ -1,0 +1,136 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                  BASIC FUNCTION LIBRARY  :  Noise Reduction
+// Initial Version                                          : 2013-11-05 Mang Yew
+// Update NR SL set strength function					    : 2014-01-10 Mang Yew
+// Update for Sifit7.3 Peer Review						    : 2014-04-22 Mang Yew
+// Sifit 7.4 Peer Reviewed									: 2014-11-13 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_NoiseReduction
+	{
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Gets the position of the Noise Reduction Checkbox via SwMacroNrEnHp and returns the position.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool NoiseReductionEn_Get ()
+		{
+			if (hi:d8SwMacroNrEnHp == d8SwMacroNrEnHp.on)
+			{
+				println ('[HAL]BLIB-NoiseReductionEn_Get = TRUE');
+				return true;
+			}
+			else
+			{
+				println ('[HAL]BLIB-NoiseReductionEn_Get = FALSE');
+				return false;
+			}
+		}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Gets the position of the Noise Reduction View via SwMacroNrViewHp and returns the position.
+//					details(advance) view = false; reduced(basic) view = true.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool NoiseReductionView_Get ()
+		{
+			if (hi:d8SwMacroNrViewHp == d8SwMacroNrViewHp.basic)
+			{
+				println ('[HAL]BLIB-NoiseReductionView_Get = TRUE');
+				return true;
+			}
+			else
+			{
+				println ('[HAL]BLIB-NoiseReductionView_Get = FALSE');
+				return false;
+			}
+		}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI controls based on the Status of CheckBox    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void NoiseReductionEn_Set (int pos)
+		{
+			if (pos == 1)
+			{
+				hi:d8SwMacroNrEnHp = d8SwMacroNrEnHp.on;
+				println ('[HAL]BLIB-NoiseReductionEn_Set NoiseReductionEn = ON    pos=' + pos);
+			}
+			else
+			{
+				hi:d8SwMacroNrEnHp = d8SwMacroNrEnHp.off;
+				println ('[HAL]BLIB-NoiseReductionEn_Set NoiseReductionEn = OFF    pos=' + pos);
+			}
+		}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI controls based on the Status of CheckBox    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void NoiseReductionView_Set (int pos)
+		{
+			if (pos == 0)
+			{
+				hi:d8SwMacroNrViewHp = d8SwMacroNrViewHp.basic;
+				println ('[HAL]BLIB-NoiseReductionEn_Set NoiseReductionView = BASIC    pos=' + pos);
+			}
+			else
+			{
+				hi:d8SwMacroNrViewHp = d8SwMacroNrViewHp.advance;
+				println ('[HAL]BLIB-NoiseReductionEn_Set NoiseReductionView = ADVANCE    pos=' + pos);
+			}
+		}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the NoiseReduction Slider Sw controls based on Cxx input position
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void NoiseReductionSL_Set_Strength_Sw (int pos)
+		{
+			hi:d8SwMacroNrSlHp = pos;
+			println('[HAL]:BLIB.NoiseReductionSL_Set_Strength_Sw Pos = '+pos);	
+		}
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the ui position 
+-----------------------------------------------------------------------------------------------------------------*/
+			public function int NoiseReductionSL_Get_Strength_Sw ()
+			{
+				if (hi:d8SwMacroNrSlHp == 0)
+				{
+					println("[HAL]BasicLibrary_NoiseReduction.NoiseReductionSL_Get_Strength_Sw, pos =  0");  
+				 	return 0;
+				}
+				else if(hi:d8SwMacroNrSlHp == 1)
+				{
+					println("[HAL]BasicLibrary_NoiseReduction.NoiseReductionSL_Get_Strength_Sw, pos =  1");  
+					return 1;
+				}
+				else if(hi:d8SwMacroNrSlHp == 2)
+				{
+					println("[HAL]BasicLibrary_NoiseReduction.NoiseReductionSL_Get_Strength_Sw, pos =  2");  
+					return 2;
+				}
+				else if(hi:d8SwMacroNrSlHp == 3)
+				{
+					println("[HAL]BasicLibrary_NoiseReduction.NoiseReductionSL_Get_Strength_Sw, pos =  3");  
+					return 3;
+				}
+				else if(hi:d8SwMacroNrSlHp == 4)
+				{
+					println("[HAL]BasicLibrary_NoiseReduction.NoiseReductionSL_Get_Strength_Sw, pos =  4");  
+					return 4;
+				}
+				else
+				{
+					println('[HAL]:BLIB.NoiseReductionSL_Get_Strength_Sw !!ERROR: Slider position out of SPEC/Range!!');
+					assertion(false, "[MacroError] Undefined state of NR Slider! 
+								BasicLibrary_NoiseReduction.NoiseReductionSL_Get_Strength_Sw");
+					return -1;
+				}
+		}
+
+/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY   Noise Reduction 
+-----------------------------------------------------------------------------------------------------------------*/
+	}
+
+}

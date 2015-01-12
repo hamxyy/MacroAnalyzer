@@ -1,0 +1,42 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Basic Tuning: BasicTuning_MedSoundsUpBu
+// Initial Version                						     						:2012-06-04 Frauke Schall
+// *********************************************CODE FREEZE*******************************************************
+// FR68941 to disable Basic Tuning Button when tinnitus is ON and Pure				:2014-09-02 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat {
+	using shs_sat.*;
+
+	package MixedMode BasicTuning_MedSoundsUpBu{		
+		application function bool IsVisible(){
+			return true;
+		}
+			
+		application function bool IsEnabled()
+		{
+			bool retVal = false;
+			retVal = High_Level_Library_BasicTuning.MedSoundsUpBuIsEnabled();
+			println('[HAL]: BT.BasicTuning_MedSoundsUpBu-IsEnabled = ' + retVal);
+			return retVal;
+		}
+
+		application function int MaxPos(){
+			return 1;    	
+		}
+		
+	 	application function bool IsEnabledPos(int pos){	
+	 		return true;
+	 	}
+	 		
+	 	application function int GetPos(){
+			return 1; 	//Always return 1	 
+	 	}
+	 	
+		application function void SetPos(int pos){
+			println('[HAL]: BT.BasicTuning_MedSoundsUpBu-SetPos');
+			CL_CurveLibrary.ApplyOffset_LevMed_Partial("BT_MedSoundsUp");
+		}
+		
+	}// closes MixedMode BasicTuning_MedSoundsUpBu
+}//namespace shs.sat
+// end of file

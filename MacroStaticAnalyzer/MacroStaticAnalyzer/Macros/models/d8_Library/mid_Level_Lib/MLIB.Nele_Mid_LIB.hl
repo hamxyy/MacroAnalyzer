@@ -1,0 +1,54 @@
+//---------------------------------------------------------------------------------------------------------------*
+//                                 MID LEVEL LIBRARY Nele
+// Initial Version                						   							: 2014-07-07 MeSt
+// Updated NeleEn_IsVisible: to call from MLIB to BLIB Is_Telecoil_Input_Mode. 
+// Code cleanup: Updated printlines.												: 2014-10-20 Jenny
+//---------------------------------------------------------------------------------------------------------------
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib Mid_Level_Library_Nele
+	{
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		  Description:  Returns IsVisible for Nele    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool NeleEn_IsVisible()
+		{
+			println ('[HAL]MLIB.Mid_Level_Library_Nele.NeleEn_IsVisible');
+			
+			// visible for StreamingAudio and BluetoothPhone Input Modes & PP700
+			bool retVal = (BasicLibrary_InputMode.Is_Wireless_withoutFM_Input_Mode () && 
+							cap:PricePoint == PricePoint.PP700);
+			return retVal;
+		}
+	
+		///*---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Returns IsEnabled for Nele    
+		//-----------------------------------------------------------------------------------------------------------------*/
+//		public function bool NeleEn_IsEnabled()
+//		{
+//		// to be filled
+//		     return false;
+//		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		  Description:  Set default checkbox position after FirstFit   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void NeleEn_Set_Default ()
+		{
+			println ('[HAL]MLIB.Mid_Level_Library_Nele.NeleEn_Set_Default');
+			
+			if (Mid_Level_Library_Nele.NeleEn_IsVisible())
+			{
+				println('[HAL]MLIB.Mid_Level_Library_Nele.NeleEn_Set_Default >> 1');
+				BasicLibrary_Nele.NeleEn_Set_Entry(1);
+			}
+			else
+			{
+				println('[HAL]MLIB.Mid_Level_Library_Nele.NeleEn_Set_Default >> 0');
+				BasicLibrary_Nele.NeleEn_Set_Entry(0);
+			}
+		}
+	}
+}

@@ -1,0 +1,124 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            MID LEVEL LIBRARY : Beeps
+// Initial version														: 2011-07-14 Nadia Neugeborn
+// include d8PhlVcRange instead of localVc and RCU						: 2011-08-01 Meike Doose
+// Updated the checks for Program control & volume control availability.: 2011-11-10 Jenny Lin
+// Clean up comments													: 2012-02-13 Meike Steinbuss
+// Updated BeepProgramChangeEn_IsEnabled to include non config Ucontrols: 2012-03-27 Cecil Wilson
+// Updated function name for program change check 						: 2012-03-27 Cecil Wilson
+// Updated function name for VC beeps check & clean up of code			: 2012-04-12 Nadia
+// Updated IsEnabled Function return function instead of variable, 
+	reworked VCBeeps_IsEnabled() to add d8PhlVcRange.off check and
+	in terms of true and false.											: 2012-06-08 Mang Yew		
+// Added new function 'BeepAlertProfileDD_IsVisiblePhysicalPos', to cover PP75 devices.  : 2013-06-05 Al.
+*********************************************CODE FREEZE*******************************************************
+// Added remapped_pos for BeepLoudnessDD								: 2013-04-26 Sonia Stasiak
+// Updated capabilities to separate Loudness settings for Nitro BTE		: 2013-06-17 Sonia Stasiak
+// Changed BeepAlertProfileDD_IsVisiblePhysicalPos (int pos) to..
+// ..BeepAlertProfileDD_IsEnabledPos (int pos)                          : 2013-06-17 Alastair Manders
+// CR64681: Updated BeepLoudness_Remapping default to 75dB (loud) instead of 65dB (average).	: 2014-01-14 Jenny
+// Commented out VCBeeps function. Always return true -> can be written : 2014-02-27 Mang Yew
+// in application function. 
+// Rework IsEnabled function for VcBeeps to set to false only when 
+// PhlVcRange = off														: 2014-02-27 Mang Yew
+// Sifit7.3 Peer review													: 2014-04-30 Jenny, Jeline
+// Sifit7.4 Peer review													: 2014-11-19 MieMie/Sultan/Jeline
+-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib Mid_Level_Library_Beep
+	{
+
+	/*---------------------------------------------------------------------------------------------------------------*
+//   Mid Level LIBRARY Function: BeepProgramChangeEn_IsEnabled
+//   Input		:  none
+//   Output      :  <bool> Returns True if enabled; False if disabled (greyed out) 
+//   Description:  Prog change beeps should be disabled if no program control & no RCU 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool BeepProgramChangeEn_IsEnabled () //SIFIT7.4PEERREVIEWED
+		{
+		// Check if local control or RCU available
+			return Mid_Level_Library_UserControl.Check_Program_Change_UserControl ();
+		} //Close Mid_Level_Library_Beep.BeepProgramChangeEn_IsEnabled()
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Mid Level LIBRARY Function: VCBeeps_IsEnabled
+//   Input		:  none
+//   Output      :  <bool> Returns True if enabled; False if disabled (greyed out) 
+//   Description:  If VC range = 0dB or there is no VC or no WLS RCU then no VC beeps are possible and should be greyed out
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool VCBeeps_IsEnabled () //SIFIT7.4PEERREVIEWED
+		{
+			// Sifit7.3 Note: to ensure the support of the touchControl App, the controls for VC, Tinnitus and SoundBalance shall always be offered (depending on the performance level).
+			// Therefore, only when VC Range is set to OFF, will VC beeps be disabled. (as confirmed by Robert G)
+			return (hi:d8PhlVcRange != d8PhlVcRange.off);
+		
+		} //Close Mid_Level_Library_Beep.VCBeeps_IsEnabled()
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level LIBRARY Function: BeepFrequencyDD_IsEnabled
+//   Input		:  none
+//   Output      :  <bool> Returns True if enabled; False if disabled (greyed out) 
+//   Description:  Greyes out Frequency DD if Sound Profile is Advanced
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool BeepFrequencyDD_IsEnabled () //SIFIT7.4PEERREVIEWED
+		{
+			// Grey out Frequency DD menu if Sound Profile is set to Advanced
+			if (BasicLibrary_Beep.BeepAlertProfileDD_Get_Entry () == 0)
+			{
+				println('[HAL]MLIB.BeepFrequencyDD_IsEnabled >> TRUE for Basic Profile');
+				return true;
+			}
+			else{
+				println('[HAL]MLIB.BeepFrequencyDD_IsEnabled >> FALSE for Advanced Profile');
+				return false;
+			}
+		} // Close Mid_Level_Library_Beep.BeepFrequencyDD_IsEnabled()
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level LIBRARY Function: BeepLoudnessDD_DefaultCxxPos
+//   Input		:  none
+//   Output      :  <int>  Actual Loudness Level with respect to Super Power devices
+//   Description:  remapped_pos to set loudness to:
+* 			- loud (75 dB) - pos_remapped = 2 --> for Nitro devices; and all other devices (CR64681)
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int BeepLoudnessDD_DefaultCxxPos () //SIFIT7.4PEERREVIEWED
+		{
+			println ('[HAL]: MLIB.BeepLoudnessDD_Remapping = 2 (loud)');
+			return 2; // set Beep Loudness to loud (75 dB) for Nitro BTE and all other devices (CR64681)
+		} // close Mid_Level_Library_Beep.BeepLoudnessDD_DefaultCxxPos()
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level LIBRARY Function: BeepAlertProfileDD_IsEnabledPos
+//   Input		:  <int> Position (Physical/absolute) in the list that needs to be checked for 'greyed-outness'
+//   Output      :  <bool> Whether the position is Enabled or not ( greyed out = False ) 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool BeepAlertProfileDD_IsEnabledPos (int pos) //SIFIT7.4PEERREVIEWED
+		{
+			if(pos == 0){
+				// Basic- enabled for all PPs
+				println ('[HAL]: MLIB.BeepAlertProfileDD_IsEnabledPos ='+pos +' >> (BASIC) TRUE always');
+				return true;
+			}
+			else if (pos==1){
+				// Advanced- greyed-out for PP75, but enabled for all other PPs
+				if (cap:PricePoint > PricePoint.PP75){
+					println ('[HAL]: MLIB.BeepAlertProfileDD_IsEnabledPos ='+pos +' >> (ADVANCED) TRUE for PP100 and above');
+					return true;
+				}
+				else{
+					println ('[HAL]: MLIB.BeepAlertProfileDD_IsEnabledPos ='+pos +' >> (ADVANCED) FALSE for PP75');
+					return false;
+				}
+			}
+			else{
+				println ('[HAL]: MLIB.BeepAlertProfileDD_IsEnabledPos ='+pos +' >> ERROR!!! not known input!!');
+				assertion (false, "[MacroError] BeepAlertProfileDD_IsEnabledPos is NOT defined!");
+				return false;
+			}
+		} // close Mid_Level_Library_Beep.BeepAlertProfileDD_IsEnabledPos
+		
+	} //package Mid_Level_Library_Beep
+} //namespace shs.sat

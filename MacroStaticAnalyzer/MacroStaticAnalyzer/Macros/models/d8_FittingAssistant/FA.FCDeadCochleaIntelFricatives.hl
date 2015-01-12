@@ -1,0 +1,109 @@
+// First Draftbased on FA.AATemplateFitAss.hl 		   									:2013-04-18 Raymond
+// Updated Package Name																	:2013-05-06 Judith
+// Updated proposal name																:2013-05-10 Raymond
+// Updated builtin functions name														:2013-05-13 Raymond
+// Update setApply2IsVisible to false													:2013-05-30 Raymond
+// Add pricepoint dependency for sub question											:2013-06-11 Raymond
+// Updated proposals, add FA_P_FCOon to proposal 2										:2013-06-28 Raymond
+// Rename FA_P_FCOIncfmaxuntil1_3 to FA_P_FCODecfmaxuntil1_3							:2013-07-02 Raymond
+// update due to CR62325			                                                    :2013-07-02 Judith
+// Added FA_X_FCOon to proposal2														:2013-07-03 Raymond
+// Update due FA_P_ActivateFCO instead of FCO on due to optimization					:2013-07-02 Judith
+// Rename FA_P_FCOon to FA_P_ActivateFCO for proposal2									:2013-07-04 Raymond
+//FR62273: FIAS - Display propsal cannot be applied text for Tinnitus ear side          :2013-07-05 Judith
+// Added missing Proposal2 text and corrected IsVisible/IsEnabled						:2013-08-05 Raymond
+// Update due to peer review 7.2.                                                       :2013-08-14 Judith, Raymond            
+//----------------------------------------------------------- 7.3 ---------------------------------------------------
+// Clean up comments and refractor method argument										:2013-12-13 Raymond      
+/*------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package FittingAssistent FCDeadCochleaIntelFricatives
+	{
+		application function bool IsVisible ()
+		{
+			return Mid_Level_Library_FCO.Fco_IsAvailable();
+		} //closing FCDeadCochleaIntelFricatives.IsVisible
+		application function bool IsEnabled ()
+		{
+			return Mid_Level_Library_FCO.Fco_IsAvailable();
+		} //closing FCDeadCochleaIntelFricatives.IsEnabled
+		application function void SelectProposal1 ()
+		{	
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+			{
+				setApply1IsVisible (false);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_P_Tinnitus");
+			}
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_ActivateFCO"))
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (true);
+				setProposalTextID1 ("FA_P_ActivateFCO");
+			}
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable("FA_P_FCODecfmaxuntil1_3"))
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (true);
+				setProposalTextID1 ("FA_P_FCODecfmaxuntil1_3");
+			}
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable("FA_P_FCODecfminfmax"))
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (true);
+				setProposalTextID1 ("FA_P_FCODecfminfmax");
+			}
+			else if (cap:PricePoint == PricePoint.PP75)
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_X_ActivateFCO");
+			}
+			else
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_N_FCODecfminfmax");
+			}
+		} //closing FCDeadCochleaIntelFricatives.SelectProposal1
+		application function void ApplyProposal1 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID1 ());
+		} //closing FCDeadCochleaIntelFricatives.ApplyProposal1
+		application function void SelectProposal2 ()
+		{	
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+			{
+				setApply2IsVisible (false);
+				setApply2IsEnabled (false);
+				setProposalTextID2 ("FA_P_Tinnitus");
+			}
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_ActivateFCO"))
+			{
+				setApply2IsVisible (false);
+				setApply2IsEnabled (false);
+				setProposalTextID2 ("");
+			}
+			else if (cap:PricePoint == PricePoint.PP75)
+			{
+				setApply2IsVisible (true);
+				setApply2IsEnabled (false);
+				setProposalTextID2 ("FA_X_ActivateFCO");
+			}
+			else
+			{
+				setApply2IsVisible (false);
+				setApply2IsEnabled (false);
+				setProposalTextID2 ("FA_P_FCOAdjustDeadR_NoApply");
+			}
+		} //closing FCDeadCochleaIntelFricatives.SelectProposal2
+		application function void ApplyProposal2 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID2 ());
+		} //closing FCDeadCochleaIntelFricatives.ApplyProposal2
+
+	} //package FitAss FCDeadCochleaIntelFricatives
+
+} //namespace shs_sat

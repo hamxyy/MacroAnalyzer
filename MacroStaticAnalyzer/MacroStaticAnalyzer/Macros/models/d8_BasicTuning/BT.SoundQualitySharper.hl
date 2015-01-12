@@ -1,0 +1,65 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Basic Tuning: BasicTuning_SoundQualitysharperBu
+// Initial Version                						     						:2011-08-18 Chuah LayYuan
+// Updated SetPos and IsEnable														:2011-11-21 Frauke Schall
+// Updated SetPos (3dB broadband, partial: for test purposes)						:2012-01-13 Frauke Schall
+// Updated SetPos (3dB broadband, complete: for test purposes)						:2012-01-18 Frauke Schall
+// Updated IsEnabled (grey out if curve cannot be applied)							:2012-02-01 Frauke Schall
+// Added println in IsEnabled														:2012-02-10	Frauke Schall
+// For Gmax >=80 devices, the applied curve is equal to the original, but shifted.. 
+// ..down one whole octave. Gmax <80 devices use the original curve. To implement..
+// ..this change, two new curve names have been used; 'BT_SQ_SharpGmaxMore80dB' and..
+// ..'BT_SQ_SharpGmaxLess80dB'.                                                     :2013-07-16 Alastair Manders
+// *********************************************CODE FREEZE*******************************************************
+// FR68941 to disable Basic Tuning Button when tinnitus is ON and Pure				:2014-09-02 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode BasicTuning_SoundQualitysharperBu
+	{
+		application function bool IsVisible ()
+		{
+			return true;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			bool retVal = false;
+			retVal = High_Level_Library_BasicTuning.SoundQualitySharperBuIsEnabled();
+			println('[HAL]: BT.BasicTuning_SoundQualitysharperBu-IsEnabled = ' + retVal);
+			return retVal;
+		} 
+		
+		application function int MaxPos ()
+		{
+			return 1;
+		}
+		application function bool IsEnabledPos (int pos)
+		{
+			return true;
+		}
+		application function int GetPos ()
+		{
+			return 1; //Always return 1	 
+
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]: BT.BasicTuning_SoundQualitysharperBu-SetPos');
+			
+			if (cap:GMax >= 80)
+			{
+				CL_CurveLibrary.ApplyOffset_LevAll_Partial ("BT_SQ_SharpGmaxMore80dB");
+			}
+			else
+			{
+				CL_CurveLibrary.ApplyOffset_LevAll_Partial ("BT_SoundQualitySharper");
+			}
+		} 
+
+	} // closes MixedMode BasicTuning_SoundQualitysharperBu
+
+} //namespace shs.sat
+// end of file

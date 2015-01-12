@@ -1,0 +1,110 @@
+// First Draft based on FA.AATemplateFitAss.hl 											:2013-04-18 Raymond
+// Updated builtin functions name														:2013-05-14 Raymond
+// Update due to CR62325																:2013-07-02 Judith
+//FR62273: FIAS - Display propsal cannot be applied text for Tinnitus ear side          :2013-07-05 Judith
+// Rename FA_P_CurrentSetting to FA_N_RedSoftLevDir										:2013-07-08 Raymond
+// Bugfix due to optimization                                                           :2013-07-19 Judith
+// Bugfix due to optimization															:2013-07-22 Judith
+//------------------------------------------------7.3----------------------------------------------------------------
+// Remove FA_P_SpeechFocC_BackCar proposal not supported in D9							:2013-12-10 Raymond
+// Clean up comments and refractor method argument										:2013-12-13 Raymond
+// Remove MicAuto proposals from proposal 1												:2013-12-16 Raymond
+// Comment out proposal related to binaural feature										:2014-08-19	Mang Yew
+/*------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package FittingAssistent SPHardlyUnderstBackCar
+	{
+		application function bool IsVisible ()
+		{
+			return true;
+		} //closing SPHardlyUnderstBackCar.IsVisible
+		
+		application function bool IsEnabled ()
+		{
+			return true;
+		} //closing SPHardlyUnderstBackCar.IsEnabled
+		
+		application function void SelectProposal1 ()
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+			{
+				setApply1IsVisible (false);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_P_Tinnitus");
+			}
+			//Hide it for Sifit7.4 as Binaural Proposal will not be available. Will be used again in Sifit7.5			
+//			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_SpeechFoc"))
+//			{
+//				setApply1IsVisible (true);
+//				setApply1IsEnabled (true);
+//				setProposalTextID1 ("FA_P_SpeechFoc");
+//			}
+//			else
+//			{
+//				setApply1IsVisible (true);
+//				setApply1IsEnabled (false);
+//				setProposalTextID1 ("FA_N_SpeechFoc");
+//			}
+			// added for 7.4 workaround. This shall be removed once Binaural proposal is available to work for Fitting assistant.
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_IncGainSpeech"))
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (true);
+				setProposalTextID1 ("FA_P_IncGainSpeech");
+			}
+			else
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_N_IncGainSpeech");
+			}
+		} //closing SPHardlyUnderstBackCar.SelectProposal1
+		
+		application function void ApplyProposal1 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID1 ());
+		} //closing SPHardlyUnderstBackCar.ApplyProposal1
+		
+		application function void SelectProposal2 ()
+		{
+			//Hide it for Sifit7.4 as Binaural Proposal will not be available. Will be used again in Sifit7.5
+//			if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+//			{
+//				setApply2IsVisible (false);
+//				setApply2IsEnabled (false);
+//				setProposalTextID2 ("FA_P_Tinnitus");
+//			}
+//			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_RedSoftLevDir"))
+//			{
+//				setApply2IsVisible (true);
+//				setApply2IsEnabled (true);
+//				setProposalTextID2 ("FA_P_RedSoftLevDir");
+//			}
+//			else if (cap:DirMicAvailable == DirMicAvailable.omni)
+//			{
+//				setApply2IsVisible (true);
+//				setApply2IsEnabled (false);
+//				setProposalTextID2 ("FA_X_RedSoftLevDir");
+//			}
+//			else
+//			{
+//				setApply2IsVisible (true);
+//				setApply2IsEnabled (false);
+//				setProposalTextID2 ("FA_N_RedSoftLevDir");
+//			}
+			// added for 7.4 workaround. This shall be removed once Binaural proposal is available to work for Fitting assistant.
+			setApply2IsVisible (false);
+			setApply2IsEnabled (false);
+			setProposalTextID2 ("");
+		} //closing SPHardlyUnderstBackCar.SelectProposal2
+		
+		application function void ApplyProposal2 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID2 ());
+		} //closing SPHardlyUnderstBackCar.ApplyProposal2
+
+	} //package FitAss SPHardlyUnderstBackCar
+
+} //namespace shs_sat

@@ -1,0 +1,83 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        FeedbackStopper Radio Buttons
+// Initial Version                													:	2011-03-11  Cecil Wilson
+// Added Tinnitus greyout															:	2011-03-23  Cecil Wilson  
+// Workaround for MPV issue (shift in counting) - GetPos & SetPos					:   2011-06-22  Nadia Neugeborn
+// Updated all functions for FBC													:   2011-06-22  Nadia Neugeborn 
+// Deleted the workaround because MPV is fixed										:   2011-06-28	Nadia Neugeborn
+// Added comments																	:   2011-07-29  Jenny Lin
+// Add println for MPV testing												 		:   2011-09-22	Jenny Lin
+// Macro code Cleanup														 		:   2012-02-14  Cecil Wilson
+// Added IsVisiblePhysicalPos function (for PP75)									: 	2012-04-24 	Nadia Neugeborn
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Updated based on peer review									: 2012-06-25	Mang Yew
+*****************************************CODE FREEZE***************************************************
+// IsVisible now calls the MLIB function FeedbackStopperRB_IsVisible()              :  2013-03-04 Alastair Manders
+// Sifit 7.3 Peer Review update														: 2014-05-05 Mang Yew
+/*-------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat {	
+    using shs_sat.*;               	
+	package MixedMode FeedbackStopperRB{
+		
+	application function bool IsVisible(){						      		
+	    
+	    bool retval = Mid_Level_Library_FeedbackStopper.FeedbackStopperRB_IsVisible();
+		if (retval == true ){ println('[HAL]MM - FeedbackStopperRB - IsVisible = TRUE');	}
+		else				{ println('[HAL]MM - FeedbackStopperRB - IsVisible = FALSE');	}				
+			
+		return retval;
+			
+	}// Closes FeedbackStopperRB.IsVisible 
+
+	 application function bool IsVisiblePhysicalPos(int pos) { 		 		
+	 	return Mid_Level_Library_FeedbackStopper.FeedbackStopperRB_Is_Visible_Physical_Pos(pos);
+	 }// Closes FeedbackStopperRB.IsVisiblePhysicalPos
+		
+	application function bool IsEnabled(){		
+		bool retval = High_Level_Library_FeedbackStopper.FeedbackStopperRB_IsEnabled();
+		// Function call to the Mid level library to check status of FBC and Tinnitus		
+		int hp=env:Prog;
+		if (retval == true ){ println('[HAL]MM - FeedbackStopperRB - IsEnabled = TRUE in HP='+hp);	}
+		else				{ println('[HAL]MM - FeedbackStopperRB - IsEnabled = FALSE in HP='+hp);	}				
+		
+		return retval;
+	}// Closes FeedbackStopperRB.IsEnabled
+	 
+	application function int MaxPos() {		
+		println('[HAL]MM - FeedbackStopperRB - MaxPos = 1');
+		
+		return 1; 
+	}// Closes FeedbackStopperRB.MaxPos
+					
+ 	application function bool IsEnabledPos(int pos){
+ 		println('[HAL]MM - FeedbackStopperRB - IsEnabledPos = TRUE');
+ 		
+		return true;
+	}// Closes FeedbackStopperRB.IsEnabledPos
+		
+	application function int GetPos(){						
+		// Function call to the High level pricepoing library to get the current position with respect to(w.r.t) the current Device
+		int retval     =  High_Level_Library_FeedbackStopper.FeedbackStopperRB_Get();
+		if (retval==-1)
+		{
+			println('MacroError: FeedbackStopperRB-GetPos()  Set to 0 to prevent return -1');
+			retval=0; //to prevent the return of -1 to Cxx
+		}
+ 		int hp=env:Prog;
+ 		println('[HAL]MM - FeedbackStopperRB - GetPos = '+ retval + ' in HP='+hp);
+ 		
+		return retval; 		
+			
+	}// Closes FeedbackStopperRB.GetPos
+			
+	application function void SetPos(int pos){
+		int hp=env:Prog;
+ 		println('[HAL]MM - FeedbackStopperRB - SetPos = ' + pos + ' in HP='+hp);		
+		
+		// This is a function call to the Higher level pricepoint library  for FeedbackStopperRB
+		High_Level_Library_FeedbackStopper.FeedbackStopperRB_Set(pos);
+				
+	}// Closes FeedbackStopperRB.SetPos
+		
+	}	//package MixedMode.FeedbackStopperRB
+}	//namespace shs.sat

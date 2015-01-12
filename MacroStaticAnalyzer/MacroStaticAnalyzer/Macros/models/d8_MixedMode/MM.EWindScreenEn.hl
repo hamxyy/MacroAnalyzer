@@ -1,0 +1,80 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        EWindScreen CheckBox
+// Initial Version     only SetPos missing           						    :	2011-02-18  Meike Doose
+// Renamed Library Package name													:	2011-02-22	Meike Doose
+// include SetPos																:	2011-02-22	Meike Doose
+// include IsEnabled when Tinnitus is set to Noise								: 	2011-03-22	Meike Doose
+// update file name to ... Entry												:	2011-03-22	Meike Doose
+// delete if loop from SetPos function											:	2011-05-04	Meike Doose
+// Add println for MPV testing												    :   2011-09-22  Jenny Lin
+// Macro code Cleanup														 	:   2012-02-14  Cecil Wilson
+// UPdate Ewindscreen to call HLIB												:	2012-04-11  Jenny Lin
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5
+// Peer review changes															: 2012-06-15 Judith, Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Updated IsEnabled, GetPos, SetPos due to CR61635								: 2013-05-22	Mang Yew
+// Implementation for CR61635 (Disable FBC and WNC if input mode is non-mic input)      : 2012-05-27 Mang Yew
+// 7.3 Peer Review: Replace Mic_Mode_Is_Enabled with IsTinnitusPureandMicModeEnabled	: 2014-04-14 Raymond
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode EWindScreenEn
+	{
+		application function bool IsVisible ()
+		{
+			bool retval = Mid_Level_Library_EWindScreen.EWindScreenEn_IsVisible ();
+			if (retval == true)
+			{
+				println ('[HAL]MM - EWindScreenEn - IsVisible = TRUE');
+			}
+			else
+			{
+				println ('[HAL]MM - EWindScreenEn - IsVisible = FALSE');
+			}
+			return retval;
+		} // Closes EWindScreenEn.IsVisible
+		application function bool IsEnabled ()
+		{
+			int hp = env:Prog;
+			// to check both Tinnitus and microphone input
+			if (BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled())
+			{
+				println ('[HAL]MM - EWindScreenEn - IsEnabled = TRUE in HP=' + hp);
+				return true;
+			}
+			else
+			{
+				println ('[HAL]MM - EWindScreenEn - IsEnabled = FALSE in HP=' + hp);
+				return false;
+			}
+		} // Closes EWindScreenEn.IsEnabled
+		application function int MaxPos ()
+		{
+			println ('[HAL]MM - EWindScreenEn - MaxPos = 1');
+			return 1; // This is a Check Box with 2 states. 0 and 1		
+
+		} // Closes EWindScreenEn.MaxPos
+		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MM - EWindScreenEn - IsEnabledPos = TRUE');
+			return true;
+		} // Closes EWindScreenEn.IsEnabledPos
+		application function int GetPos ()
+		{
+			int retval = High_Level_Library_EWindScreen.eWindScreenEn_Get ();
+			int hp = env:Prog;
+			println ('[HAL]MM - EWindScreenEn - GetPos = ' + retval + ' in HP=' + hp);
+			return retval;
+		} // Closes EWindScreenEn.GetPos
+		application function void SetPos (int pos)
+		{
+			int hp = env:Prog;
+			println ('[HAL]MM - EWindScreenEn - SetPos = ' + pos + ' in HP=' + hp);
+			High_Level_Library_EWindScreen.eWindScreenEn_Set (pos);
+		} // Closes EWindScreenEn.SetPos
+
+	} //package MixedMode.EWindScreenEn
+
+} //namespace shs.sat

@@ -1,0 +1,164 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        First Fit Wizard
+// first draft                                          	: 2011-04-15  Nadine Seubert / Cecil Wilson
+// Updated SoundManagement function calls for PostFit 		: 2011-04-26  Cecil Wilson
+// Updated Microphone System for Activation Threshold       : 2011-05-04  Nadine Seubert
+// Updated Postfit function names							: 2011-06-10  Cecil Wilson
+// Updated default function calls							: 2011-07-11  Nadia Neugeborn
+// update on println to trace functions                     : 2011-07-11  Nadine Seubert
+// Added println for checking default settings				: 2011-07-20  Nadia Neugeborn
+// Added MicMode setting in PreFit							: 2011-08-02  Nadia Neugeborn
+// Added default FCO setting in PostFit						: 2011-08-02  Nadia Neugeborn
+// Set Compression Type	in PostFit							: 2011-08-18  Nadia Neugeborn
+// Set MPO in PreFit and Postfit							: 2011-11-25  Cecil Wilson
+// Set MPO in PreFit only, set THI weight in PostFit		: 2011-11-25  Nadia Neugeborn
+// Reworked FCO (calling HLIB), set MPO to both				: 2011-11-28  Nadia Neugeborn			
+// Updates MPO type pos to 1 (both)	CR52597					: 2011-12-13  Cecil Wilson
+// Don't set FCO, Cxx is taking over this					: 2011-12-15  Nadia Neugeborn
+// PostFit should not set Mic Mode (commented out for now)	: 2011-12-16  Nadia Neugeborn
+// Added Postfit settings for E2E wireless				    : 2011-12-19  Cecil Wilson
+// MicMode reworked for PreFit and PostFit					: 2011-12-27  Nadia Neugeborn
+// reactivate eTemplaste delivery settings forPostFitER53220: 2012-01-02  Nadine Seubert
+// included XcelAmp Compression for Customer Test. (AgcDualSlow still missing until IT19!) JUST PRELIMINARY STATUS! Needs to be deleted or rebuild later! : 2012-03-15 Meike Steinbuss
+// Added MPO setting for CxxFit (waiting for CR54021)		: 2012-03-19  Nadia Neugeborn
+// Set d8SwMacroConnexxFitEn as a workaround				: 2012-03-19  Nadia Neugeborn
+// d8PAgcDualSlow included for XcelAmp						: 2012-03-29  Meike Steinbuss
+// Reworked compression setting (call HLIB)					: 2012-04-02  Nadia Neugeborn
+// Added Power On Delay to PostFit							: 2012-04-19  Nadia  
+// Uncommented out MPO decrease								: 2012-04-20  Nadia
+// Moved XcelAmp controls into BLIB							: 2012-04-23  Nadia 
+// Implement FR54134 - disable FCO for open fittings		: 2012-06-05  Nadia
+// Update SoundSmoothing set default to void				: 2012-06-13  Nadine and Frauke
+// Macro Peer Review Updates for PreFit						: 2012-07-10  Nadia & Judith
+// Macro Peer Review Updates for PostFit					: 2012-07-18  Nadia & Judith
+***********************************************CODE FREEZE*********************************************************
+//  FR57390: Channel MPO for open fittings                  : 2012-09-17  Nadine Seubert
+//  ER57857: NALNL2 match to target not correct				: 2012-09-19  Nadine Seubert
+//  ER58011: MPO Setting wrong 								: 2012-09-21  Nadine Seubert
+*********************************************** 7.1 *********************************************************
+// AutoFit requires MicMode to be reset in PostFit			: 2012-10-18 Frauke Schall
+// AutoFit peer review									    : 2012-01-03 MieMie and Judith	
+// Added Terzo fit to PostFit as comment					: 2013-03-19 Raymond
+// Deactivate Spass and set compression to traditional 
+// for Terzo fit													: 2013-04-09 Raymond
+// Correct SelectFormula parameter for Terzo fit					: 2013-05-15 Raymond
+// Refractor PostFit to call from High Level Libraray and 
+// Added FF.RecalcPostFit() and 
+// refractor FF.PostFit() to call from HLIB.FirstFit_Config()		: 2013-06-11 Raymond
+// Rename RecalcPostFit() to PostFitRecalc()						: 2013-06-14 Raymond
+// CR61177: Added SwMacroFCO_Set for PostFit & RecalcPostFit		: 2013-07-08 Raymond
+// Pull out common settings between postfit and Remon and put in HLIB for PostFit_RemOn_CommonConfig: 2013-07-10 MieMie
+// ******SIFIT7.2_PEERREVIEWED: 					  :  2013-07-31   Jenny, Judith, Alastair, Raymond
+*********************************************** 7.3 *********************************************************
+// updated println statement for debugging.											: 2014-01-10 Jenny
+// FR64944 - Remove all MPO related code												: 2014-02-26 Raymond
+// FR64913 - Replace all ConnexxFit with BinaxFit									: 2014-02-27 Raymond
+// Sifit7.3 Peer review	(Fco).													: 2014-04-21 Jenny, Jeline
+// Sifit 7.3 Peer Review (Compression Method)									: 2014-04-30 MY,MieMie
+// ER65597 In Prefit macro, Sets Input mode to and ensure SwAuxMode = Off_MicOnly.	: 2014-05-28 Jenny
+************************************************* 7.4  ******************************************************
+// For 7.4 removed Noiser from PostFit_MainConfig() and added Noiser to ExtendedConfig() :2014-05-15 Judith
+*/
+/*---------------------------------------------------------------------------------------------------------------$*/
+namespace shs_sat
+{
+	using builtins.*;
+	using shs_sat.*;
+	package FirstFit FF
+	{
+
+	/*---------------------------------------------------------------------------------------------------------------*
+//   FirstFit	:  PreFit
+//   Input		:  none
+//   Ouput      :  none
+//   Description:  Default settings for MicMode, MPO, before BestFit is run
+// 				   Some features are necessary to set before BestFit (target-gain calculation)
+-----------------------------------------------------------------------------------------------------------------*/
+		application function void PreFit ()
+		{
+			println ("[HAL]FIRSTFIT - Start of PreFit() macro");
+
+			// Set default MicMode for First Fit
+			println ("[HAL]FIRSTFIT - Mic Mode is set in PreFit");
+			High_Level_Library_Mic_Mode.MicMode_Set_Default ();
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ConnexxFit Specific settings~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//				
+			if (fit:SelectableFormula == SelectableFormula.BinaxFit)
+			{
+				println ("[HAL]FIRSTFIT - Set d8SwMacroConnexxFitEn = ON for Proprietary Formula");
+				hi:d8SwMacroConnexxFitEn = d8SwMacroConnexxFitEn.on;
+			}
+			else
+			{
+				println ("[HAL]FIRSTFIT - Set d8SwMacroConnexxFitEn = OFF for Traditional Formula");
+				hi:d8SwMacroConnexxFitEn = d8SwMacroConnexxFitEn.off;
+			}
+			// Set Compression Type and Compression Concept (ALM or XcelAmp)
+			println ("[HAL]FIRSTFIT - Compression Type and Compression Concept (ALM/XcelAmp) is set");
+			High_Level_Library_Compression.Compression_Set_Default ();
+			
+			
+			//ER65597: Call default function for InputMode (including SoundBrilliance) and to set SwAuxMode = Off_MicOnly
+			println ("[HAL]FIRSTFIT - Input Mode is set");
+			High_Level_Library_InputMode.InputModeDD_Set_Default ();
+			High_Level_Library_MicrophoneMix.Microphone_MixMicrophoneEn_Set_Mode (true); // prefit
+
+			println ("[HAL]FIRSTFIT - End of PreFit() macro");
+		} // Closes FF.PreFit()
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   FirstFit	:  PostFit
+//   Input		:  none
+//   Ouput      :  Default settings are set (for program 1)
+//   Description:  All of the needed features are set after FirstFit (based on the MRS)
+-----------------------------------------------------------------------------------------------------------------*/
+		application function void PostFit ()
+		{
+			println ("[HAL]FIRSTFIT - Running PostFit() macro");
+			
+			println ("[HAL]FIRSTFIT - PostFit_RemOn_CommonConfig");
+			High_Level_Library_FirstFit_Config.PostFit_RemOn_CommonConfig ();
+
+			// ****** Settings specific to PostFit Only ********* //
+
+			// Call default function for Feedback Stopper (will also set sub features related to FBC)
+			println ("[HAL]FIRSTFIT - FeedbackStopper_Set_Default");
+			High_Level_Library_FeedbackStopper.FeedbackStopper_Set_Default ();
+
+			// Call SwMacroFCO_Set to store last FCO setting
+			// FCO set by CXX in PostFit (CR61993), Therefore, to remember the state of the checkbox, FCO settings is saved in SwMacro 
+			println ("[HAL]FIRSTFIT - SwMacroFCO_Set");
+			High_Level_Library_FCO.SwMacroFCO_Set ();
+
+			println ("[HAL]FIRSTFIT - Running PostFit() macro Done!");
+		} // Closes FF.PostFit()
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   FirstFit	:  PostFitRecalc
+//   Input		:  none
+//   Ouput      :  Default settings are set (for program 1), except for Beeps, PowerOnDelay and e2e
+//   Description:  All of the needed features are set after FirstFit (based on the MRS)
+-----------------------------------------------------------------------------------------------------------------*/
+		application function void PostFitRecalc ()
+		{
+			println ("[HAL]: PostFitRecalc - Running PostFitRecalc() macro");
+
+			//Call function for FirstFit_MainConfig
+			println ("[HAL]FIRSTFIT - PostFit_MainConfig");
+			High_Level_Library_FirstFit_Config.PostFit_MainConfig ();
+
+			// FBC settings same as PostFit setting
+			println ("[HAL]FIRSTFIT - FeedbackStopper_Set_Default");
+			High_Level_Library_FeedbackStopper.FeedbackStopper_Set_Default ();
+
+			// Call SwMacroFCO_Set to store last FCO setting
+			// FCO set by CXX in PostFit (CR61993), Therefore, to remember the state of the checkbox, FCO settings is saved in SwMacro 
+			println ("[HAL]FIRSTFIT - SwMacroFCO_Set");
+			High_Level_Library_FCO.SwMacroFCO_Set ();
+			
+			println ("[HAL]: PostFitRecalc - Running PostFitRecalc() macro Done!");
+		} // Closes FF.PostFitRecalc()
+
+	} // package FirstFit
+
+} // namespace shs.sat

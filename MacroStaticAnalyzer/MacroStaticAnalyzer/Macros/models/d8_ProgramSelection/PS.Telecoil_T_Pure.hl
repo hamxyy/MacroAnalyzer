@@ -1,0 +1,74 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									PROGRAM SELECTION - Phone T
+
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Initial version based on Telecoil_T (FR64541)											: 2014-03-19 Sonia & Jeline
+// PEER REVIEW CXX 7.3																		: 2014-05-06 Sonia, Mie Mie, Jenny
+/*--------------------------------------------- Cxx 7.4 -----------------------------------------------------------*
+// Changed package to MonAppProgramSelection, added ApplyComplementary function				: 2014-07-10 Sonia Stasiak
+// Change Apply function to call BLib.Set<program> to set d9SwmacroProgramIdHp				: 2014-09-16 Sonia
+// Code clean up																			: 2014-09-17 Sonia
+/*-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package MonAppProgramSelection Telecoil_T_Pure
+	{
+		application function int GetID ()
+		{
+			int retVal = 20;
+			println ('[HAL]PS - Telecoil_T_Pure.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "Phone T";
+			println ('[HAL]PS - Telecoil_T_Pure.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 20; // Phone T
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - Telecoil_T_Pure.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 20; // Phone T
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - Telecoil_T_Pure.IsEnabled = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetPhoneT();
+			
+			println ('[HAL]PS - Telecoil_T_Pure.Apply started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - Telecoil_T_Pure.Apply done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function void ApplyComplementary ()
+		{
+			BasicLibrary_ProgramSelection.SetPrivacy();
+			
+			println ('[HAL]PS - Telecoil_T_Pure.ApplyComplementary started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - Telecoil_T_Pure.ApplyComplementary done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function int GetOrderNumber ()
+		{
+			int retVal = 6;
+			println ('[HAL]PS - Telecoil_T_Pure.GetOrderNumber = ' + retVal);
+			return retVal;
+		}
+	}
+}
+//--------------------------------------- END of PROGRAM SELECTION - Phone T --------------------------------------*/

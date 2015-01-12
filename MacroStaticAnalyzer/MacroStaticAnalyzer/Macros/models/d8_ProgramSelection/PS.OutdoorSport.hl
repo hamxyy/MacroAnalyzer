@@ -1,0 +1,82 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									PROGRAM SELECTION - Outdoor Sport
+
+// Initial Version		         															: 2011-08-22 Chuah LayYuan
+// Update input mode, microphone system and sound management settings						: 2011-11-15 Ma Mie Mie Thein
+// Added THI Weight setting in Apply Function     											: 2011-11-22 Chuah LayYuan
+// Added PS_OutdoorSports ApplyOffset curve													: 2011-11-23 Ma Mie Mie Thein
+// Changed return false to true for IsVisible												: 2011-11-30 Ma Mie Mie Thein
+// Added GetOrderNumber() and IsSingleUse() function.										: 2012-03-19 Jenny Lin
+// Updated GetID from 7 to 8 due to Universal = 1.											: 2012-03-22 Jenny Lin
+// Replaced InputMode SetPos to non-adaptive (no update of WNC/SoundBrilliance)				: 2012-03-27 Cecil Wilson	
+// Updated IsVisible function 																: 2012-04-04 Cecil Wilson
+// Updated the Microphone mode function call												: 2012-05-02 Cecil Wilson
+// Update insertion gain modification from ApplyOffsets_ProgramSelection() to 
+// ApplyInsertionGainOffsets_ProgramSelection												: 2012-07-09 Jenny Lin
+// Call the HLIB for Program Selection for all programs.									: 2012-07-20 Cecil, Jenny
+// *********************************************CODE FREEZE*******************************************************
+// CR57156 - Set CBFS to off for HP2-HP6													: 2012-08-22 Nadia Neugeborn
+// Peer Review Changes 7.2.                                                     			: 2013-08-15 Raymond, MangYew, Judith
+// D8 Program Selection code cleaning, apply function to call H_Lib							: 2013-10-24 Sonia Stasiak
+// Updated IsEnabled to call Mid_Level_Library												: 2013-11-01 Sonia Stasiak
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Updated Apply function with d9SwMacroProgramIdHp, code tuning							: 2013-12-17 Sonia Stasiak
+// PEER REVIEW CXX 7.3																		: 2014-05-06 Sonia, Mie Mie, Jenny
+/*--------------------------------------------- Cxx 7.4 -----------------------------------------------------------*
+// Change Apply function to call BLib.Set<program> to set d9SwmacroProgramIdHp				: 2014-09-16 Sonia
+// Code clean up																			: 2014-09-17 Sonia  
+/*-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package ProgramSelection OutdoorSport
+	{
+		application function int GetID ()
+		{
+			int retVal = 8;
+			println ('[HAL]PS - OutdoorSport.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "Outdoor Sport";
+			println ('[HAL]PS - OutdoorSport.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 8; // Outdoor Sport
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - OutdoorSport.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 8; // Outdoor Sport
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - OutdoorSport.IsEnabled = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			return retVal;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetOutdoorSport();
+			
+			println ('[HAL]PS - OutdoorSport.Apply started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - OutdoorSport.Apply done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function int GetOrderNumber ()
+		{
+			int retVal = 10;
+			println ('[HAL]PS - OutdoorSport.GetOrderNumber = ' + retVal);
+			return retVal;
+		}
+	}
+}
+//--------------------------------------- END of PROGRAM SELECTION - Outdoor Sport --------------------------------*/

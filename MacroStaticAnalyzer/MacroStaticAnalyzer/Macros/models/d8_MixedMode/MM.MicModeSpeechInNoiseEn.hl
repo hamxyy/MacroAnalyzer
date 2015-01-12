@@ -1,0 +1,54 @@
+/*---------------------------------------------------------------------------------------------------------------
+// CXX UI:                        MicSpeechandNoiseOnly CheckBox
+/*---------------------------------------------------------------------------------------------------------------
+// Initial Version                						    						 : 2011-03-25 Nadine Seubert
+// Add println for MPV testing								 						 : 2011-09-22 Jenny Lin
+// Deleted comments above application functions that descibe what the functions do   : 2012-06-05 Alastair Manders  
+// Peer review changes									   							 : 2012-06-20 Nadine/Frauke
+// IsVisible now calls MicModeSpeechInNoiseEn_IsVisible(), as not visible for PP75.  : 2013-03-18 Alastair Manders 
+// Removed IsEnabledPos, as not being used.                							 : 2014-03-05 Al
+// *********************************************CODE FREEZE*******************************************************
+// Code Cleanup																         : 2014-06-30 Sultan 
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{	
+	using shs_sat.*;
+
+	package MixedMode MicModeSpeechInNoiseEn
+	{
+		application function bool IsVisible() 
+		{				
+			bool retVal = Mid_Level_Library_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_IsVisible();
+			println('[HAL]MM - MicModeSpeechInNoiseEn.IsVisible = ' + retVal);					
+			return retVal;
+		}
+						
+		application function int MaxPos() 
+		{
+			int retVal = 1;
+	 		println('[HAL]MM - MicModeSpeechInNoiseEn.MaxPos = ' + retVal);	 					
+			return retVal;     // This is a Check Box with 2 states. 0 and 1			
+		}
+							
+		application function bool IsEnabled() 
+		{			
+			bool retVal = High_Level_Library_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Is_Enabled();
+			println('[HAL]MM - MicModeSpeechInNoiseEn.IsEnabled = ' + retVal + ' in' + BasicLibrary_DebugPrint.PrintCurrentProg());						
+			return retVal;
+		}
+	 		 			
+	 	application function int GetPos() 
+	 	{	 		
+			int retval = BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Get();	 			 			 
+	 		println('[HAL]MM - MicModeSpeechInNoiseEn.GetPos = '+ retval + ' in' + BasicLibrary_DebugPrint.PrintCurrentProg());						
+			return retval;
+	 	}	 		 		 	
+	 		 		 	
+		application function void SetPos(int pos) 
+		{						
+	 		println('[HAL]MM - MicModeSpeechInNoiseEn.SetPos = ' + pos + ' in' + BasicLibrary_DebugPrint.PrintCurrentProg());			 
+			High_Level_Library_Mic_Mode.MicModeSpeechInNoiseEn_Set(pos);				  			 			
+		}
+	}
+}

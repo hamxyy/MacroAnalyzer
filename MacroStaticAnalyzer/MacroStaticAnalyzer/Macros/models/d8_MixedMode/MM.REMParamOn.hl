@@ -1,0 +1,82 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                 REM Adaptive Parameters On
+// Initial Version                                 			   	: 2012-11-28  Judith Köppe
+// Remove d8SwMacroConnexxFitEn question, it is set in PostFit  : 2012-12-17
+* // Update/ peer review						                : 2012-01-03  MieMie and Judith	
+*****************************************CODE FREEZE***************************************************
+// Added Terzo fit as comments in SetPos()						: 2013-03-19 Raymond
+// Deactivate Spass and set compression to traditional 
+// for Terzo fit												: 2013-04-09 Raymond
+// Correct SelectFormula parameter for Terzo fit				: 2013-05-15 Raymond
+// Refractoer SetPos to call from HLIB_FirstFit_Config			: 2013-06-11 Raymond
+// CR61177: Added FCO setting for SetPos						: 2013-07-08 Raymond
+// Pull out common settings between postfit and Remon and put in HLIB for PostFit_RemOn_CommonConfig: 2013-07-10 MieMie
+// Updated description of SetPos								: 2013-07-11 Jenny
+// Update FBC description										: 2013-07-18
+// Sifit7.3 Peer review (FCO only).								: 2014-04-21 Jenny, Jeline
+// Sifit7.3 Peer review 						  				: 2014-04-24 Meike, Judith
+*/
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode REMParamOn
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MM - REMParamOn - IsVisible = TRUE');
+			return true;
+		} // Closes REMParamOn.IsVisible
+		application function bool IsEnabled ()
+		{
+		// Enabled only in Universal Programm (Program 0)	
+			int hp = env:Prog;
+			if (hp == 0)
+			{
+				println ('[HAL]TestSettings - REMParamOn - IsEnabled = TRUE in HP=' + hp);
+				return true;
+			}
+			else
+			{
+				println ('[HAL]TestSettings - REMParamOn - IsEnabled = FALSE in HP=' + hp);
+				return false;
+			}
+		} // Closes REMParamOn.IsEnabled		
+		application function bool IsEnabledPos (int pos)
+		{
+			return true;
+		}
+		application function int GetPos ()
+		{
+			int retval = -1;
+			// Cxx does not read the GetPos for REMParamOn
+			int hp = env:Prog;
+			println ('[HAL]TestSettings - OmniButton - GetPos = ' + retval + ' in HP=' + hp);
+			return retval;
+		}
+		application function void SetPos (int pos)
+		{
+		//All settings same as Postfit except: 
+		//(1) FeedbackStopper checkbox and radiobutton is not changed, ONLY OpenOptimizer is set to on again, if it was intended to be On.
+		//(2) Frequency Compression will be set based on SwMacro based on after FirstFit default. (CR61177)
+
+			println ("[HAL]: REMParamOn - Running SetPos() macro");
+			High_Level_Library_FirstFit_Config.PostFit_RemOn_CommonConfig();
+
+			// ****** Settings specific to REMPARAM ON ********* //
+		
+			// FBC radiobutton remains unchanged
+			// Set Open Optimizer to default position
+			High_Level_Library_FeedbackStopper.OpenOptimizerEn_Set_Default ();
+			println ('[HAL]HLIB-FeedbackStopper_Set_Default   OpenOpt set to ');
+
+			// Call SwMacroFCO_Get and FCO_CxxSet to set FCO setting to after PostFit
+			int fcoSetting = High_Level_Library_FCO.SwMacroFCO_Get ();
+			High_Level_Library_FCO.FCO_CxxSet (fcoSetting);
+			
+			println ("[HAL]: REMParamOn - Running SetPos() macro Done!");
+		} // Closes MM.REMParamOn()
+
+	} //package REMParamOn
+
+} //namespace shs.sat

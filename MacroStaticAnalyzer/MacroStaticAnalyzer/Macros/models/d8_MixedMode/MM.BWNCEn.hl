@@ -1,0 +1,42 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:									Binaural eWindscreen CheckBox
+// Initial version															: 2013-10-21 Raymond
+// First uncommented draft													: 2013-11-29 Raymond
+// Refractor ThisProg() method call from BLIB_CommUtil					: 2014-02-12 Raymond
+// 7.3 Peer Review: Remove IsEnabledPos as not required					: 2014-04-11 Raymond
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode BWNCEn
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MM - BWNCEn - IsVisible = ' + Mid_Level_Library_BWNC.BWNCEn_IsVisible ());
+			return Mid_Level_Library_BWNC.BWNCEn_IsVisible ();
+		} // Closes BWNCEn.IsVisible
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MM - BWNCEn - IsEnabled = ' + High_Level_Library_BWNC.BWNCEn_IsEnabled ());
+			return High_Level_Library_BWNC.BWNCEn_IsEnabled ();
+		} // Closes BWNCEn.IsEnabled
+		application function int MaxPos ()
+		{
+			println ('[HAL]MM - BWNCEn - MaxPos == 1');
+			return 1; // Iconic checkbox with 2 states.
+		} // Closes BWNCEn.MaxPos
+ 		application function int GetPos ()
+		{
+			println ('[HAL]MM - BWNCEn - GetPos = ' + High_Level_Library_BWNC.BWNCEn_Get () + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+			return High_Level_Library_BWNC.BWNCEn_Get ();
+		} // Closes BWNCEn.GetPos
+ 		application function void SetPos (int pos)
+		{
+			println ('[HAL]MM - BWNCEn - SetPos = ' + pos + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_BWNC.BWNCEn_Set (pos);
+		} // Closes BWNCEn.SetPos
+
+	} //package MixedMode.BWNCEn
+
+} //namespace shs.sat

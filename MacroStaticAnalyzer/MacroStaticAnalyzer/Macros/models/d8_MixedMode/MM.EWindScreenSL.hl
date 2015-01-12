@@ -1,0 +1,64 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        eWindScreen Slider
+// Initial Version                										:	2011-02-16	Meike Doose
+// Add isVisible functions												:	2011-02-18	Meike Doose	
+// Renamed Library Package name											:	2011-02-22	Meike Doose
+// include IsEnabled when Tinnitus is set to Noise						: 	2011-03-22	Meike Doose
+// update file name to ... Entry										:	2011-03-22	Meiek Doose
+// Add println for MPV testing											:   2011-09-22	Jenny Lin
+// Macro code Cleanup													:   2012-02-14	Cecil Wilson
+// UPdate Ewindscreen to call HLIB										:	2012-04-11  Jenny Lin
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Peer review changes													:  2012-06-15 Judith, Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Implementation for CR61635 (Disable FBC and WNC if input mode is non-mic input)      : 2012-05-27 Mang Yew
+// ************************************************ 7.3 **********************************************************
+// Refractor IsEnabled to call from HLIB.EWindscreen					:	2013-12-02 Raymond
+// 7.3 Peer Review														: 2014-04-15 Raymond
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode EWindScreenSL
+	{
+		application function bool IsVisible ()
+		{
+			// This slider is visible for pricepoints PP700 and PP500		
+			println ('[HAL]MM - EWindScreenSL - IsVisible = ' + Mid_Level_Library_EWindScreen.EWindScreenSL_IsVisible ());
+			return Mid_Level_Library_EWindScreen.EWindScreenSL_IsVisible ();
+		} // Closes EWindScreenSL.IsVisible
+		application function bool IsEnabled ()
+		{
+			// Greyed out if the EWindScreen Checkbox is disabled or if Tinnitus is set to on and pure or microphone is not present
+			println ('[HAL]MM - EWindScreenSL - IsEnabled = ' + High_Level_Library_EWindScreen.eWindScreenSL_IsEnabled() + ' in HP= ' + BasicLibrary_CommUtil.CurrentProg());
+			return High_Level_Library_EWindScreen.eWindScreenSL_IsEnabled();
+		} // Closes EWindScreenSL.IsEnabled
+		application function int MaxPos ()
+		{
+			println ('[HAL]MM - EWindScreenSL - MaxPos = 2');
+			return 2;
+		} // Closes EWindScreenSL.MaxPos
+		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MM - EWindScreenSL - IsEnabledPos = TRUE');
+			return true;
+		} // Closes EWindScreenSL.IsEnabledPos
+		application function int GetPos ()
+		{
+			println ('[HAL]MM - EWindScreenSL - GetPos = ' + High_Level_Library_EWindScreen.EWindScreenSL_Get () + ' in HP=' + BasicLibrary_CommUtil.CurrentProg());
+			return High_Level_Library_EWindScreen.EWindScreenSL_Get ();
+		} // Closes EWindScreenSL.GetPos
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MM - EWindScreenSL - SetPos = ' + pos + ' in HP=' + BasicLibrary_CommUtil.CurrentProg());
+			int retval = High_Level_Library_EWindScreen.eWindScreenSL_Set (pos);
+			if (retval == -1)
+			{
+				println ('[HAL]MM:EWindScreenSL.Error:-SetPos Failed to set a Position');
+			}
+		} // Closes EWindScreenSL.SetPos
+
+	} //package MixedMode.EWindScreenSL
+
+} //namespace shs.sat

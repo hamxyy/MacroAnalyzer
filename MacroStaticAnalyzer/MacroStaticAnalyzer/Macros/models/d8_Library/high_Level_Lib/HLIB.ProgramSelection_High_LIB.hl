@@ -1,0 +1,91 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									HIGH LEVEL LIBRARY : Program Selection 
+// Initial Version																			: 2013-09-16 Jenny
+// Page tuning																				: 2013-10-29 Sonia Stasiak
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Updated comments																			: 2013-11-01 Sonia Stasiak
+// Removed ID dependency as currently d9SwMacroProgramIdHp control is in use, added BWNC ...
+// ... and Noise Reduction Set																: 2013-12-17 Sonia Stasiak
+// Added Set_Intellizoom 																	: 2914-01-25 Sonia Stasiak
+// Comment updated																			: 2014-03-19 Sonia
+// Removed IntelliZoom																		: 2014-04-09 Sonia 
+// FR66291 Add in remark for Intellizoom.													: 2014-04-16 Jenny
+// 7.3 Peer Review: Swap function call sequence for MicMode and InputMode in 
+// ...Set_ProgramSelection()																: 2014-04-17 Raymond
+// PEER REVIEW CXX 7.3	for Program Selection												: 2014-05-06 Sonia, Mie Mie, Jenny
+/*-----------------------------------------------------Cxx 7.4-----------------------------------------------------*
+// include Nele default for 7.4																: 2014-07-07 Meike Steinbuss
+// Added new Induction Loop (T) program														: 2014-07-30 Sonia
+// Code clean up																			: 2014-09-03 Sonia
+/*-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_ProgramSelection
+	{
+	
+/*-----------------------------------------------------------------------------------------------------------------*
+//	Description	:	Function is setting MixedMode features and gain modifications for all listening situation. 
+//	Comments	:	Features that remain unchanged by macro for all programs: 
+//					- Frequency Compression		- System Sounds				
+//					- Power-On Delay			- IntelliZoom [FR66291]
+/*-----------------------------------------------------------------------------------------------------------------*/		
+		public function void Set_ProgramSelection ()
+		{
+			println ('[HAL]HLIB.Set_ProgramSelection - Apply() started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			
+			// Tinnitus
+			High_Level_Library_Noiser.Noiser_Set_ProgramSelection ();
+
+			// Microphone System
+			High_Level_Library_Mic_Mode.MicMode_Set_ProgramSelection ();
+			
+			// Input Mode and Sound Brilliance
+			High_Level_Library_InputMode.InputMode_Set_ProgramSelection ();
+			
+			// Noise Reduction, Speech in Noise Management, Sound Smoothing, SPASS			
+			High_Level_Library_NoiseReduction.NoiseReduction_ProgramSelection ();
+
+			// eWindScreen
+			High_Level_Library_EWindScreen.EWindScreen_Set_ProgramSelection ();
+			
+			// Binaural eWindScreen
+			High_Level_Library_BWNC.BWNC_Set_ProgramSelection ();
+
+			// Feedback Stopper
+			High_Level_Library_FeedbackStopper.FeedbackStopper_Set_ProgramSelection ();
+
+			// Compression Method
+			High_Level_Library_Compression.Compression_Set_ProgramSelection ();
+	
+			// Training Weights
+			High_Level_Library_THI.THI_Set_ProgramSelection ();
+	
+			// Classification-Based Frequency Shaping (CBFS) [OFF for all programs]
+			High_Level_Library_CBFS.CBFS_Set (0);  
+	
+			// Nele 
+			Mid_Level_Library_Nele.NeleEn_Set_Default(); //TO BE REWORKED!
+					
+			// Insertion Gain modification
+			CL_CurveLibrary.ApplyInsertionGainOffsets_ProgramSelection ();
+
+			// Direct Sound modification
+			CL_CurveLibrary.ApplyDirectSoundModification_ProgramSelection ();
+			
+			println ('[HAL]HLIB.Set_ProgramSelection - Apply() done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			
+			// Additional comments:
+			// IntelliZoom shall only be available in HP1 but this is done via FW. 
+			// The control d9FIzmEn is a simple control and cannot be set differently for different program slots. 
+			// Therefore: the macro shall not deactivate IntelliZoom in dedicated programs. (FR66291)
+			
+			// MicMode_Set_ProgramSelection() is swapped with InputMode_Set_ProgramSelection ()
+			// due to WNC dependency to set HW off and SW on when switching to non-microphone mode programs
+			// This swap is a temporary measure for 7.3 and dependency should be properly corrected in 7.4 and beyond
+		}
+	}
+}
+/*------------------------------------------------------------------------------------------------------------------
+// 								  END of HIGH LEVEL  LIBRARY  - Program Selection 
+-------------------------------------------------------------------------------------------------------------------*/

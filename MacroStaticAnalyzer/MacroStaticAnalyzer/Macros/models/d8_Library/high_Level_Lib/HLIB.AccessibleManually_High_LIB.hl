@@ -1,0 +1,114 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                                 HIGH LEVEL LIBRARY :  Accessible Manually
+// Initial Version                						    						    :  2011-03-09 Cecil Wilson
+// Added Cap_NoPrgr workaround															:  2011-03-24 Cecil Wilson	
+// Deleted Cap_NoPrgr workaround, using cap:NoOfPrograms 								:  2011-07-01 Nadia Neugeborn
+// Updated the conditions for Greyout: added the checks for Program change UserCTL avail:  2012-03-28 Cecil Wilson
+// Added HP 1 check and Wls check for Tcoil Isenabled function.							:  2012-06-21 Mang Yew
+// Removed ProgramControlLocal and update IsEnabled() for Tcoil Acc Man due to ER59269 .:  2013-01-31 Mang Yew															
+// ******SIFIT7.2_PEERREVIEWED: No changes required									  :  2013-07-30   Jenny, Judith
+// Added AccessibleManually_For_InputModeDD()					: 2013-11-04 Jenny
+// refractor: Optimize code									: 2013-12-02 Jenny
+// update assertion to false instead of true.				: 2013-12-12 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// FR68862: Hide Telecoil Accessible Manually checkbox for Induction Loop Program 
+// and optimize the code to call blib program selection.							: 2014-09-22 Jenny
+// Updated Telecoil_AccessibleManuallyEn_IsVisible_In_CXX and In_Hicoss to call from MLIB to BLIB 
+// Is_Telecoil_Input_Mode. Code cleanup: Updated printlines.						: 2014-10-20 Jenny
+/*$$---------------------------------------------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_AccessibleManually
+	{
+		
+		/*$---------------------------------------------------------------------------------------------------------------*
+		 Description: Accessible Manually for Input Modes.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void AccessibleManually_For_InputModeDD ()
+		{
+			println ('[HAL]HLIB.High_Level_Library_AccessibleManually.XXXXX');
+			
+			if (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Microphone ||
+					hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Telecoil )
+			{
+				// [Accessible Manually Enabled  RCU and Pushbutton]
+				BasicLibrary_AccessibleManually.AccessibleManuallyEn_Set_HPx (env:Prog, 1);
+			}
+			else if (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Tek_d_miniTek ||
+				hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Bluetooth_Phone ||
+				hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.MiniTek_FM ||
+				hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.miniTek_Telecoil ||
+				hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Direct_Audio_InputFM )
+			{
+				// [Accessible Manually via RCU and Disable via Pushbutton]
+				BasicLibrary_AccessibleManually.AccessibleManuallyEn_Set_HPx (env:Prog, 0);
+			}
+			else
+			{
+				assertion (false,"[MacroError] HLIB.AccessibleManually_For_InputModeDD >> Invalid d8SwMacroInputModeHp in HI");
+			}
+		}
+	
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description: Grey-out for Telecoil Accessible Manually checkbox.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool Telecoil_AccessibleManuallyEn_IsEnabled ()
+		{
+			println ('[HAL]HLIB.High_Level_Library_AccessibleManually.Telecoil_AccessibleManuallyEn_IsEnabled');
+			
+			bool retVal = (Mid_Level_Library_UserControl.Check_Program_Change_UserControl ());
+			
+			return retVal;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		// Description: Decides the visibility status of the Telecoil_AccessibleManuallyEn Checkbox
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool Telecoil_AccessibleManuallyEn_IsVisible ()
+		{
+			println ('[HAL]HLIB.High_Level_Library_AccessibleManually.Telecoil_AccessibleManuallyEn_IsVisible');
+			
+			bool retVal = false;
+			
+			if(env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+			{
+				retVal = Telecoil_AccessibleManuallyEn_IsVisible_In_CXX();
+			}
+			else
+			{ 
+				retVal = Telecoil_AccessibleManuallyEn_IsVisible_In_HICOSS();
+			}
+			
+			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		// Description: Decides the visibility of the Telecoil Accessible Manually Checkbox in CXX (Fitting)
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool Telecoil_AccessibleManuallyEn_IsVisible_In_CXX ()
+		{
+			println ('[HAL]HLIB.High_Level_Library_AccessibleManually.Telecoil_AccessibleManuallyEn_IsVisible_In_CXX');
+			
+			bool retVal = BasicLibrary_InputMode.Is_Telecoil_Input_Mode() &&
+					(BasicLibrary_ProgramSelection.IsPhoneTelecoilProgramSetInCurrentSide());					
+			
+			println('[HAL] HLIB.Telecoil_AccessibleManuallyEn_IsVisible_In_CXX = ' + retVal);
+			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		// Description: Decides the visibility of the Telecoil Accessible Manually Checkbox in HICOSS (Service)
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool Telecoil_AccessibleManuallyEn_IsVisible_In_HICOSS ()
+		{
+			println ('[HAL]HLIB.High_Level_Library_AccessibleManually.Telecoil_AccessibleManuallyEn_IsVisible_In_HICOSS');
+			
+			bool retVal = BasicLibrary_InputMode.Is_Telecoil_Input_Mode();		
+
+			return retVal;
+		}
+	}
+}

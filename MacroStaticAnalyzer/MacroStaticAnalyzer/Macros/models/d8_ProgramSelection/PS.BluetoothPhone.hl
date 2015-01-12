@@ -1,0 +1,94 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									PROGRAM SELECTION - Bluetooth Phone
+
+// Initial Version		         															: 2011-08-22 Chuah LayYuan
+// Added THI Weight setting in Apply Function                           					: 2011-11-22 Chuah LayYuan
+// Updated the IsVisible() and IsEnabled() functions										: 2012-01-11 Jenny Lin
+// removed the additional lines.															: 2012-01-16 Jenny Lin
+// added Direct sound modifications															: 2012-02-08 Cecil Wilson
+// Added GetOrderNumber() and IsSingleUse() function.										: 2012-03-19 Jenny Lin
+// Added println() for IsVisible, IsEnabled, IsSingleUse function.							: 2012-03-20 Jenny Lin
+// Updated GetID from 4 to 5 due to Universal = 1.											: 2012-03-22 Jenny Lin
+// Replaced InputMode SetPos to non-adaptive (no update of WNC/SoundBrilliance)				: 2012-03-27 Cecil Wilson	
+// Added CanCopy function																	: 2012-04-02 Cecil Wilson
+// Updated IsVisible function 																: 2012-04-04 Cecil Wilson
+// Removed IsSingleUse() from this page and updated descriptions.							: 2012-04-05 Jenny Lin
+// Updated to call HLIB.MicMode_Set_ProgramSelection to set the MicMode.					: 2012-04-09 Jenny Lin
+// Wireless Level slider position change from 10 to 6 for 0dB as per MRS v2.3				: 2012-06-14 Jenny Lin
+// Call HLIB curve library to apply direct sound modification.								: 2012-07-09 Jenny Lin
+// MacroPeerReview: Clean up comments.														: 2012-07-12 Cecil/Jenny
+// Call the HLIB for Program Selection for all programs.									: 2012-07-20 Cecil, Jenny
+// *********************************************CODE FREEZE*********************************************************
+// CR57156 - Set CBFS to off for HP2-HP6													: 2012-08-22 Nadia Neugeborn
+// Peer Review Changes 7.2.																	: 2013-08-15 Raymond, MangYew, Judith
+// D8 Program Selection code cleaning, apply function to call H_Lib							: 2013-10-24 Sonia Stasiak
+// Updated IsEnabled to call Mid_Level_Library												: 2013-11-01 Sonia Stasiak
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Updated Apply function with d9SwMacroProgramIdHp, code tuning							: 2013-12-17 Sonia Stasiak
+// PEER REVIEW CXX 7.3																		: 2014-05-06 Sonia, Mie Mie, Jenny
+/*--------------------------------------------- Cxx 7.4 -----------------------------------------------------------*
+// Change Apply function to call BLib.Set<program> to set d9SwmacroProgramIdHp				: 2014-09-16 Sonia
+// Code clean up																			: 2014-09-17 Sonia 
+/*-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package ProgramSelection BluetoothPhone
+	{
+		application function int GetID ()
+		{
+			int retVal = 5;
+			println ('[HAL]PS - BluetoothPhone.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "Bluetooth Phone";
+			println ('[HAL]PS - BluetoothPhone.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 5; // Bluetooth Phone
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - BluetoothPhone.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 5; // Bluetooth Phone
+			bool retval = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - BluetoothPhone.IsEnabled = ' + retval + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			return retval;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetBluetoothPhone();
+			
+			println ('[HAL]PS - BluetoothPhone.Apply started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - BluetoothPhone.Apply done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function int GetOrderNumber ()
+		{
+			int retVal = 7;
+			println ('[HAL]PS - BluetoothPhone.GetOrderNumber = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool CanCopy ()
+		{
+			// Bluetooth Phone is a program which cannot be copied
+			bool retVal = false;
+			println ('[HAL]PS - BluetoothPhone.CanCopy = ' + retVal);
+			return retVal;
+		}
+	}
+}
+//------------------------------------ END of PROGRAM SELECTION - Bluetooth Phone ---------------------------------*/

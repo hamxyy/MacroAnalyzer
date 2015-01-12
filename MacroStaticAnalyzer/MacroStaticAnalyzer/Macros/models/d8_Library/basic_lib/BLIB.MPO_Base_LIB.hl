@@ -1,0 +1,82 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY  MPO
+// Initial Version                                         			   	:	2011-11-23 Cecil Wilson
+// Updates the states due to MPV linking CR52597						:	2011-12-13 Cecil Wilson
+// Clean up comments													:	2012-02-15 Cecil Wilson
+// Added MPO setting for CxxFit (waiting for CR54021)					:   2012-03-19 Nadia Neugeborn
+// Macro Peer review													:	2012-06-21 Nadia/Frauke
+//***********************************************CODE FREEZE***************************************************
+// CR51742: Fix of logChanCount - replace workarounds					:	2012-08-20 Nadia
+// FR57390: Channel MPO for open fittings								:   2012-09-17 Nadine Seubert
+// ER58011: MPO Setting wrong 											:   2012-09-21 Nadine Seubert
+// Added MPO_Increase_Decrease function									:   2013-04-18 Raymond
+// Modify MPO_Increase_Decrease to make use of isMin and isMax function		:   2013-04-23 Raymond
+// Modify MPO_Increase_Decrease to be behaviour independent				:   2013-04-24 Raymond
+// Corrected MPO_Increase_Decrease decision argument						:   2013-05-27 Raymond
+// ******SIFIT7.2_PEERREVIEWED: except MPO_Increase_Decrease (to be reviewed in FitAsst)  :  2013-07-31   Jenny, Judith, Alastair, Raymond
+// ------------------------------------------------------- 7.3 -----------------------------------------------------
+// FR64944 - Remove/Commented out MPO functions							: 2014-02-26 Raymond
+//---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_MPO
+	{
+	/*$----------------------------------------------------------------------------------------------------------------
+	//   BASIC LIBRARY Function:    MPO_Channel_Set
+	//   Input      :  <int> Desired State of RadioButton  1=> Multichannel 0=> Broadband
+	//   Ouput      :  none 
+	//   Description:  Sets the MPO feature based on Radiobutton selection   
+	// ******SIFIT7.2_PEERREVIEWED
+	-----------------------------------------------------------------------------------------------------------------$*/
+		public function void MPOChannelSet ()
+		{
+			hi:d8SwChanOutLim [ 18 ] = d8SwChanOutLim.M9dB;
+			hi:d8SwChanOutLim [ 19 ] = d8SwChanOutLim.M9dB;
+		} // Closes	BasicLibrary_MPO.MPOChannelSet		
+
+	/*$----------------------------------------------------------------------------------------------------------------
+	//   BASIC LIBRARY Function:    MPO Increase/Decrease
+	//   Input      :  pos = steps to increase; IsIncrease = true for Increase and IsIncrease = false for Decrease
+	//   Ouput      :  N.A
+	//   Description:  Increase or decrease broadband MPO     
+	-----------------------------------------------------------------------------------------------------------------$*/
+
+//		FR64944 - All MPO functions commented out 7.3, to be considered in 7.4
+//		public function void MPO_Increase_Decrease (int pos, bool IsIncrease)
+//		{
+//			int mPOChanCount = logChanCount (Xf.XfChanMpo);
+//			if (IsIncrease) // Check for MPO Increase
+//
+//			{
+//				while (mPOChanCount > 0)
+//				{
+//					if (isMin (hi:d8SwChanOutLim [ mPOChanCount - 1 ]) == false)
+//					{
+//						hi:d8SwChanOutLim [ mPOChanCount - 1 ] << pos;
+//					}
+//					-- mPOChanCount;
+//				}
+//			}
+//			else // MPO Decrease
+//
+//			{
+//				while (mPOChanCount > 0)
+//				{
+//					if (isMax (hi:d8SwChanOutLim [ mPOChanCount - 1 ]) == false)
+//					{
+//						hi:d8SwChanOutLim [ mPOChanCount - 1 ] >> pos;
+//					}
+//					-- mPOChanCount;
+//				}
+//			}
+//		} //Close BasicLibrary_MPO.MPO_Increase_Decrease		
+
+		/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY     
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package BasicLibrary_MPO
+
+} //namespace shs.sat
+		
+	

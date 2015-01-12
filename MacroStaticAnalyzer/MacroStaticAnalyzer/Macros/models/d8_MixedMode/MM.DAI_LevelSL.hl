@@ -1,0 +1,63 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                            Direct Audio Input(DAI) -   Level Slider 
+// Initial Version		         										:  2011-03-16  Cecil Wilson
+// Add println for easy debugging										:  2011-06-27  Chuah LayYuan
+// Added Tinnitus greyout												:  2011-07-19  Cecil Wilson
+// Add println for MPV testing										    :  2011-09-22  Jenny Lin
+// Macro code Cleanup													:  2012-02-14  Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// call Tinnitus HLIB, update Maxpos to 6 and remove Getpos -1 workaround	: 20
+// ******SIFIT7.2_PEERREVIEWED: 					  :  2013-07-30   Jenny, Judith
+// updated IsVisible() to call the Is_DAI_Input_Mode()	: 2013-11-04 Jenny
+// refractor: Optimize code									: 2013-12-02 Jenny
+// updated println statement for debugging.											: 2014-01-15 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// ****** SIFIT7.4 ******
+// Updated SetPos to PrintEnvSettings to test SideSelection macro.  				:  2014-08-25   Jenny
+// Code cleanup: Updated printlines.												: 2014-10-09 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode DAI_LevelSL
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MixedMode.DAI_LevelSL.IsVisible'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+
+			bool retVal = BasicLibrary_InputMode.Is_DAI_Input_Mode ();
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.DAI_LevelSL.IsEnabled');
+
+			bool retVal = (BasicLibrary_Noiser.Noiser_IsOnAndPure () == false);
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.DAI_LevelSL.MaxPos');
+
+			int retVal = Mid_Level_Library_MicrophoneMix.DAILevelSL_MaxPos(); // This is a slider with 7 steps
+			return retVal;
+		}
+
+		application function int GetPos ()
+		{
+			println ('[HAL]MixedMode.DAI_LevelSL.GetPos');
+
+			int retVal = High_Level_Library_MicrophoneMix.Get_DAILevelSL_CxxPos ();
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.DAI_LevelSL.SetPos'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+			
+			High_Level_Library_MicrophoneMix.Set_DAILevelSL_CxxPos (pos);
+		}
+	}
+}

@@ -1,0 +1,65 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                 Automatic Audio Shoe Detection Enable Checkbox
+// Initial Version                												   	:  2011-02-22   Cecil Wilson
+// Updated all functions															:  2011-03-28   Cecil Wilson
+// Add println for easy debugging													:  2011-06-27   Chuah LayYuan
+// Add println for MPV testing														:  2011-09-22   Jenny Lin
+// Macro code Cleanup														        :  2012-02-14   Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Changed IsEnabled function to use BasicLibrary_Noiser.Noiser_IsOnAndPure()
+// Replace the IsVisible function call to reuse the other UI functions (mix mic en isvisible function) :2012-06-19	Mang Yew
+// *********************************************CODE FREEZE*******************************************************
+// ******SIFIT7.2_PEERREVIEWED: 												  :  2013-07-30   Jenny, Judith
+// updated IsVisible() to call the Is_DAI_Input_Mode()	: 2013-11-04 Jenny
+// refractor: Optimize code					: 2013-12-02 Jenny
+// updated println statement for debugging.											: 2014-01-15 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// ****** SIFIT7.4 ******
+// Updated SetPos to PrintEnvSettings to test SideSelection macro.  				: 2014-08-25 Jenny
+// Updated IsVisible to call BLIB instead of MLIB. Code cleanup: Updated printlines.	: 2014-10-21 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode Auto_AudioShoeDetectEn
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MixedMode.Auto_AudioShoeDetectEn.IsVisible'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+
+			bool retVal = BasicLibrary_InputMode.Is_DAI_Input_Mode (); 
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.Auto_AudioShoeDetectEn.IsEnabled');
+
+			bool retVal = (BasicLibrary_Noiser.Noiser_IsOnAndPure () == false);
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.Auto_AudioShoeDetectEn.MaxPos');
+
+			int retVal = 1;
+			return retVal;
+		}
+
+		application function int GetPos ()
+		{
+			println ('[HAL]MixedMode.Auto_AudioShoeDetectEn.GetPos');
+
+			int retVal = High_Level_Library_DAI.AutoAudioShoeDetectEn_Get ();
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.Auto_AudioShoeDetectEn.SetPos'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+			
+			High_Level_Library_DAI.AutoAudioShoeDetectEn_Set (pos);
+		}
+	}
+}

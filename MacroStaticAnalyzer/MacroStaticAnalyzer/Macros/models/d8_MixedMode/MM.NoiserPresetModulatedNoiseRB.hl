@@ -1,0 +1,45 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        NoiserPresetModulatedNoiseRB Radio Buttons
+// Initial Version																	:  2014-06-03  Meike Steinbuss
+// Always visible and always enabled --> dependencies to other tin features will be done by Cxx   : 2014-06-05 Meike Steinbuss
+*/
+/*-------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode NoiserPresetModulatedNoiseRB
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MM - NoiserPresetModulatedNoiseRB - IsVisible = TRUE');
+			return true;
+		} // Closes NoiserPresetModulatedNoiseRB.IsVisible 
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MM - NoiserPresetModulatedNoiseRB - IsEnabled = TRUE');
+			return true;
+		} // Closes NoiserPresetModulatedNoiseRB.IsEnabled
+		application function int MaxPos ()
+		{
+			// MaxPos = 3 (0: Ocean1, 1: Ocean2, 2: Ocean3, 3: Ocean4)
+			println ('[HAL]MM - NoiserPresetModulatedNoiseRB - MaxPos = 3');
+			return 3;
+		} // Closes NoiserPresetModulatedNoiseRB.MaxPos
+		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MM - NoiserPresetModulatedNoiseRB - IsEnabledPos = TRUE for pos=' + pos);
+			return true;
+		} // Closes NoiserPresetModulatedNoiseRB.IsEnabledPos
+		application function int GetPos ()
+		{
+			println ('[HAL]MM - NoiserPresetModulatedNoiseRB - GetPos');
+			return BasicLibrary_Noiser.NoiserPresetModulatedNoiseRB_Get_Entry();
+		} // Closes NoiserPresetModulatedNoiseRB.GetPos
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MM - NoiserPresetModulatedNoiseRB - SetPos = ' + pos);
+			BasicLibrary_Noiser.NoiserPresetModulatedNoiseRB_Set_Entry(pos);					
+		} // Closes NoiserPresetModulatedNoiseRB.SetPos
+	} //package MixedMode.NoiserPresetModulatedNoiseRB
+
+} //namespace shs.sat

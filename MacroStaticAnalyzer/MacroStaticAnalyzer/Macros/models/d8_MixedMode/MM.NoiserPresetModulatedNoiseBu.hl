@@ -1,0 +1,45 @@
+/*---------------------------------------------------------------------------------------------------------------*							
+// CXX UI:                        Tinnitus Modulated Noise preset button
+// Initial draft                					    						:  2014-06-03 Meike Steinbuss
+// Always visible and always enabled --> dependencies to other tin features will be done by Cxx   : 2014-06-05 Meike Steinbuss
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode NoiserPresetModulatedNoiseBu
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MM - NoiserPresetModulatedNoiseBu - IsVisible = TRUE ');
+			return true;
+		} // Closes NoiserPresetModulatedNoiseBu.IsVisible
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MM - NoiserPresetModulatedNoiseBu - IsEnabled = TRUE');
+			return true;
+		}// Closes NoiserPresetModulatedNoiseBu.IsEnabled
+		application function int MaxPos ()
+		{
+			println ('[HAL]MM - NoiserPresetModulatedNoiseBu - MaxPos = 1');
+			return 1;
+		}// Closes NoiserPresetModulatedNoiseBu.MaxPos
+		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MM - NoiserPresetModulatedNoiseBu - IsEnabledPos = TRUE for pos=' + pos);
+			return true;
+		}// Closes NoiserPresetModulatedNoiseBu.IsEnabledPos
+		application function int GetPos ()
+		{
+		// as preset buttons are stateless button, it will have only 1 state, which is 0.			
+			println ('[HAL]MM - NoiserPresetModulatedNoiseBu - GetPos = 0 (stateless button)');
+			return 0;
+		}// Closes NoiserPresetModulatedNoiseBu.GetPos
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MM - NoiserPresetModulatedNoiseBu - SetPos = ' + pos);
+			High_Level_Library_Noiser.NoiserPreset_ModulatedNoise ();
+		}// Closes NoiserPresetModulatedNoiseBu.SetPos
+	} //package MixedMode.NoiserPresetModulatedNoiseBu
+
+} //namespace shs.sat

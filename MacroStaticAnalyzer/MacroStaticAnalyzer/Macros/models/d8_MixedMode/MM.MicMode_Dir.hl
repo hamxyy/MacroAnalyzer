@@ -1,0 +1,54 @@
+/*----------------------------------------------------------------------------------------------------------------
+// CXX UI:                        MicMode Directional panel
+//-----------------------------------------------------------------------------------------------------------------
+// Initial Version                						     							:  2013-10-31 Raymond
+// Removed IsEnabledPos                                                                 :  2014-02-26 Al
+//--------------------------------------------------v7.4---------------------------------------------------------
+//code cleanup and Chores                                                               :  2014-02-26 Sultan
+//Amended Code for checking MicModeSpeechInNoiseEn_Is_Enabled to call 
+//DirIsEnabled instead of DirOmniIsEnabled												: 2014-06-27 Sultan
+//---------------------------------------------------------------------------------------------------------------*/
+
+
+namespace shs_sat 
+{
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_Dir 
+	{
+		application function bool IsVisible() 
+		{
+			bool retVal = Mid_Level_Library_Mic_Mode.DirIsVisible();
+			println('[HAL]MM - Mic_Mode_Dir.IsVisible = ' + retVal);
+			return retVal;
+		} 
+		
+		application function bool IsEnabled()
+		{
+			bool retVal = High_Level_Library_Mic_Mode.DirIsEnabled();
+			println('[HAL]MM - Mic_Mode_Dir.IsEnabled = ' + retVal);
+			return retVal;
+		}
+		
+		application function int MaxPos()
+		{
+			//This control is a checkbox which can return only two states 0 or 1
+			int retVal = 1;
+			println('[HAL]MM - Mic_Mode_Dir.MaxPos = ' + retVal);
+			return retVal; 			
+		} 
+				
+		application function int GetPos()
+		{
+			int retVal = High_Level_Library_Mic_Mode.Dir_GetPos();
+			println('[HAL]MM - Mic_Mode_Dir.GetPos = ' + retVal);
+			return retVal;
+		} 
+		
+		application function void SetPos(int pos)
+		{
+			println('[HAL]MM - Mic_Mode_Dir.SetPos = ' + pos);
+			High_Level_Library_Mic_Mode.Mic_Mode_Set_Dir(pos);
+		} 
+	}
+}

@@ -1,0 +1,62 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        SoundBriliance CheckBox
+// Initial Version                						                        :  2011-02-24   Nadine Seubert
+// update for Set pos and set printlines                                        :  2011-05-12   Nadine Seubert
+// Add println for easy debuggin                                                :  2011-06-27   Chuah LayYuan
+// Change calling function of IsEnabled from HLIB to MLIB                       :  2011-06-29   Chuah LayYuan
+// Add println for MPV testing													:  2011-09-22   Jenny Lin
+// call the HLib for the GetPos													: 2011-11-29 Jenny Lin
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// rework SoundBriliance/ new Inpute from j.Lauer                               : 2012-06-15 Nadine / Frauke
+// *********************************************CODE FREEZE*******************************************************
+// ******SIFIT7.2_PEERREVIEWED: 					  :  2013-07-30   Jenny, Judith
+// refractor: Optimize code									: 2013-12-02 Jenny
+// Sifit7.3 Peer review																: 2014-04-14 Jenny, Judith
+// ****** SIFIT7.4 ******
+// Updated SetPos to PrintEnvSettings to test SideSelection macro.  				:  2014-08-25   Jenny
+// Code cleanup: Updated printlines.												: 2014-10-09 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode SoundBrilianceEn
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MixedMode.SoundBrilianceEn.IsVisible'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+
+			bool retVal = Mid_Level_Library_SoundBriliance.SoundBriliance_IsVisible();
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.SoundBrilianceEn.IsEnabled');
+
+			bool retVal = Mid_Level_Library_SoundBriliance.SoundBriliance_Is_Enabled();
+			return retVal;
+		} // Closes SoundBrilianceEn.IsEnabled
+
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.SoundBrilianceEn.MaxPos');
+
+			int retVal = 1;
+			return retVal;
+		}
+		application function int GetPos ()
+		{
+			println ('[HAL]MixedMode.SoundBrilianceEn.GetPos');
+
+			int retVal = High_Level_Library_SoundBriliance.SoundBrilianceEn_Get();
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.SoundBrilianceEn.SetPos'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+			
+			High_Level_Library_SoundBriliance.SoundBrilianceEn_Set (pos);
+		}
+	}
+}

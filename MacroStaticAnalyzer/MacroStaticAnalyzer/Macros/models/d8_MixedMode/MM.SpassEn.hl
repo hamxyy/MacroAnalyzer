@@ -1,0 +1,95 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        SPASS Checkbox
+// Initial Version                						    					: 2011-03-17	Frauke Schall
+// Update IsVisible and IsEnabled dependecies									: 2011-03-22	Frauke Schall
+// rework m-Fynset to high levellib                         					: 2011-04-28	Frauke Schall & Nadine Seubert
+// deleted retval assignment in SetPos											: 2011-05-02	Frauke Schall
+// Grey out Spass checkbox when microphone modes are grey out					: 2011-08-05	Ma Mie Mie Thein
+// Add println for MPV testing													: 2011-09-22	Jenny Lin
+// Added and updated comments													: 2012-02-10	Frauke Schall
+// Updated OmniDirectional check in IsEnable									: 2012-05-02    Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Peer review changes															: 2012-06-14 Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Updated the omnidirectional to (remapped_pos >= 90)							: 2012-11-19 Jenny
+//---------------------------------------------------------- 7.3 ------------------------------------------------
+// Refractor IsEnabled for 7.3													: 2013-11-11 Raymond
+// 7.3 Peer Review: Updated Mic_Mode_Is_Enabled with IsTinnitusPureandMicModeEnabled 	: 2014-04-14 Raymond
+// Sifit 7.4 Peer Review Code cleanup											: 2014-11-14 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{	
+    using shs_sat.*;
+    
+    package MixedMode SpassEn
+    {
+		
+		application function bool IsVisible()
+		{
+			bool retval = Mid_Level_Library_Spass.SpassEn_IsVisible();		
+			if (retval == true )
+			{
+				println('[HAL]MixedMode.SpassEn.IsVisible = TRUE');
+			}
+			else
+			{
+				println('[HAL]MixedMode.SpassEn.IsVisible = FALSE');
+			}
+			return retval;
+		}
+		
+		application function bool IsEnabled()
+		{
+			int hp=env:Prog;			
+			if(	BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false ||
+				(Mid_Level_Library_Mic_Mode.MicModeIsOmni() == true))
+			{
+				println('[HAL]MixedMode.SpassEn.IsEnabled = FALSE in HP='+hp);
+				return false;
+			}
+			else
+			{
+				println('[HAL]MixedMode.SpassEn.IsEnabled = TRUE in HP='+hp);
+				return true;
+			}
+		}
+		
+		application function int MaxPos()
+		{
+	 		println('[HAL]MixedMode.SpassEn.MaxPos = 1');
+	 					
+			return 1;
+		}
+
+		application function bool IsEnabledPos(int pos)
+		{
+	 		println('[HAL]MixedMode.SpassEn.IsEnabledPos = TRUE');
+	 					
+			return true;
+		}
+ 
+		application function int GetPos()
+		{
+			int retval = -1;			
+			if ( BasicLibrary_Spass.SpassEn_Get()== true){
+	 			retval = 1;
+	 		}
+			else{
+				retval = 0;
+			} 		 
+	 		int hp=env:Prog;
+	 		println('[HAL]MixedMode.SpassEn.GetPos = '+ retval + ' in HP='+hp);
+	 					
+			return retval;
+		}
+		
+		application function void SetPos(int pos)
+		{
+			int hp=env:Prog;
+	 		println('[HAL]MixedMode.SpassEn.SetPos = ' + pos + ' in HP='+hp);	 					
+			
+			High_Level_Library_Spass.SpassEnSet(pos);
+		}
+
+	}
+}

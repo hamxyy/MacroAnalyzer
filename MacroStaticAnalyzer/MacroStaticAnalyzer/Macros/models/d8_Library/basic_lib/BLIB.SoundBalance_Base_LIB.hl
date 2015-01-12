@@ -1,0 +1,30 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY SoundBalance
+// Initial Version ER67710  SoundBalance control volume range incorrect default to 0dB after apply FF. : 2014-06-06  Jenny, MangYew
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_SoundBalance
+	{
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    Set_Default_SoundBalance_SCRange
+//   Input      :  none 
+//   Output      :  none 
+//   Description:  Sets the default for SoundBalance SC range
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void Set_Default_SoundBalance_SCRange () //ER67710
+		{
+			println ('[HAL]BLIB-Set_Default_SoundBalance_SCRange set to 8dB');
+			hi:d8PhlUctScRange = d8PhlUctScRange._8dB;
+		} // Closes	BasicLibrary_SoundBalance.Set_Default_SoundBalance_SCRange
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY  SoundBalance
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package BasicLibrary_SoundBalance
+
+} //namespace shs.sat

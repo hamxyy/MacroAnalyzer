@@ -1,0 +1,237 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                           HIGH LEVEL PRICEPOINT LIBRARY 		 			: Sound Briliance
+// Initial Version                						  		 			:  2011-02-22   Nadine Seubert
+// add new backmapping                                    	 	 			:  2011-03-01   Nadine Seubert
+// Removed Package LIB workaround & fixed backmapping bug  
+// SoundBriliance_Slider_Get: replaced while condition <= with < 			:  2011-03-08   Cecil Wilson
+// add is enabled in dependencie to InputMode                    			:  2011-03-25   Nadine Seubert
+// change is enabled and call InputModeGetter                    			:  2011-04-12   Nadine Seubert
+// add remapping for Checkbox                                    			:  2011-05-12   Nadine Seubert
+// Add println for easy debugging								 			:  2011-06-27   Chuah LayYuan
+// Shift IsEnable to MidLib for pricepoint checking							:  2011-06-29   Chuah LayYuan
+// Updated SoundBriliance_Set_Default (off after FF)						:  2011-07-19	Nadia Neugeborn
+// Updated closing remark & added SoundBriliance_Default_for_TekInputMode	:  2011-08-05   Jenny Lin
+// Correction for SoundBriliance_Set_Default function                       :  2011-08-17   Chuah LayYuan
+// Updated SoundBrilianceEn_Set - include check Hifi-fit and call BLIB.SoundBrillianceEn_Set_AgcControls
+// Updated SoundBriliance_Set_Default, set checkbox with the HLIB.SoundBrilianceEn_Set
+// and also set the slider default.											: 2011-08-29   Jenny Lin
+// Add SoundBriliance_Set_ProgramSelection function			                : 2011-09-13   Chuah LayYuan
+// Update the Hifi-fit check. d8SwMacroVarEn14 (to be rename to "d8SwMacroHifiFitEn" in CR51591) 
+// to check if Hifi-Fit enabled.											: 2011-09-27   Jenny Lin
+// reworked SoundBriliance_Set_Default										: 2011-09-28   Nadia Neugeborn
+// Added behaviour of Induction Loop program								: 2011-11-08   Frauke Schall
+// updated ID for programSelection setting    								: 2011-11-09   Chuah LayYuan
+// Updated Setting for miniTekTelecoil Program								: 2011-11-14   Chuah LayYuan
+// Updated settings for PS:Privacy											: 2011-11-14   Jenny Lin
+// Updated settings for PS:Phone Acoustically								: 2011-11-14   Cecil Wilson
+// Updated settings for PS:Outdoor/Sports									: 2011-11-14   Ma Mie Mie Thein
+// Update comments. CR51591 fixed, sw variable renamed.						: 2011-11-22   Jenny Lin
+// rename "SoundBrilianceEn_SetOFF_For_FCO" to "SoundBrilianceEn_Set_For_FCO" to take care of the FCo dependency.
+// Comment out changes to the AGC, may need to modify to use Curve manipulation. 
+// added SoundBrilianceEn_Get function.										: 2011-11-29  Jenny Lin
+// added actual apply offset curve for soundbrilliance						: 2012-01-20  Jenny Lin
+// updated SoundBriliance_Set_ProgramSelection for Music program			: 2012-02-07  Frauke Schall
+// added function for setting SB checkbox and slider for program selection. : 2012-02-14  Jenny Lin
+// Updated the Set function to check the visiblility and set the function to default if not visible.
+// As for PS, not visible will be same as universal.						: 2012-03-19  Jenny Lin
+// Update the SoundBrilianceEn_Set() to set to default position if checkbox is not visible. else, it 
+// shall be set according to the MLIB-remapped function. Update SoundBrilianceEn_Set_For_FCO()
+// to set back the SwMacro variable.										: 2012-03-21  Jenny Lin
+// Updated variable default_slider_pos										: 2012-04-03  Nadia Neugeborn
+// Updated SoundBrilianceSL_Set to remove visibility check					: 2012-04-11  Jenny Lin
+// Updated SoundBrilliande to be off											:  2012-06-01 Frauke Schall
+// Removed the offsets due to it is no longer based on D00087684 (version 4) footnote 4, SoundBrilliance
+// only for aux input.														: 2012-06-04 Jenny Lin 
+// rework SoundBriliance/ new Inpute from j.Lauer                           : 2012-06-15 Nadine / Frauke
+// Renamed function SoundBrilianceEn_For_FCO_And_InputMode Inputmode Peerreview : 2012-06-21 Cecil/Jenny
+// Updated based on peer review (ProgramSelection)							: 2012-06-27 Frauke, Jenny and co
+// Reworked SoundBriliance_Set_Default to avoid loss of high frequencies	: 2012-07-03 Nadia, Nadine, Frauke
+// We do not need to set SB = off for any ProgramSelection macros, as it wont be available in first program
+// *********************************************CODE FREEZE*******************************************************
+// Update macro based on CR55955
+// 1) Renamed SoundBrilianceEn_For_FCO_And_InputMode to SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks.
+// 2) rework HLIB.SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks to set the SoundBrilliance based on FCO and Input mode.
+// 3) Updated SoundBrilianceEn_Set to call the new function, HLIB.SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks 
+// to set the SoundBrilliance.
+// 4) rework SoundBriliance_Set_ProgramSelection to set SB on, med only in Tek/minitek program. All other program, 
+// sets it to OFF by calling the High_Level_Library_SoundBriliance.SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks
+// 5) removed SoundBriliance_Default_for_TekInputMode since it is already called from the 
+// SB_Set_ProgramSelection and InputMode + Feature.							: 2012-07-16 Cecil, Jenny 
+// removed retval from SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks	: 2012-07-17 Jenny
+// FirstFit peer review updates: SoundBriliance_Set_Default()					: 2012-07-20 Nadia & Judith
+// Updated macro based on CR56273
+// Set the default for PS to do nothing (same as universal/ not changed) for all PS macro
+// All PS macro should not switch off SB other than tek/minitek prog.			: 2012-07-25 Jenny
+// ER56647: FITU: SoundBrilliance available for Ace but must not                : 2012-08-24 Nadine Seubert
+// CR57038: SoundBrilliance Implementation                                      : 2012-08-24 Nadine Seubert
+
+// ******SIFIT7.2_PEERREVIEWED: only MixedMode packages. 
+// SoundBriliance_Set_Default and SoundBriliance_Set_ProgramSelection needs to be reviewed. :  2013-07-30   Jenny, Judith
+// Update ID number in Set_ProgramSelection function									:	2013-10-29 Sonia Stasiak
+// Updated comments	for Set_ProgramSelection D9											:	2013-11-01 Sonia Stasiak
+// refractor: Optimize code									: 2013-12-02 Jenny
+// Updated Set_Program Selection with d9SwMacroProgramIdHp control instead of ID		:	2013-12-17 Sonia Stasiak
+// Comment update for Program Selection													: 2014-03-19 Sonia
+// Sifit7.3 Peer review																: 2014-04-14 Jenny, Judith
+// FR67014 Set SoundBrilliance Slider Default to Minimum in FirstFit default and
+// remove High_Level_Library_SoundBriliance.SoundBriliance_Set_ProgramSelection (not in used).	: 2014-05-09 Jenny
+* ----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_SoundBriliance
+	{
+
+	/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SoundBrilianceSL_Set
+//   Input      :  <int> Slider position from Cxx
+//   Ouput      :  <void> 
+//   Description:  set  Slider positions based on CxxPos
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SoundBrilianceSL_Set (int pos) //SIFIT7.3PEERREVIEWED
+		{
+			println ('[HAL]HLIB-SoundBrilianceSL_Set pos=' + pos + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+			BasicLibrary_SoundBriliance.SoundBriliance_Set_Slider_Strength (pos);
+		} // Closing High_Level_Library_SoundBriliance.SoundBrilianceSL_Set
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SoundBrilianceEn_Set
+//   Input      :  <int> Checkbox position from Cxx
+//   Ouput      :  <void> 
+//   Description:  remapping  Checkbox positions;  Price point and Family resolving function.
+// 					Setting of the checkbox is PricePoint dependent. In addtion, IG offsets will be applied for
+//					instruments with Hifi Fit OFF.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SoundBrilianceEn_Set (int pos) //SIFIT7.3PEERREVIEWED
+		{
+			println ('[HAL]HLIB-SoundBrilianceEn_Set pos=' + pos + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+			// Call the HLIB to set SB with the interdependency of Input mode and FCO.
+			High_Level_Library_SoundBriliance.SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks (pos);
+		} // Closing High_Level_Library_SoundBriliance.SoundBrilianceEn_Set
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks
+//   Input      :  <int>  SoundBrillianceState = 1 --> request SB ON, SoundBrillianceState = 0 --> request SB OFF
+//   Ouput      :  <void>
+//   Description:  Set the hardware controls and software controls of SoundBrilliance based on the interaction
+//			between SoundBrilliance, Frequency Compression, and Input Mode.
+//	To set SB ON >> FCO OFF and Input mode = Tek/MiniTek  .. Sound brilliance will be activated else action ignored
+//					For HW control, additionally, the Tek/minitek has to be connected. (Taken care by Tek/MiniTek input)
+//	To set SB OFF >> 
+//			When Sound brilliance is being switched Off , If SB already OFF in HW, action ignored
+//			Set the SB Checkbox to Unticked if FCO is OFF and and set the HW to OFF. 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks (int SoundBrillianceState) //SIFIT7.3PEERREVIEWED
+		{
+			int BlibPos_SB_Off = 10;
+			int pos_wrt_basic_fcn = -1;
+
+			// Remap the pos to pos_wrt_basic_fcn  using the Remapping function			
+			pos_wrt_basic_fcn = Mid_Level_Library_SoundBriliance.SoundBrilianceEN_Remapping (SoundBrillianceState);
+			
+			if (SoundBrillianceState == 1)
+			{
+			//			When Sound brilliance is being switched ON 
+			//  		FCO OFF and Input mode = Tek/MiniTek  .. Sound brilliance will be activated else action ignored
+				if (High_Level_Library_FCO.FCO_CxxGet () == 0 && //FCO off
+						hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Tek_d_miniTek)
+				{ // Inputmode = Tek/minitek
+
+				// Set the actual HI settings basic library functions
+					BasicLibrary_SoundBriliance.SoundBrilianceEn_Set_For_SwOnly (pos_wrt_basic_fcn);
+					BasicLibrary_SoundBriliance.SoundBrilianceEn_Set_For_HwOnly (pos_wrt_basic_fcn);
+					println
+					('[HAL]HLIB - SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks. SoundBrilliance Set to ON' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				}
+				else
+				{
+					println
+					('[HAL]HLIB - SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks. FCO was activated or Inputmode is not Tek/MiniTek : Request to activate SB ignored ');
+				}
+			}
+			else
+			{ //SoundBrillianceState==0
+			//			When Sound brilliance is being switched Off , If SB already OFF in HW, action ignored 	
+				if (BasicLibrary_SoundBriliance.SoundBrilianceEn_GetHwOnly () != BlibPos_SB_Off)
+				{
+
+				// Set the actual SB HW settings to OFF			
+					BasicLibrary_SoundBriliance.SoundBrilianceEn_Set_For_HwOnly (pos_wrt_basic_fcn);
+				}
+				else
+				{
+					println
+					('[HAL]HLIB - SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks. SB HW is already OFF, no action ' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				}
+
+				// Set the SB Checkbox to Unticked if FCO is OFF 
+				if (High_Level_Library_FCO.FCO_CxxGet () == 0) //FCO off
+				{
+					BasicLibrary_SoundBriliance.SoundBrilianceEn_Set_For_SwOnly (pos_wrt_basic_fcn);
+					println
+					('[HAL]HLIB - SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks. Hw and Sw SoundBrilliance Set to OFF' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				}
+				else
+				{
+					println
+					('[HAL]HLIB - SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks. Hw SoundBrilliance Set to OFF');
+				}
+			}
+		} // Closing High_Level_Library_SoundBriliance.SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SoundBrilianceEn_Get
+//   Input      :  None
+//   Ouput      :  <int> Checkbox position based on the sw macro variable 
+//   Description: Get the checkbox position based on the sw macro variable to display in Cxx.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SoundBrilianceEn_Get () //SIFIT7.3PEERREVIEWED
+		{
+			//reading the sw macro variable to show in Cxx the state of the checkbox.
+			if (BasicLibrary_SoundBriliance.SoundBrilianceEn_GetSwOnly () == true)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} //Closing High_Level_Library_SoundBriliance.SoundBrilianceEn_Get()
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SoundBriliance_Slider_Get
+//   Input      :  None
+//   Ouput      :  <int> Actual slider position with respect to Current Device 
+//   Description:  no remapping, just transfer the Connexx Position to basic lib
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SoundBriliance_Slider_Get () //SIFIT7.3PEERREVIEWED
+		{
+		//Get the current position with respect to the Basic function  
+			return BasicLibrary_SoundBriliance.SoundBriliance_Get_Slider_Strength ();
+		} //Closing High_Level_Library_SoundBriliance.SoundBriliance_Slider_Get
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SoundBriliance_Set_Default
+//   Input      :  none
+//   Ouput      :  none
+//   Description:  Set the default after FirstFit for SoundBrilliance checkbox & slider    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SoundBriliance_Set_Default ()
+		{
+		// Remap the pos to BoxPos using the Remapping function			
+			int BoxPos = Mid_Level_Library_SoundBriliance.SoundBrilianceEN_Remapping (0);
+
+			// Set the actual HI settings + Sw Macro variable using basic library functions			
+			BasicLibrary_SoundBriliance.SoundBrilianceEn_Set_For_HwOnly (BoxPos);
+			BasicLibrary_SoundBriliance.SoundBrilianceEn_Set_For_SwOnly (BoxPos);
+			High_Level_Library_SoundBriliance.SoundBrilianceSL_Set (Mid_Level_Library_SoundBriliance.SoundBrilianceSL_DefaultPos());
+		} // Closing High_Level_Library_SoundBriliance.SoundBriliance_Set_Default
+
+		/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Higher Level PP LIBRARY    Sound Briliance
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package High_Level_Library_SoundBriliance
+
+} //namespace shs.sat

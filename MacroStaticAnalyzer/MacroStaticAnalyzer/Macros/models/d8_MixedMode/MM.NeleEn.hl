@@ -1,0 +1,52 @@
+//---------------------------------------------------------------------------------------------------------------
+// CXX UI:                        Nele checkbox
+// Initial Version                						     							:  2014-04-02 MeSt
+// Update visibility function according to PP 700 and Input Streaming Audio and BluetoothPhone only : 2014-07-07 Meike Steinbuss	
+// ****** SIFIT7.4 ******
+// Updated SetPos to PrintEnvSettings to test SideSelection macro.  				:  2014-08-25   Jenny									
+// Code cleanup: Updated printlines.												: 2014-10-09 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode Nele_En 
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MixedMode.Nele_En.IsVisible'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+
+			bool retVal = Mid_Level_Library_Nele.NeleEn_IsVisible ();
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.Nele_En.IsEnabled');
+
+			bool retVal = (BasicLibrary_Noiser.Noiser_IsOnAndPure () == false);
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.Nele_En.MaxPos');
+
+			int retVal = 1;
+			return retVal;
+		}
+		application function int GetPos ()
+		{
+			println ('[HAL]MixedMode.Nele_En.GetPos');
+
+			int retVal = BasicLibrary_Nele.NeleEn_Get_Entry();
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.Nele_En.SetPos'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+			
+			BasicLibrary_Nele.NeleEn_Set_Entry(pos);
+		}
+	}
+}

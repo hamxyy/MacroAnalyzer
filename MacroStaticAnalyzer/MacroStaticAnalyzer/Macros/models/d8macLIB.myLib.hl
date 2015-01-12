@@ -1,0 +1,12 @@
+
+namespace shs_sat {
+	
+
+	package Lib myLib{
+	
+		//function to demonstrate setting & querying hi controls
+		public function void DoSomething(){
+		}
+		 
+	}	//package Lib.myLib
+}	//namespace shs.sat

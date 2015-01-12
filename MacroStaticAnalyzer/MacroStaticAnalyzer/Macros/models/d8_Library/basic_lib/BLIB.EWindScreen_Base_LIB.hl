@@ -1,0 +1,331 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY EWindScreen
+// Initial Version                                         	:  	2011-02-17  Meike Doose
+// include EWindScreenEn_Get function 						:	2011-02-18	Meike Doose
+// Renamed Library Package name					            :   2011-02-21  Cecil Wilson
+// Updated Function structure with single Remapping Funct   :   2011-03-02  Meike Doose
+// Removed Package LIB workaround 							:   2011-03-03	Cecil Wilson
+// Change name of EWindScreenSL_Set and Get to Set_Strength and Get_Strength : 2011-03-14 Meike Doose
+// Update preliminary Hi settings of WNC					:	2011-03-17	Meike Doose
+// update file name to ... Entry							:	2011-03-22	Meiek Doose
+// Add println for easy debugging						    :   2011-09-06  Chuah LayYuan
+// Clean up comments										:	2012-02-15  Cecil Wilson
+// Peer review changes										:	2012-06-15 Judith, Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Updated library for SWINE implementation					:	2012-12-10 Mang Yew
+// Added assertion message									:   2012-12-14 Jenny Lin
+// Peer review changes										:	2013-01-02 Mang Yew
+// Peer review changes update comments						:	2013-01-08 Jenny Lin
+// *********************************************CODE FREEZE For 7.1**********************************************
+// Implementation for CR61635 (Disable FBC and WNC if input mode is non-mic input)      : 2013-05-27 Mang Yew
+// Updated d8SwMacroVar3Hp to d8SwMacroWncEnHp due to FR61692.		: 2013-06-25 Mang Yew
+// Updated d8MWncStart step number for EWindScreenSL Set/Get Strenght	: 2013-10-03 Mie Mie
+// Revert back to d8MWncStart (int).									: 2013-10-24 Jenny
+// --------------------------------------------------- 7.3 ------------------------------------------------------
+// Added EWindScreenSL_Set_EntrySw function					:	2013-11-01 Raymond
+// Corrected EWindScreenSL_Set_EntrySw controls position	:	2013-11-04 Raymond
+// Added case 0 for EWindscreenSL_Set_Strength				:   2013-11-11 Raymond
+// Included directional check in EWindScreen_ResetHwCtrlsToSwVars   : 2013-12-20 Al
+// Added EWindScreenSL_Set_EntrySw()                                : 2014-01-07 Al
+// Updated ResetHwCtrlsToSwVars to call EWindScreenSL_Set							: 2014-01-21 Raymond
+// Included check of 'd8MWncStart' in 'EWindScreenEn_Get_Entry' function: Mie Mie
+// In EWindScreenSL_Get_Strength function, change from checking HW to checking SwMacroVariable to get sl position :2014-02-10 MieMie
+// 7.3 Peer Review																		: 2014-04-15 Raymond
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_EWindScreen
+	{
+
+	/*----------------------------------------------------------------------------------------------------------------
+//   Basic LIBRARY Function:    EWindScreenSL_Set_Strength
+//   Input      :  <int> Desired UI position
+//   Ouput      :  <int> return value for error handling
+//   Description:  sets d8MWncStart
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int EWindScreenSL_Set_Strength (int remapped_pos) // 7.3 Reviewed
+		{
+			int retval = remapped_pos;
+			// POS -->  should specify the absolute slider step (with respect to the HI asic controls) 
+			switch (remapped_pos)
+			{
+				case 0:{ // For Binaural microphone mode dependencies
+					hi:d8MWncStart = 0;
+					println ("[HAL]:BLIB.EWindScreenSL_Set_Strength, retval =  5 [Only for Binaural microphone modes, 5 is bogus number]");
+					retval = 5;
+				}
+				case 10:{ // For WNC/SWN min
+					hi:d8MWncStart = 5;
+					retval = 0;
+				}
+				case 20:{ //For WNC med
+					hi:d8MWncStart = 8;
+					retval = 1;
+				}
+				case 21:{ //For SWN med/WNC max
+					hi:d8MWncStart = 9;
+					retval = 1;
+				}
+				case 30:{ //For SWN max
+					hi:d8MWncStart = 11;
+					retval = 2;
+				}
+				default:{ // Does not make sense to CXX but for implementation CHECK
+					println ('[HAL]:BLIB.EWindScreenSL_Set_Strength !!ERROR: Slider position out of SPEC/Range!!');
+					retval = -1;
+				}
+			}
+			println ("[HAL]:BLIB.EWindScreenSL_Set_Strength, retval =  " + retval);
+			assertion (retval >= 0, "[MacroError] Undefined state of EWindscreen slider!");
+			return retval;
+		} // Closes  BasicLibrary_EWindScreen.EWindScreenSL_Set_Strength
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   Basic LIBRARY Function:    EWindScreenSL_Get_Strength
+//   Input      :  None
+//   Ouput      :  <int> remapped int of UI position
+//   Description:  Compares the HI settings and returns the remapped pos of UI position   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int EWindScreenSL_Get_Strength () // 7.3 Reviewed
+		{
+			
+			int pos = -1;
+			if (hi:d9SwMacroWncSlHp == 0)
+			{
+				pos = 0; 
+
+			}
+			else if (hi:d9SwMacroWncSlHp == 1)
+			{
+				pos = 1; 
+
+			}
+			else if (hi:d9SwMacroWncSlHp == 2)
+			{
+				pos = 2; 
+
+			}
+			else
+			{
+				println ('[HAL]:BLIB.EWindScreenSL_Get_Strength !!ERROR: Slider position out of SPEC/Range!!');
+				pos = -1;
+			} // default closes 
+			println ("[HAL]:BLIB.EWindScreenSL_Get_Strength, remapped_pos =  " + pos);
+			assertion (pos >= 0, "[MacroError] Undefined state of EWindscreen slider!");
+			return pos;
+			
+		} // Closes	BasicLibrary_EWindScreen.EWindScreenSL_Get_Strength
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    EWindScreenEn_Get_Entry
+//   Input      :  none 
+//   Ouput      :  <bool> Current State of checkbox 
+//   Description:  Compares the HI settings and returns the state of the UI. 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool EWindScreenEn_Get_Entry () // 7.3 Reviewed
+		{
+			int error = 0;
+			bool retval = false;
+
+			if (hi:d8MWncStart!=0){ // Check if WNC HW control is false on
+
+							if (hi:d9FWncEn == d9FWncEn.on &&
+									hi:d8PSwnEn == d8PSwnEn.off)
+							{
+								println ("[HAL]:BLIB.EWindScreenEn_Get_Entry = true ");
+								retval = true;
+							}
+							else if (hi:d9FWncEn == d9FWncEn.off &&
+								hi:d8PSwnEn == d8PSwnEn.on)
+							{
+								println ("[HAL]:BLIB.EWindScreenEn_Get_Entry = true ");
+								retval = true;
+							}
+							else if (hi:d9FWncEn == d9FWncEn.off &&
+								hi:d8PSwnEn == d8PSwnEn.off)
+							{
+								println ("[HAL]:BLIB.EWindScreenEn_Get_Entry = false ");
+								retval = false;
+							}
+							else
+							{
+								println ("[HAL]:BLIB.EWindScreenEn_Get_Entry = ERROR!!!! ");
+								retval = false;
+								error = -1;
+							}
+							assertion (error >= 0, "[MacroError] Undefined state of EWindscreen checkbox!");
+
+			}
+			else{
+				retval = false;
+			}
+			return retval;
+
+		} // close BasicLibrary_EWindScreen.EWindScreenEn_Get_Entry		
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    EWindScreenEn_Set_Entry
+//   Input      :  <int> Desired State of checkbox 
+//   Ouput      :  none 
+//   Description:  Compares the HI settings and returns the UI position   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void EWindScreenEn_Set_Entry (int remapped_pos) // 7,3 Reviewed
+		{
+			int pos = -1;
+			switch (remapped_pos)
+			{
+				case 11:{ //For Twin Mic, WNC should be on and SWN should be OFF as eWindScreen uses WNC and not SWINE.
+					hi:d9FWncEn = d9FWncEn.on;
+					hi:d8PSwnEn = d8PSwnEn.off;
+					pos = 1;
+				}
+				case 21:{ //For Single Mic, WNC should be OFF and SWN should be ON as eWindScreen uses SWINE and not WNC.
+					hi:d9FWncEn = d9FWncEn.off;
+					hi:d8PSwnEn = d8PSwnEn.on;
+					pos = 1;
+				}
+				default:{ //Set both controls to OFF.
+					hi:d9FWncEn = d9FWncEn.off;
+					hi:d8PSwnEn = d8PSwnEn.off;
+					pos = 0;
+				}
+			}
+			println ("[HAL]:BLIB.EWindScreenEn_Set_Entry, pos =  " + pos);
+			assertion (pos >= 0, "[MacroError] Undefined state of EWindscreen checkbox!");
+		} // Closes	BasicLibrary_EWindScreen.EWindScreenEn_Set_Entry
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    EWindScreenEn_Set_EntrySw
+//   Input      :  <int> Desired State of checkbox 
+//   Ouput      :  none 
+//   Description:  Set the State of the checkbox if the software control is enabled.    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void EWindScreenEn_Set_EntrySw (int pos) // 7.3 Reviewed
+		{
+			if (pos == 1)
+			{
+				hi:d8SwMacroWncEnHp = d8SwMacroWncEnHp.on;
+				println ('[HAL]BLIB-EWindScreenEn_Set_EntrySw = ON');
+
+			}
+			else
+			{
+				hi:d8SwMacroWncEnHp = d8SwMacroWncEnHp.off;
+				println ('[HAL]BLIB-EWindScreenEn_Set_EntrySw = OFF');
+
+			}
+		} // Closes BasicLibrary_EWindScreen.EWindScreenEn_Set_EntrySw
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    EWindScreenEn_Get_EntrySw
+//   Input      :  none 
+//   Ouput      :  <int> Current State of checkbox 
+//   Description:  Check Software control of EWindScreen checkbox and returns the state    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool EWindScreenEn_Get_EntrySw () // 7.3 Reviewed
+		{
+			bool retval = false;
+			if (hi:d8SwMacroWncEnHp == d8SwMacroWncEnHp.on)   
+			{
+				println ('[HAL]BLIB-EWindScreenEn_Get_EntrySw = ON');
+				retval = true;
+			}
+			else
+			{
+				println ('[HAL]BLIB-EWindScreenEn_Get_EntrySw = OFF');
+				retval = false;
+			}
+			return retval;
+		} // close BasicLibrary_EWindScreen.EWindScreenEn_Get_EntrySw
+
+
+//*********************************************** 7.3 Function Below this line ***********************************************
+
+/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    EWindScreenSL_Set_EntrySw
+//   Input      :  None
+//   Ouput      :  None
+//   Description:  Set the value of the Wnc slider SW control based on the input index 'pos'    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void EWindScreenSL_Set_EntrySw(int pos) // 7.3 Reviewed
+		{
+			switch (pos)
+			{
+				case 0:{
+					hi:d9SwMacroWncSlHp = 0;     
+				}
+				case 1:{
+					hi:d9SwMacroWncSlHp = 1;
+				}
+				case 2:{
+					hi:d9SwMacroWncSlHp = 2;
+				}
+			}
+		} // close BasicLibrary_EWindScreen.EWindScreenSL_Set_EntrySw
+		
+/*$----------------------------------------------------------------------------------------------------------------
+  BASIC LIBRARY Function:    EWindScreen_ResetHwCtrlsToSwVars
+  Input      :  None
+  Output      :  None
+  Description:  Set the WNC hardware controls equal to the values of their corresponding SW controls   
+-----------------------------------------------------------------------------------------------------------------$*/
+	public function void EWindScreen_ResetHwCtrlsToSwVars()
+	{		
+	   //The Wnc HW control resetting process is only applied for directional devices - no need to do this for Swn!
+	  if(cap:DirMicAvailable == DirMicAvailable.dir) 
+	  { 	                                                         
+		         // Set checkbox HW control equal to the SW control setting		
+	           	if(hi:d8SwMacroWncEnHp == d8SwMacroWncEnHp.on)	 
+		        {
+	                   hi:d9FWncEn = d9FWncEn.on;	
+		        }	
+		        else
+		        {
+		               hi:d9FWncEn = d9FWncEn.off;
+		        }		
+		        // Set the slider HW control equal to the SW control setting.
+		        if(hi:d9SwMacroWncSlHp == 0)  // Slider position 0
+		        {
+		               High_Level_Library_EWindScreen.eWindScreenSL_Set(0);
+		        }
+		        else if(hi:d9SwMacroWncSlHp == 1) // Slider position 1
+		        {
+		               High_Level_Library_EWindScreen.eWindScreenSL_Set(1);
+		        }
+		        else if(hi:d9SwMacroWncSlHp == 2) // Slider position 2
+		        {
+		               High_Level_Library_EWindScreen.eWindScreenSL_Set(2);
+		        }
+	  }
+	  else
+	  {
+	   // do nothing
+	  }
+		
+										
+	} // close BasicLibrary_EWindScreen.EWindScreen_ResetHwCtrlsToSwVars
+	
+/*$----------------------------------------------------------------------------------------------------------------
+  BASIC LIBRARY Function:    EWind_SetHwCtrlsForBinMicModeAndEnOff
+  Input      :  None
+  Output      :  None
+  Description:  Set the WNC hardware controls for the Binaural mic mode + WncEn = off condition.    
+-----------------------------------------------------------------------------------------------------------------$*/
+	public function void EWind_SetHwCtrlsForBinMicModeAndEnOff()
+	{		
+		hi:d9FWncEn = d9FWncEn.on;
+        hi:d8MWncStart = 0;								
+	} // close BasicLibrary_EWindScreen.EWind_SetHwCtrlsForBinMicModeAndEnOff	
+	
+
+/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY  EWindScreen
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package BasicLibrary_EWindScreen
+
+} //namespace shs.sat

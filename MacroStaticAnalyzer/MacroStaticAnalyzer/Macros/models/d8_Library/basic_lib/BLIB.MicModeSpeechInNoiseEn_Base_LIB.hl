@@ -1,0 +1,177 @@
+//----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY  MicModeSpeechInNoiseEn
+// Initial Version                                         					:  2011-03-25   Nadine Seubert
+// add printlines                                          					:  2011-05-12   Nadine Seubert
+// Peer review changes									   					:  2012-06-20 Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Added Getter and Setter function for d9SwMacroSpeechnoiseOnlyEnHp 		:	2013-11-12 Raymond
+// *********************************************In 7.3************************************************************
+// GetPos now queries the SW control, instead of the HW control             :   2014-02-11 Al
+
+//---------------------------------------------------------------------------------------------------------------
+
+/*-----------------------------------------------------------7.4--------------------------------------------------*/
+// Simplified the function  MicModeSpeechInNoiseEn_Get so that 
+//MicModeSpeechInNoise will not have logic in there           				 :   2014-08-07 Sultan
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat {
+	using shs_sat.*;
+
+	package  Lib BasicLibrary_MicModeSpeechInNoiseEn{
+
+/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    MicModeSpeechInNoiseEn_Get_Checkbox
+//   Input      :  none 
+//   Ouput      :  <int> Current State of checkbox 
+//   Description:  Checks if the MicModeSpeechInNoiseEn is enabled or not, ie the checkbox is ticked or not    
+-----------------------------------------------------------------------------------------------------------------*/		
+    public function int MicModeSpeechInNoiseEn_Get()
+    {
+    	int retVal = 0;
+		if ( hi:d9SwMacroSpeechnoiseOnlyEnHp == d9SwMacroSpeechnoiseOnlyEnHp.on)
+		{
+			retVal = 1;			    			 			
+ 		}
+ 		println('[HAL]BLIB-BasicLibrary_MicModeSpeechInNoiseEn return ' + retVal);
+		return retVal;
+    }
+		
+		
+/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    MicModeSpeechInNoiseEn_Set
+//   Input      :  <int> Desired State of checkbox 
+//   Ouput      :  none 
+//   Description:  Sets the MicModeSpeechInNoiseEn feature based on Checkbox selection   
+-----------------------------------------------------------------------------------------------------------------*/    
+    public function void MicModeSpeechInNoiseEn_Set(int pos){
+    	println('[HAL]BLIB-MicModeSpeechInNoiseEn_Set  pos='+pos);    
+        // SiQ = 32, SiN = 16, N = 8, M = 4, C = 2, Q = 1
+        if(pos==1){
+			hi:d8FClaDecMicDirOff = 45;  // 45 means that MicDir is turned off in classes: SiQ + N + M + Q
+		
+		}
+		else{
+			hi:d8FClaDecMicDirOff = 37;	 // 37 means that MicDir is turned off in classes: SiQ + M + Q
+		    
+		}
+	} // Closes	BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set
+		
+/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    MicModeSpeechInNoiseEn_SWSet
+//   Input      :  <int> Desired State of checkbox 
+//   Ouput      :  none 
+//   Description:  Sets the MicModeSpeechInNoiseEn feature based on Checkbox selection   
+-----------------------------------------------------------------------------------------------------------------*/    
+    public function void MicModeSpeechInNoiseEn_SWSet(int pos){
+
+        if(pos==1){
+			hi:d9SwMacroSpeechnoiseOnlyEnHp = d9SwMacroSpeechnoiseOnlyEnHp.on;  // SW control on
+		
+		}
+		else{
+			hi:d9SwMacroSpeechnoiseOnlyEnHp = d9SwMacroSpeechnoiseOnlyEnHp.off;	 // SW control off
+		    
+		}
+	} // Closes	BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_SWSet
+		
+/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    SpeechNoiseOnlyEnHpSwIsOn
+//   Input      :  <bool> Desired status of the checkbox
+//   Ouput      :  None
+//   Description:  Set the status of the speech in noise checkbox   
+-----------------------------------------------------------------------------------------------------------------*/
+	public function void SetSpeechNoiseOnlyEnHpSwIsOn(bool status)
+	{
+		if(status)
+		{
+			hi:d9SwMacroSpeechnoiseOnlyEnHp = d9SwMacroSpeechnoiseOnlyEnHp.on;
+		}
+		else
+		{
+			hi:d9SwMacroSpeechnoiseOnlyEnHp = d9SwMacroSpeechnoiseOnlyEnHp.off;
+		}
+	} // Closes BasicLibrary_MicModeSpeechInNoiseEn.SetSpeechNoiseOnlyEnHpSwIsOn
+
+/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    GetSpeechNoiseOnlyEnHpSwIsOn
+//   Input      :   None 
+//   Ouput      :  <bool> Status of the checkbox 
+//   Description:  Get the status of the speech in noise checkbox   
+-----------------------------------------------------------------------------------------------------------------*/    
+	public function bool GetSpeechNoiseOnlyEnHpSwIsOn()
+	{
+		if(hi:d9SwMacroSpeechnoiseOnlyEnHp == d9SwMacroSpeechnoiseOnlyEnHp.on)
+		{
+		    return true;
+		}
+		else
+		{
+		    return false;
+		}
+	} // Closes BasicLibrary_MicModeSpeechInNoiseEn.GetSpeechNoiseOnlyEnHpSwIsOn
+	
+		
+/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY     
+-----------------------------------------------------------------------------------------------------------------*/			
+	}	//package BasicLibrary_MicModeSpeechInNoiseEn
+}	//namespace shs.sat
+
+
+//namespace shs_sat {
+//	using shs_sat.*;
+//
+//	package  Lib BasicLibrary_MicModeSpeechInNoiseEn{
+//
+///*----------------------------------------------------------------------------------------------------------------
+////   BASIC LIBRARY Function:    MicModeSpeechInNoiseEn_Get_Checkbox
+////   Input      :  none 
+////   Ouput      :  <int> Current State of checkbox 
+////   Description:  Checks if the MicModeSpeechInNoiseEn is enabled or not, ie the checkbox is ticked or not    
+//-----------------------------------------------------------------------------------------------------------------*/		
+//    public function bool MicModeSpeechInNoiseEn_Get()
+//    {
+//			return hi:d8FClaDecMicDirOff == 45;	
+//    }// Closes	BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Get
+//		
+//		
+///*----------------------------------------------------------------------------------------------------------------
+////   BASIC LIBRARY Function:    MicModeSpeechInNoiseEn_Set
+////   Input      :  <int> Desired State of checkbox 
+////   Ouput      :  none 
+////   Description:  Sets the MicModeSpeechInNoiseEn feature based on Checkbox selection   
+//-----------------------------------------------------------------------------------------------------------------*/    
+//    public function void MicModeSpeechInNoiseEn_Set(int pos)
+//    {
+//    	println('[HAL]BLIB-MicModeSpeechInNoiseEn_Set  pos='+pos);    
+//        // SiQ = 32, SiN = 16, N = 8, M = 4, C = 2, Q = 1
+//        if(pos==1){
+//			hi:d8FClaDecMicDirOff = 45;  // 45 means that MicDir is turned off in classes: SiQ + N + M + Q
+//		}
+//		else{
+//			hi:d8FClaDecMicDirOff = 37;	 // 37 means that MicDir is turned off in classes: SiQ + M + Q
+//		}
+//	} // Closes	BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set
+//		
+///*----------------------------------------------------------------------------------------------------------------
+////   BASIC LIBRARY Function:    SpeechNoiseOnlyEnHpSwIsOn
+////   Input      :  <bool> Desired status of the checkbox
+////   Ouput      :  None
+////   Description:  Set the status of the speech in noise checkbox   
+//-----------------------------------------------------------------------------------------------------------------*/
+//	public function void SetSpeechNoiseOnlyEnHpSwIsOn(bool status)
+//	{
+//		if(status)
+//		{
+//			hi:d9SwMacroSpeechnoiseOnlyEnHp = d9SwMacroSpeechnoiseOnlyEnHp.on;
+//		}
+//		else
+//		{
+//			hi:d9SwMacroSpeechnoiseOnlyEnHp = d9SwMacroSpeechnoiseOnlyEnHp.off;
+//		}
+//	} // Closes BasicLibrary_MicModeSpeechInNoiseEn.SetSpeechNoiseOnlyEnHpSwIsOn
+///*----------------------------------------------------------------------------------------------------------------
+//// 								  END Of BASIC FUNCTION  LIBRARY     
+//-----------------------------------------------------------------------------------------------------------------*/			
+//	}	//package BasicLibrary_MicModeSpeechInNoiseEn
+//}	//namespace shs.sat

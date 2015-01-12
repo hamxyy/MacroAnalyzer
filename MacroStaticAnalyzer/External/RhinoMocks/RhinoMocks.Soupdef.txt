@@ -1,0 +1,45 @@
+Name: Rhino Mocks
+Version: 3.6.0.0
+Release date:
+Intended use:  Mock framework for software testing
+
+Added by: 
+Added at: 
+
+Description: Dynamic mock object framework for .Net
+
+# Where does the SOUP comes from?
+# Using this information it should be possible to update the SOUP
+Source: http://www.hibernatingrhinos.com/oss/rhino-mocks
+
+# for usage, enter "Product" or  "Development"
+# "Product" means that it gets delivered to the customer, including statically linked SOUP
+Usage: Development
+
+# if the SOUP is not for a "Product", then you can stop here and enter n.a.
+# Otherwise, specify the list of Products that will use this SOUP
+Products: 
+
+# enter details about license clearance , refer to reproducable information like CRs, checked in Emails/protocols,...
+# if license is confidential (e.g. contract), do mention where the license is located. (Accessible to approved members)
+# example, at \\deerlh1sat5srv.ww005.siemens.net\satdfs\AES-Shares\Projekte\Architecture_SW\SoupLicenses\SOUP clearance fitting 7.3
+License Clearance: 
+License: BSD, license.txt
+License retrieved from:
+License retrieve date:
+
+# try to analyze and list which SOUPs this SOUP is using (e.g. indirect dependencies). In case of open source, SAT would
+# also be in charge for this indirect depencies.
+IndirectSOUP:
+
+# enter "n.a" for SOUP without DLLs, "By Creator" if already signed, "By Us" if we created signature, "Unsigned" otherwise
+# check in also the emails/protocols with the vendor/originator of the SOUP for signature clearance
+DLL Signature: 
+
+# enter "n.a." for SOUP without strong named DLLs. List all assemblies which provide a strong name to document
+# that you considered the implications of using strong named assemblies.
+Strong Names used:  
+
+# whatever may be important to remember: enter it under Comments
+Comments: 
+

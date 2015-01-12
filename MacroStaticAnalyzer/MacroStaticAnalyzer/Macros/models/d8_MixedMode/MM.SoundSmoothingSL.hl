@@ -1,0 +1,61 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        SoundSmoothing Slider
+// Initial Version                						   					   		: 2011-02-11 Cecil Wilson
+// Added SoundSmoothing functions                          					  		: 2011-02-14 Cecil Wilson
+// Relocated file to the MM structure					   					   		: 2011-02-17 Cecil Wilson
+// Renamed the file and Libraries						   					  		: 2011-02-21 Cecil Wilson
+// Renamed package to follow naming convention			   					   		: 2011-02-24 Cecil Wilson
+// Added Tinnitus greyout													   		: 2011-03-23 Cecil Wilson  
+// Add println for MPV testing												   		: 2011-09-22 Jenny Lin
+// Update IsVisible to call mlib of slider only and IsEnabled function.		  		: 2011-12-09 Jenny Lin
+// Macro code Cleanup														   		: 2012-02-14 Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  : 2012-06-05 Alastair Manders 
+// Peer review changes																: 2012-06-13 Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Sifit 7.2 Peer Review															: 2013-07-31 Jenny, Judith, Raymond
+// Update println																	: 2014-03-04 Mang Yew
+// Code Clean up																	: 2014-10-01 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package MixedMode SoundSmoothingSL
+	{
+		application function bool IsVisible ()
+		{
+			bool retVal = Mid_Level_Library_SoundSmoothing.SoundSmoothingSL_IsVisible ();
+			println ('[HAL]MixedMode.SoundSmoothingSL.IsVisible = ' + retVal); 	
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{	
+			bool retVal= High_Level_Library_SoundSmoothing.IsSoundSmoothingSLEnabled ();
+			println ('[HAL]MixedMode.SoundSmoothingSL.IsEnabled = ' + retVal + BasicLibrary_DebugPrint.PrintCurrentProg ());																			
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			int retVal = 2;
+			println ('[HAL]MixedMode.SoundSmoothingSL.MaxPos = '+ retVal);
+			return retVal;
+		}
+		
+		application function int GetPos ()
+		{
+			int retVal = High_Level_Library_SoundSmoothing.SoundSmoothingSL_Get ();
+			println ('[HAL]MixedMode.SoundSmoothingSL.GetPos = ' + retVal + BasicLibrary_DebugPrint.PrintCurrentProg ());
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.SoundSmoothingSL.SetPos = ' + pos + BasicLibrary_DebugPrint.PrintCurrentProg ());
+			High_Level_Library_SoundSmoothing.SoundSmoothingSL_Set (pos);
+		}			
+
+	}
+
+}

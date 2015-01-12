@@ -1,0 +1,58 @@
+/*----------------------------------------------------------------------------------------------------------------
+// CXX UI:									Mic Mode Stars for Speech Focus
+//----------------------------------------------------------------------------------------------------------------
+// Initial version														: 2014-02-03 Raymond
+// Changed 4 to 5 for Maxpos                    	                    : 2014-02-28 Judith
+// Updated Println statement for MaxPos									: 2014-03-04 Raymond
+/*----------------------------------------------------------v7.4-------------------------------------------------*/
+// Chores																: 2014-06-30 Sultan 
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_StarsSF
+	{
+		application function bool IsVisible ()
+		{
+			bool retVal = Mid_Level_Library_MicModeStars.SFStarsIsVisible();
+			println ('[HAL]MM - Mic_Mode_StarsSF.IsVisible = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			bool retVal = true;
+			println ('[HAL]MM - Mic_Mode_StarsSF.IsEnabled = ' + retVal);
+			return retVal;
+		} 
+		
+		application function int MaxPos ()
+		{
+			int retVal = 5;
+			println ('[HAL]MM - Mic_Mode_StarsSF.MaxPos == ' + retVal);
+			return retVal;
+		} 
+		
+ 		application function bool IsEnabledPos (int pos)
+		{
+			bool retVal = true;
+			println ('[HAL]MM - Mic_Mode_StarsSF.IsEnabledPos = ' + retVal);
+			return retVal;
+		}
+		
+ 		application function int GetPos ()
+		{
+			int retVal = Mid_Level_Library_MicModeStars.GetSFStars();
+			println ('[HAL]MM - Mic_Mode_StarsSF.GetPos = ' + retVal);
+			return retVal;
+		} 
+		
+ 		application function void SetPos (int pos)
+		{
+			
+		} 
+				 		
+	} 
+} 

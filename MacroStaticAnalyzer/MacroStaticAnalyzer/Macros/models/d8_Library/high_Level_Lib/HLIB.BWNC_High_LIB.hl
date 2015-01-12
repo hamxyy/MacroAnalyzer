@@ -1,0 +1,166 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// 											HIGH LEVEL LIBRARY BWNC
+// Initial version																									: 2013-10-21 Raymond
+// Remove program selections not available in D9																	: 2013-11-06 Raymond		
+// Refractor BWNCEn_Get																								: 2013-11-13 Raymond		
+// First uncommented draft																							: 2013-11-29 Raymond
+// Added IsVisible checks for BWNCEn_Set_ProgramSelection														: 2013-12-02 Raymond
+// Updated Set_Program Selection with d9SwMacroProgramIdHp control instead of ID								: 2013-12-17 Sonia Stasiak
+// Updated IsEnabled logic																							: 2013-12-23 Raymond
+// Corrected IsEnabled logic																						: 2013-12-24 Raymond
+// Updated IsEnabled logic																							: 2013-12-26 Raymond
+// Update SetDefaultPos function																					: 2013-12-26 Raymond
+// Added PTinMode and SwAuxMode checks to IsEnabled																: 2013-12-27 Raymond
+// Added IsEnabled checks to BWNC_Set_ProgamSelection 															: 2013-12-30 Raymond
+// Added BWNCEn_Set(0) for Program Selection checks																: 2013-12-30 Raymond
+// Added IsEnabled checks for SWINE for current side																: 2014-01-03 Raymond
+// Corrected SWINE IsEnabled checks from On to Off																: 2014-01-06 Raymond
+// Updated IsEnabled functions to check for input mode															: 2014-01-20 Raymond
+// Updated BinauralDirMicCompatibleMicType env in IsEnabled														: 2014-02-03 Raymond
+// Refractor BWNC_Set_ProgramSelection																				: 2014-02-04 Raymond
+// Refractor BWNCEn_IsEnabled																						: 2014-02-06 Raymond
+// Refractor BWNC_Set_ProgramSelection to check for IsVisible and IsEnable only for on condition			: 2014-02-12 Raymond
+// Shorten BWNCEn_IsEnabled per review feedback																	: 2014-02-18 Raymond
+// Add d9SwAuxMode.MicWLA checks to IsEnabled																		: 2014-02-24 Raymond
+// Added SwMacroWncEnHp checks for Opp side																		: 2014-02-28 Raymond
+// Removed IsEnabled checks from BWNC_SetDefault																	: 2014-03-03 Raymond
+// Added new programs Telecoil MT and Telecoil T for Set_ProgramSelection (FR64541)							: 2014-03-19 Sonia & Jeline
+// Added phone acoustically program checks for IsEnabled														: 2014-03-24 Raymond
+// Added stroll program in program selection default function 													: 2014-03-25 Raymond
+// 7.3 Peer Review: Rework BWNCEn_IsEnabled to comment out not required code									
+// 		Change || to && for BWNCEn_Get()								
+//		Added BWNCEn_IsEnabled check for BWNCEn_Set_Default														: 2014-04-11 Raymond
+// PEER REVIEW CXX 7.3																		:	2014-05-06 Sonia, Mie Mie, Jenny
+// ER67301: Remove HW varible checks from BWNCEn_Get															: 2014-05-15 Raymond
+/*--------------------------------------------- Cxx 7.4 ----------------------------------------------------------*/
+// IsEnabled to check for opposite side Input Mode to cover LCM of Program Selection cases		: 2014-07-10 Sonia
+// Update comment on Set_Program Selection (added new Induction Loop (T) program)				: 2014-07-30 Sonia Stasiak
+// Replaced Noiser functions calls from high level Library to directly Basic level Library
+// in BWNCEn_IsEnabled()																		: 2014-08-07 Sultan
+// Re-write Set_ProgramSelection to call BLib.Is<program>										: 2014-09-16 Sonia
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_BWNC
+	{
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    BWNCEn_IsEnabled
+//   Input      :  None
+//   Ouput      :  <bool> Return IsEnabled status
+//   Description:  Check for MicMode, Monaural for IsEnabled
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool BWNCEn_IsEnabled ()
+		{
+			return (BasicLibrary_Noiser.Noiser_IsOnAndPure() == false &&
+					BasicLibrary_Noiser.Noiser_IsOnAndPureOpposite() == false &&
+					hi:d9FWncEn == d9FWncEn.on &&
+					hi:d8SwMacroWncEnHp == d8SwMacroWncEnHp.on &&
+					opp(hi:d9FWncEn) == d9FWncEn.on &&
+					opp(hi:d8SwMacroWncEnHp) == d8SwMacroWncEnHp.on &&
+					BasicLibrary_InputMode.InputModeDD_Get_Mode() == 0 &&
+					opp(hi:d8SwMacroInputModeHp) == d8SwMacroInputModeHp.Microphone && // 7.4 uncommented for LCM PS
+					(hi:d9SwAuxMode == d9SwAuxMode.Off_MicOnly || hi:d9SwAuxMode == d9SwAuxMode.MicWLA) &&
+					//(opp(hi:d9SwAuxMode) == d9SwAuxMode.Off_MicOnly || opp(hi:d9SwAuxMode) == d9SwAuxMode.MicWLA) && // 7.3 Peer Review: Not relevant for 7.3 as not possible to decouple input mode
+					env:BinauralDirMicCompatibleMicType == BinauralDirMicCompatibleMicType.UsableTogether &&
+					hi:d9SwMacroProgramIdHp != d9SwMacroProgramIdHp.ID03);							
+		} // Closes High_Level_Library_BWNC.BWNCEn_IsEnabled
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    BWNCEn_Get
+//   Input      :  None
+//   Output      :  <int> Actual iconic checkbox position
+//   Description:  Get checkbox position   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int BWNCEn_Get ()
+		{ 
+			if (BasicLibrary_BWNC.BWNCEn_Get_EntrySw ()) 
+			{   
+				println('[HAL]: HLIB.BWNCEn_Get = 1');
+				return 1;
+			}
+			else
+			{
+				println('[HAL]: HLIB.BWNCEn_Get = 0');
+				return 0;
+			}
+		} // Closes High_Level_Library_BWNC.BWNCEn_Get
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    BWNCEn_Set
+//   Input      :  <int> Actual iconic checkbox position
+//   Output      :  None
+//   Description:  Set checkbox position   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void BWNCEn_Set (int pos)
+		{ // WNC HW controls is a super controls of the BWNC HW controls, BWNC will not be activated regardless of its HW controls status
+		  // when WNC HW controls is not activated
+			println('[HAL]: HLIB.BWNCEn_Set = ' + pos);
+			BasicLibrary_BWNC.BWNCEn_Set_Entry (pos);
+			BasicLibrary_BWNC.BWNCEn_Set_EntrySw (pos);
+		} // Closes High_Level_Library_BWNC.BWNCEn_Set
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    BWNCEn_Set_Default
+//   Input      :  None
+//   Output      :  None
+//   Description:  Set default checkbox position after FirstFit   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void BWNCEn_Set_Default ()
+		{
+			if (Mid_Level_Library_BWNC.BWNCEn_IsVisible())
+			{	// This IF statement should only check for IsVisible as WNC will be set to on if BWNCEn_IsVisible condition is met
+				// Do not check for BWNCEn.IsEnabled as the IsEnabled function consists of checking WNC on both current and opp sides
+				// This will results in BWNC activated on one side only after postfit, this is due to the call sequence for postfit (Left then Right)
+				println('[HAL]: HLIB.BWNCEn_Set_Default = 1');
+				BWNCEn_Set(1);
+			}
+			else
+			{
+				println('[HAL]: HLIB.BWNCEn_Set_Default = 0');
+				BWNCEn_Set(0);
+			}
+		} // Closes High_Level_Library_BWNC.BWNCEn_Set_Default
+
+/*---------------------------------------------------------------------------------------------------------*
+//	HIGH LEVEL LIBRARY - BWNC_Set_ProgramSelection
+//	Description	:	Function is setting BWNC for all listening situation. 
+/*---------------------------------------------------------------------------------------------------------*/
+		public function void BWNC_Set_ProgramSelection ()
+		{
+			println('[HAL]HLIB.BWNC_Set_ProgramSelection in HP' + BasicLibrary_CommUtil.CurrentProg());
+			
+			if (BasicLibrary_ProgramSelection.IsNoisyEnv() == true  ||
+				BasicLibrary_ProgramSelection.IsOutdoorSport() == true ||
+				BasicLibrary_ProgramSelection.IsStroll() == true)
+			{ 
+			// This IF statement should only check for IsVisible as WNC will be set to on if BWNCEn_IsVisible condition is met
+				// Do not check for BWNCEn.IsEnabled as the IsEnabled function consists of checking WNC on both current and opp sides
+				// This will results in BWNC activated on one side only after applying program, this is due to the call sequence for program selection (Left then Right)
+				if(Mid_Level_Library_BWNC.BWNCEn_IsVisible()) // Do not check for FWncEn control due to function call sequence dependency
+				// BWNC set to ON
+				{
+					BWNCEn_Set (1);
+				}
+				else
+				{
+					BWNCEn_Set (0);
+				} 					
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsTinnitus() == true)
+			//BWNC same as Universal (do nothing)
+			{
+			
+			}
+			
+			else // (all other programs)
+			// BWNC set to OFF
+			{
+				BWNCEn_Set (0);
+			}
+		} // Closes High_Level_Library_BWNC.BWNC_Set_ProgramSelection
+
+	} // package High_Level_Library_BWNC
+
+} // namespace shs.sat

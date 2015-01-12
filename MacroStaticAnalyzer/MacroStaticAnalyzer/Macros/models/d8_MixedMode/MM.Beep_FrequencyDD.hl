@@ -1,0 +1,63 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Beep Frequency DropDown Menue
+// Initial Version          without isEnabled      						     :  2011-04-19 Meike Doose
+// isEnabled function added            						    			 :  2011-04-20 Meike Doose
+// Workaround in isEnabled function for the HW PR3,added/modified println	 :  2011-05-19 Cecil Wilson  
+// IsEnabled function working (rework/uncomment), added/modified println	 :  2011-05-23 Jenny Lin
+// IsEnabled calls the function, code moved out to MLIB		 				 :  2011-07-14 Nadia Neugeborn
+// Add println for MPV testing												 :  2011-09-22  Jenny Lin
+// Updated to call HLIB instead of BLIB										 :  2012-04-20  Jenny Lin
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Delete int hp=env:Prog and removed unecessary println						 :	2012-06-08 Mang Yew
+// *********************************************CODE FREEZE*******************************************************
+// Sifit7.3 Peer review															: 2014-04-28 Jenny, Jeline
+// Sifit7.4 Peer review: replace High_Level_Library_Beep.BeepFrequencyDD_Get 
+// with BasicLibrary_Beep.BeepFrequencyDD_Get_Entry								: 2014-11-17 MieMie/Sultan/Jeline	
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{	
+	using shs_sat.*;
+		
+	package MixedMode BeepFrequencyDD
+	{		
+		application function bool IsVisible() 
+		{
+			println('[HAL]MM - BeepFrequencyDD - IsVisible = TRUE');
+			// Visibility of BeepFrequency --> always visible			
+			return true;
+		}
+		
+		application function int MaxPos() 
+		{
+			println('[HAL]MM - BeepFrequencyDD - MaxPos = 3');						
+			return 3; 
+		}
+					
+		application function bool IsEnabled() 
+		{
+			println('[HAL]MM - BeepFrequencyDD - IsEnabled');
+			return Mid_Level_Library_Beep.BeepFrequencyDD_IsEnabled();
+		}
+				
+		application function bool IsEnabledPos(int pos) 
+		{
+	 		println('[HAL]MM - BeepFrequencyDD - IsEnabledPos = TRUE');	 		
+	 		return true;		
+	 	}
+	 		 	
+	 	application function int GetPos() 
+	 	{
+			println('[HAL]MM - BeepFrequencyDD - GetPos');
+			return  BasicLibrary_Beep.BeepFrequencyDD_Get_Entry();
+	 	}
+	 		 	
+		application function void SetPos(int pos) 
+		{
+	 		println('[HAL]MM - BeepFrequencyDD - SetPos = ' + pos);	 		
+			High_Level_Library_Beep.BeepFrequencyDD_Set(pos);
+		}
+	}
+	
+}
+

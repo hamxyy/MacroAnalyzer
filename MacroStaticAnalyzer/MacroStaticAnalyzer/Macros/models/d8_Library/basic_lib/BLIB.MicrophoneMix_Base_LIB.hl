@@ -1,0 +1,534 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY 	:   MicrophoneMix
+// Initial Version                                         				:  	2011-03-14  Cecil Wilson
+// Renamed 'WirelessAudio' function to match macro names 'WLS'		    :   2011-03-28  Cecil Wilson
+// Fixed HI parameters for the WLS_ Get and Set function				:   2011-04-11  Cecil Wilson
+// Workaround for MixWLA_ and WLA for Life 702 added					:   2011-05-23  Cecil Wilson
+// Set HiControl according for DAI 										:   2011-06-14  Chuah LayYuan	
+// Updated HiControls for Tcoil and WLS									:   2011-06-23  Cecil Wilson                                                 					 					 
+// Added workaround for Life and Motion									:   2011-06-27  Cecil Wilson
+// Removed workaround for Valid controls (Er49503)						:   2011-07-04  Cecil Wilson
+// Add Muting control for Tcoil, WLS and DAI                            :   2011-08-04  Chuah LayYuan
+// Added Speech activated Telecoil functions							:   2012-03-20  Cecil Wilson
+// Add the IsValid checks for d9SwAuxMode when setting the MixMicrophone checkbox, removed the setting of
+// eWindscreen controls in BLIB. Call HLIB of EWindscreen from HLIB.	:	2012-06-13  Jenny Lin
+// Updated the WLS slider steps, from -30to0dB to -18dBto+12dB (MRS 2.3), combined all the mix with microphone
+// slider into one BLIB, add in the DAL level slider -15dB step			:	2012-06-14  Jenny Lin
+// Added assertion message									: 2012-12-14 Jenny Lin
+// Added MixMicrophoneEn_Get_Mode() for IsEnabled tests of Microphone mode, SPASS. Remove the 
+// assertion message for MixMic GetMode DAI, Tcoil, Wireless	: 2012-12-19 Jenny Lin
+// Added Microphone_MixMicrophoneEn_Set_Mode() to set FBC and WNC correctly 
+//  due to CR61635														: 2013-05-30 Mang Yew
+// ******SIFIT7.2_PEERREVIEWED: 					  					:  2013-07-30   Jenny, Judith
+// <<<<<<<<<< Sifit7.3 Start >>>>>>>>>
+// Added new function Microphone_MixMicrophoneEn_Set_Mode()				: 2013-11-04 Jenny
+// Added the mnr, amnr, inr controls set controls function.				: 2013-12-20 Jenny
+// updated println statement for debugging.								: 2014-01-10 Jenny
+// FR64463: updated Microphone_MixMicrophoneEn_Set_Mode based on input from HLIB.	: 2014-02-19 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// <<<<<<<<<< Sifit7.4 Start >>>>>>>>>
+// Rebuild MixMicrophoneEn and MixMicrophoneSl according to Nele and DirectSoundComp				: 2014-07-10 Meike Steinbuss
+// Update WLS_MixMicrophoneEn_Set_Mode, MicLevelSL_Set_XX_dB, MicLevelSL_Set_Strength_Sw, MicLevelSL_Get_XX_dB according to statement above: 2014-07-10 Meike Steinbuss
+// Include Muted SMX controls for WLA Mix with Mic Checkbox							: 2014-07-14 Meike Steinbuss
+// include backward compatibility for WLA Slider and checkbox (include PSMXGainCfg) : 2014-07-29 Meike Steinbuss
+// add hi:d9PSmxMicGainBandsAtten[15] = (XX_dB*-1); which was forgotten				: 2014-07-30 Meike Steinbuss
+// uncomment d9SwMacroMixMicLevelSlHp in MicLevelSL_Set_Strength_Sw(),			
+// comment out d9PSmxMicGainBandsAtten[14] line and 
+// uncomment hi:d8SwMacroMixMicLevelSlHp==count || hi:d8PSmxGainCfg [0] in MicLevelSL_Get_XX_dB(): 2014-08-21 MieMie
+// In MicLevelSL_Set_XX_dB(), changed d9PSmxMicGainBandsAtten to d8PSmxGainCfg, added IsWirelessProgramSetInCurrentSide(),
+// added  else loop;																: 2014-08-25 MieMie	
+// adjust MicLevelSL_Set_XX_dB function according to the use of smxgaincfg and smxmicgainbandsatten  : 2014-09-02 Meike	
+// for DSO reduce first 5 mic channels to maximum attenuation for open fittings only (included)		: 2014-09-05 Meike
+// MicLevelSL_Set_XX_dB : Added CXX checks. Remove Telecoil_SpeechAct_En_Set_Mode & Telecoil_SpeechAct_En_Get_Mode
+// since not use at all. Code cleanup: Updated printlines.							: 2014-10-09 Jenny
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_MicrophoneMix
+	{
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description: Enables/Checks Microphone MicrophoneMix for a Current HearingProgram.
+			WLA = true, sets to MicWLA
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Microphone_MixMicrophoneEn_Set_Mode(bool Mic)
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.Microphone_MixMicrophoneEn_Set_Mode');
+
+			//FR64463: In Universal Hearing Program (HP0) and with Wireless audio capability instruments, 
+			// set the HI to Mic + Wireless input, else, only Microphone input path enabled.
+			if(Mic == true)
+			{
+				hi:d9SwAuxMode = d9SwAuxMode.Off_MicOnly;
+				hi:d8FSmxInputMute [ 4 ] = d8FSmxInputMute.input_muted; //Astr - Mute
+			}
+			else
+			{
+				hi:d9SwAuxMode = d9SwAuxMode.MicWLA;
+				hi:d8FSmxInputMute [ 4 ] = d8FSmxInputMute.input_not_muted; //Astr - UnMute
+			}
+
+			//Set Muting control of input signal path
+			hi:d8FSmxInputMute [ 0 ] = d8FSmxInputMute.input_not_muted; //MicF - unMute
+			hi:d8FSmxInputMute [ 1 ] = d8FSmxInputMute.input_not_muted; //MicR - unMute
+			hi:d8FSmxInputMute [ 2 ] = d8FSmxInputMute.input_muted; //Tcoil - Mute
+			hi:d8FSmxInputMute [ 3 ] = d8FSmxInputMute.input_muted; //DaiFM - Mute
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description:  Compares the HI settings & returns state of Microphone Mix
+			1 : Mixed with Mic Activated, 0 : Mixed with Mic Deactivated
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function int MixMicrophoneEn_Get_Mode()
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.MixMicrophoneEn_Get_Mode');
+
+			if (hi:d9SwAuxMode == d9SwAuxMode.Off_MicOnly ||
+					hi:d9SwAuxMode == d9SwAuxMode.MicA ||
+					hi:d9SwAuxMode == d9SwAuxMode.MicTel ||
+					hi:d9SwAuxMode == d9SwAuxMode.MicWLA)
+			{
+				// return 1 for Mic enabled.
+				return 1; 
+			}
+			else
+			{
+				return 0;
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description:  Compares the HI settings & returns state of Telecoil Microphone Mix
+			0 : Mixed with Mic Deactivated, 1 : Mixed with Mic Activated, -1 : Not Applicable.
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function int Telecoil_MixMicrophoneEn_Get_Mode()
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.Telecoil_MixMicrophoneEn_Get_Mode');
+
+			if (hi:d9SwAuxMode == d9SwAuxMode.MicTel)
+			{
+				return 1;
+			}
+			else if (hi:d9SwAuxMode == d9SwAuxMode.Tel)
+			{
+				return 0;
+			}
+			else
+			{
+				println ("[HAL]BLIB.BasicLibrary_MicrophoneMix.Telecoil_MixMicrophoneEn_Get_Mode >> ERROR! MicTel & Tel not set");
+				return -1;
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		   Description: Enables/Checks Telecoil MicrophoneMix for a Current HearingProgram
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Telecoil_MixMicrophoneEn_Set_Mode(int pos)
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.Telecoil_MixMicrophoneEn_Set_Mode');
+
+			switch (pos)
+			{
+				case 1:
+				{ 
+					// Microphone Mix activated
+					if (isValid (d9SwAuxMode.MicTel))
+					{
+						hi:d9SwAuxMode = d9SwAuxMode.MicTel;
+
+						//Set Muting control of input signal path
+						hi:d8FSmxInputMute [ 0 ] = d8FSmxInputMute.input_not_muted; //MicF - unMute
+						hi:d8FSmxInputMute [ 1 ] = d8FSmxInputMute.input_not_muted; //MicR - unMute
+						hi:d8FSmxInputMute [ 2 ] = d8FSmxInputMute.input_not_muted; //Tcoil - unMute
+						hi:d8FSmxInputMute [ 3 ] = d8FSmxInputMute.input_muted; //DaiFM - Mute
+						hi:d8FSmxInputMute [ 4 ] = d8FSmxInputMute.input_muted; //Astr - Mute
+					}
+					else
+					{
+						assertion (false, "[MacroError]BLIB.BasicLibrary_MicrophoneMix.Telecoil_MixMicrophoneEn_Set_Mode >> Unable to set the state of Telecoil MixMicrophone checkbox >> ERROR!!! Unable to set d9SwAuxMode = MicTel!");
+					}
+				}
+				default:
+				{ 
+					// Microphone Mix deactivated
+					if (isValid (d9SwAuxMode.Tel))
+					{
+						hi:d9SwAuxMode = d9SwAuxMode.Tel;
+
+						//Set Muting control of input signal path
+						hi:d8FSmxInputMute [ 0 ] = d8FSmxInputMute.input_muted; //MicF - unMute
+						hi:d8FSmxInputMute [ 1 ] = d8FSmxInputMute.input_muted; //MicR - unMute
+						hi:d8FSmxInputMute [ 2 ] = d8FSmxInputMute.input_not_muted; //Tcoil - unMute
+						hi:d8FSmxInputMute [ 3 ] = d8FSmxInputMute.input_muted; //DaiFM - Mute
+						hi:d8FSmxInputMute [ 4 ] = d8FSmxInputMute.input_muted; //Astr - Mute
+					}
+					else
+					{
+						assertion (false, "[MacroError]BLIB.BasicLibrary_MicrophoneMix.Telecoil_MixMicrophoneEn_Set_Mode >> Unable to set the state of Telecoil MixMicrophone checkbox >> ERROR!!! Unable to set d9SwAuxMode = Tel!");
+					}
+				}
+			}
+		}
+		
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description:  Compares the HI settings & returns state of Wireless Audio Microphone Mix
+			0 : Mixed with Mic Deactivated, 1 : Mixed with Mic Activated, -1 : Not Applicable.
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function int WLS_MixMicrophoneEn_Get_Mode()
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.WLS_MixMicrophoneEn_Get_Mode');
+
+			if (hi:d9SwAuxMode == d9SwAuxMode.MicWLA)
+			{
+				return 1;
+			}
+			else if (hi:d9SwAuxMode == d9SwAuxMode.WLA)
+			{
+				return 0;
+			}
+			else
+			{
+				println ("[HAL]BLIB.BasicLibrary_MicrophoneMix.WLS_MixMicrophoneEn_Get_Mode >> ERROR! MicWLA & WLA not set");
+				return -1;
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		   Description: Enables/Checks Wireless Audio/Phone MicrophoneMix for a Current HearingProgram  
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void WLS_MixMicrophoneEn_Set_Mode(int pos) 
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.WLS_MixMicrophoneEn_Set_Mode');
+			
+			//Set Muting control of input signal path
+			hi:d8FSmxInputMute [ 0 ] = d8FSmxInputMute.input_not_muted; //MicF - unMute
+			hi:d8FSmxInputMute [ 1 ] = d8FSmxInputMute.input_not_muted; //MicR - unMute
+			hi:d8FSmxInputMute [ 2 ] = d8FSmxInputMute.input_muted; //Tcoil - Mute
+			hi:d8FSmxInputMute [ 3 ] = d8FSmxInputMute.input_muted; //DaiFM - Mute
+			hi:d8FSmxInputMute [ 4 ] = d8FSmxInputMute.input_not_muted; //Astr - unMute
+			
+			switch (pos)
+			{
+				case 1:
+				{ 
+					// Microphone Mix activated
+					if (isValid (d9SwAuxMode.MicWLA))
+					{
+						hi:d9SwAuxMode = d9SwAuxMode.MicWLA;
+					}
+					else
+					{
+						assertion (false, "[MacroError]BLIB.BasicLibrary_MicrophoneMix.WLS_MixMicrophoneEn_Set_Mode >> Unable to set the state of Wireless MixMicrophone checkbox >> ERROR!!! Unable to set d9SwAuxMode = MicWLA!");
+					}
+				}
+				default:
+				{
+					// Microphone Mix deactivated
+					if (isValid (d9SwAuxMode.WLA))
+					{
+						hi:d9SwAuxMode = d9SwAuxMode.WLA;
+					}
+					else
+					{
+						assertion (false, "[MacroError]BLIB.BasicLibrary_MicrophoneMix.WLS_MixMicrophoneEn_Set_Mode >> Unable to set the state of Wireless MixMicrophone checkbox >> ERROR!!! Unable to set d9SwAuxMode = WLA!");
+					}
+				}
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description:  Compares the HI settings & returns state of DAI Microphone Mix
+			0 : Mixed with Mic Deactivated, 1 : Mixed with Mic Activated, -1 : Not Applicable.
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function int DAI_MixMicrophoneEn_Get_Mode()
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.DAI_MixMicrophoneEn_Get_Mode');
+
+			if (hi:d9SwAuxMode == d9SwAuxMode.MicA)
+			{
+				return 1;
+			}
+			else if (hi:d9SwAuxMode == d9SwAuxMode.A)
+			{
+				return 0;
+			}
+			else
+			{
+				println ("[HAL]DAI_MixMicrophoneEn_Get_Mode >> ERROR! MicA & A not set");
+				return -1;
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description: Enables/Checks DAI MicrophoneMix for a Current HearingProgram  
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void DAI_MixMicrophoneEn_Set_Mode(int pos)
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.DAI_MixMicrophoneEn_Set_Mode');
+
+			switch (pos)
+			{
+				case 1:
+				{
+					// Microphone Mix activated
+					if (isValid (d9SwAuxMode.MicA))
+					{
+						hi:d9SwAuxMode = d9SwAuxMode.MicA;
+
+						//Set Muting control of input signal path
+						hi:d8FSmxInputMute [ 0 ] = d8FSmxInputMute.input_not_muted; //MicF - unMute
+						hi:d8FSmxInputMute [ 1 ] = d8FSmxInputMute.input_not_muted; //MicR - unMute
+						hi:d8FSmxInputMute [ 2 ] = d8FSmxInputMute.input_muted; //Tcoil - Mute
+						hi:d8FSmxInputMute [ 3 ] = d8FSmxInputMute.input_not_muted; //DaiFM - unMute
+						hi:d8FSmxInputMute [ 4 ] = d8FSmxInputMute.input_muted; //Astr - Mute    
+					}
+					else
+					{
+						assertion (false, "[MacroError]BLIB.BasicLibrary_MicrophoneMix.DAI_MixMicrophoneEn_Set_Mode >> Unable to set the state of DAI MixMicrophone checkbox >> ERROR!!! Unable to set d9SwAuxMode = MicA!");
+					}
+				}
+				default:
+				{ 
+					// Microphone Mix deactivated
+					if (isValid (d9SwAuxMode.A))
+					{
+						hi:d9SwAuxMode = d9SwAuxMode.A;
+
+						//Set Muting control of input signal path
+						hi:d8FSmxInputMute [ 0 ] = d8FSmxInputMute.input_muted; //MicF - unMute
+						hi:d8FSmxInputMute [ 1 ] = d8FSmxInputMute.input_muted; //MicR - unMute
+						hi:d8FSmxInputMute [ 2 ] = d8FSmxInputMute.input_muted; //Tcoil - Mute
+						hi:d8FSmxInputMute [ 3 ] = d8FSmxInputMute.input_not_muted; //DaiFM - unMute
+						hi:d8FSmxInputMute [ 4 ] = d8FSmxInputMute.input_muted; //Astr - Mute    
+					}
+					else
+					{
+						assertion (false, "[MacroError]BLIB.BasicLibrary_MicrophoneMix.DAI_MixMicrophoneEn_Set_Mode >> Unable to set the state of DAI MixMicrophone checkbox >> ERROR!!! Unable to set d9SwAuxMode = A!");
+					}
+				}
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description:  Sets the HI controls to selected position Microphone Level Slider
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function void MicLevelSL_Set_XX_dB(int XX_dB) 
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.MicLevelSL_Set_XX_dB');
+
+			if (env:HiDriverWorkMode == HiDriverWorkMode.Fitting &&
+				BasicLibrary_ProgramSelection.IsWirelessProgramSetInCurrentSide() == true
+			)
+			{
+				// for backward compatibility reason, "old" control has to be set to 0dB and because of non-wireless program settings with SmxGainCfg
+				hi:d8PSmxGainCfg [ 0 ] = 0; // MIC_F  
+				hi:d8PSmxGainCfg [ 1 ] = 0; // MIC_R				
+				
+				// because of dependecy to NELE d8PSmxGainCfg cannot be used but d9PSmxMicGainBandsAtten instead
+				// for DSO reduce first 5 mic channels to maximum attenuation for open fittings
+				if(BasicLibrary_Curves.VentOutisOpen())
+				{
+					hi:d9PSmxMicGainBandsAtten[0] = 63;
+					hi:d9PSmxMicGainBandsAtten[1] = 63;
+					hi:d9PSmxMicGainBandsAtten[2] = 63;
+					hi:d9PSmxMicGainBandsAtten[3] = 63;
+					hi:d9PSmxMicGainBandsAtten[4] = 63;
+				}
+				else
+				{
+					hi:d9PSmxMicGainBandsAtten[0] = (XX_dB*-1);
+					hi:d9PSmxMicGainBandsAtten[1] = (XX_dB*-1);
+					hi:d9PSmxMicGainBandsAtten[2] = (XX_dB*-1);
+					hi:d9PSmxMicGainBandsAtten[3] = (XX_dB*-1);
+					hi:d9PSmxMicGainBandsAtten[4] = (XX_dB*-1);
+				}
+
+				hi:d9PSmxMicGainBandsAtten[5] = (XX_dB*-1);
+				hi:d9PSmxMicGainBandsAtten[6] = (XX_dB*-1);
+				hi:d9PSmxMicGainBandsAtten[7] = (XX_dB*-1);
+				hi:d9PSmxMicGainBandsAtten[8] = (XX_dB*-1);
+				hi:d9PSmxMicGainBandsAtten[9] = (XX_dB*-1);
+				hi:d9PSmxMicGainBandsAtten[10] = (XX_dB*-1);
+				hi:d9PSmxMicGainBandsAtten[11] = (XX_dB*-1);
+				hi:d9PSmxMicGainBandsAtten[12] = (XX_dB*-1);
+				hi:d9PSmxMicGainBandsAtten[13] = (XX_dB*-1);
+				hi:d9PSmxMicGainBandsAtten[14] = (XX_dB*-1);
+				hi:d9PSmxMicGainBandsAtten[15] = (XX_dB*-1);				
+			}
+			else
+			{
+				// needs  to be set to 0 for all non-wireless programs
+				hi:d9PSmxMicGainBandsAtten[0] = 0;
+				hi:d9PSmxMicGainBandsAtten[1] = 0;
+				hi:d9PSmxMicGainBandsAtten[2] = 0;
+				hi:d9PSmxMicGainBandsAtten[3] = 0;
+				hi:d9PSmxMicGainBandsAtten[4] = 0;
+				hi:d9PSmxMicGainBandsAtten[5] = 0;
+				hi:d9PSmxMicGainBandsAtten[6] = 0;
+				hi:d9PSmxMicGainBandsAtten[7] = 0;
+				hi:d9PSmxMicGainBandsAtten[8] = 0;
+				hi:d9PSmxMicGainBandsAtten[9] = 0;
+				hi:d9PSmxMicGainBandsAtten[10] = 0;
+				hi:d9PSmxMicGainBandsAtten[11] = 0;
+				hi:d9PSmxMicGainBandsAtten[12] = 0;
+				hi:d9PSmxMicGainBandsAtten[13] = 0;
+				hi:d9PSmxMicGainBandsAtten[14] = 0;
+				hi:d9PSmxMicGainBandsAtten[15] = 0;
+			
+				// Nele not on use, therefore d8PSmxGainCfg will be used
+				hi:d8PSmxGainCfg [ 0 ] = XX_dB; // MIC_F  
+				hi:d8PSmxGainCfg [ 1 ] = XX_dB; // MIC_R
+			}
+		}
+		
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description:  Sets the SW variable control to selected position Microphone Level Slider
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function void MicLevelSL_Set_Strength_Sw(int XX_dB)
+		{	
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.MicLevelSL_Set_Strength_Sw');
+
+			hi:d9SwMacroMixMicLevelSlHp = XX_dB; 
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description:  Checks the HI controls for the Microphone Level Slider and return the dB value.
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function int MicLevelSL_Get_XX_dB()
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.MicLevelSL_Get_XX_dB');
+
+			int XX_dB = 0;
+			int count = -21;	// starts from min dB value
+			
+			while(count <= 0){
+				if(hi:d9SwMacroMixMicLevelSlHp	== count || 
+					hi:d8PSmxGainCfg [0] == count )
+				{   
+					XX_dB = count;
+					break;
+				}
+				count = count + 1;
+			}
+			return XX_dB;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		   Description:  Sets the HI controls to selected position Wireless Level Slider
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function void WLSLevelSL_Set_XX_dB(int XX_dB)
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.WLSLevelSL_Set_XX_dB');
+
+			hi:d8PSmxGainCfg [ 4 ] = XX_dB; // Astr
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description:  Checks the HI controls for the Wireless Level Slider and return the dB value.
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function int WLSLevelSL_Get_XXdB()
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.WLSLevelSL_Get_XXdB');
+
+			int XX_dB = 0;
+			int count = -30;	// starts from min dB value
+			
+			while(count <= 12)
+			{
+				// Astr
+				if(hi:d8PSmxGainCfg [ 4 ] == count)
+				{
+					XX_dB = count;
+					break;
+				}
+				count = count + 1;
+			}
+			return XX_dB;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description:  Sets the HI controls to selected position DAI Level Slider
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function void DAILevelSL_Set_XX_dB(int XX_dB)
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.DAILevelSL_Set_XX_dB');
+
+			hi:d8PSmxGainCfg [ 3 ] = XX_dB; // DAI
+		}
+		
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description:  Checks the HI controls for the DAI Level Slider and return the dB value.
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function int DAILevelSL_Get_XXdB()
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.DAILevelSL_Get_XXdB');
+
+			int XX_dB = 0;
+			int count = -18;	// starts from min dB value
+			
+			while(count <= 0)
+			{
+				// DAI
+				if(hi:d8PSmxGainCfg [ 3 ] == count)
+				{
+					XX_dB = count;
+					break;
+				}
+				count = count + 1;
+			}
+			return XX_dB;
+		}
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description: Only in pure Telecoil mode, will the MNR be off.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Set_MNR_Controls(int pos)
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.Set_MNR_Controls');
+
+			if (pos==1)
+			{	        	
+				hi:d9FNruMnrEn = d9FNruMnrEn.on;
+			}
+			else
+			{
+				hi:d9FNruMnrEn = d9FNruMnrEn.off;
+			}
+		}		
+		
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description: Only in pure Microphone and mixed Telecoil mode, will the aMNR be on.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Set_aMNR_Controls(int pos)
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.Set_aMNR_Controls');
+
+			if (pos==1)
+			{
+				hi:d9PMicAmnrEn = d9PMicAmnrEn.enable;
+			}
+			else
+			{
+				hi:d9PMicAmnrEn = d9PMicAmnrEn.disable;
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description: Only in pure / mixed Telecoil mode, will the INR be on.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Set_INR_Controls(int pos)
+		{
+			println ('[HAL]BLIB.BasicLibrary_MicrophoneMix.Set_INR_Controls');
+
+			if (pos==1)
+			{
+				hi:d9PAuxInrEn = d9PAuxInrEn.enable;
+				hi:d9FMicAmnrNruCtrlSelect = d9FMicAmnrNruCtrlSelect.AuxINR_controls_NRU;
+			}
+			else
+			{
+				hi:d9PAuxInrEn = d9PAuxInrEn.disable;
+				hi:d9FMicAmnrNruCtrlSelect = d9FMicAmnrNruCtrlSelect.aMNR_controls_NRU;
+			}
+		}
+	}
+}

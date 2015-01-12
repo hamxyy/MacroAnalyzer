@@ -1,0 +1,706 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                           HIGH LEVEL PRICEPOINT LIBRARY : Input Mode 
+// Initial Version                												      :  2011-02-28   Cecil Wilson
+// Removed Package LIB workaround & fixed bug in
+// InputModeDD_Get :replaced while condition'<=' with '<' 				    		  :  2011-03-03   Cecil Wilson
+// InputModeDD_Set :reworked conditions for the Tek-InputModes						  :  2011-05-06   Cecil Wilson	
+// Added check for invalid MicMode in InputModeDD_Set								  :  2011-05-23   Cecil Wilson
+// Delete dependencies between OpenOptimizer and FBC strength						  :  2011-06-20   Meike Doose
+// Updated InputModeDD_Set to new structure to reuse BLIB functions					  :  2011-06-27   Cecil Wilson
+// Added IsVisiblePhysicalPos for Inputmode											  :  2011-07-21   Cecil Wilson
+// Adapt BasicLibrary_FeedbackStopper.AdaptiveDirMicEn_Set(0) to Set_for_FBC, since Turbo checkbox was deleted: 2011-07-29 Meike Doose
+// Adapt InputModeDD_Set to set OO in HLIB (since Turbo is set in incorporate in OO)
+// Removed direct setting WNC in BLIB and move the setting of WNC to HLIB			  :  2011-08-01  Jenny Lin
+// Updated closing comment and Set Sound Brilliance for Tek/miniTek Input mode by calling the 
+// High_Level_Library_SoundBriliance.SoundBriliance_Default_for_TekInputMode()		  :  2011-08-05  Jenny Lin
+// Add InputModeDD_SetAfterRemapping function										  :  2011-08-24  Chuah LayYuan
+// Added mix mic slider reset to 0dB for Micorphone mode							  :  2011-09-28  Cecil Wilson
+// Reordered accessibiliy manually calls due to dependencies to other functions		  :  2012-01-16  Cecil Wilson
+// Added SetAfterRemapping_with and without adaptive features						  :  2012-03-26  Cecil Wilson
+// Linked the InputMode setter to new functions and updated comments				  :  2012-03-27  Cecil Wilson
+// Linked InputModeDD_IsVisiblePhysicalPos to Mlib due to cap dependence and reuse	  :  2012-03-28  Cecil Wilson	
+// UPdate Ewindscreen to call HLIB													  :	 2012-04-11  Jenny Lin
+// Added Toggle updated for DAI inputmode
+// added comments for InputModeDD_SetAfterRemapping_with_NoAdapt_features on the position : 2012-04-19 Jenny Lin											  :  2012-04-18  Cecil Wilson
+// Updated Speechactivated FM & Telecoil for inputmodes and removed unused function	  :  2012-04-20  Cecil Wilson	
+// Updated Microphone Mode for Dual Omni											  :  2012-05-02  Cecil Wilson
+// Update the call for mixmic slider to common BLIB									  :  2012-06-14  Jenny Lin
+// Added peer review comments														  :  2012-06-21  Cecil/Jenny/MangYew
+// Added peer review comments: call to SoundBrilianceEn_For_FCO_And_InputMode 		  :  2012-06-21 Cecil/Jenny	
+// Updated comments in InputModeDD_SetAfterRemapping_with_NoAdapt_features to set to Omni in Tek modes and
+// Set OpenOptimizer set to OFF even if it is not visible.							  :  2012-07-12 Cecil/Jenny
+// Update macro based on CR55955 Renamed SoundBrilianceEn_For_FCO_And_InputMode to 
+// SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks. 								: 2012-07-17 Jenny
+// Updated comments for InputMode_Set_ProgramSelection. 								: 2012-07-20 Cecil, Jenny
+// FirstFit peer review: InputModeDD_Set_Default										: 2012-07-20 Nadia & Judith
+// Updated for InductionLoop Program that Autophone will be set OFF						: 2012-07-24 Frauke, Jenny
+***********************************************CODE FREEZE*********************************************************
+// ER55460: Classifier controlled noise reduction in aux only & mixed modes		      :  2012-08-27   Cecil Wilson
+// Updated HLib OpenOptimizer_Set for All TEK modes                                   :  2013-01-02   Sonia Stasiak	
+// Update High_Level_Library_InputMode.InputMode_Set_ProgramSelection
+// program selection to due FR59453. Mix with Mic is set to ON and Mic Slider set to 
+// -6dB for Program Telecoil and Induction Loop.								      :  2013-05-14 Mang Yew
+// Implementation for CR61635 (Disable FBC and WNC if input mode is non-mic input),
+// ER61121 (To deactivate FBC in pure Tinnitus mode)							        : 2012-05-30 Mang Yew  
+// Fixed ER56719 & ER59785: Remove env:Prog==0 for checks in Wireless input mode, so that it can be shown in 
+// program selection that the wireless programs are selectable when not already in use.:  2013-07-11  Jenny
+// SIFIT7.2_PEERREVIEWED: only MixedMode packages. InputMode_Set_ProgramSelection not reviewed.
+// Removed InputModeDD_IsVisiblePhysicalPos()											: 2013-07-30 Jenny & Judith
+***********************************************Sifit 7.2 CODE FREEZE************************************************
+// Update ID number in Set_ProgramSelection function									:	2013-10-29 Sonia Stasiak
+// Updated comments	for Set_ProgramSelection D9, added new Programs in set_PS			:	2013-11-04 Sonia Stasiak
+// Updated InputModeDD_SetAfterRemapping_with_NoAdapt_features() and InputModeDD_SetAfterRemapping_with_Adaptive_features()
+// to call HLIB. Added BluetoothDetection_For_InputModeDD()		: 2013-11-04 Jenny
+/*------------------------------------------In 7.3----------------------------------------------------------------------*/
+// In InputModeDD_SetAfterRemapping_with_NoAdapt_features (int physicalPos), replaced D8 function call...
+// 'High_Level_Library_Mic_Mode.MicMode_Set_MPVPos_from_String ('Omni')'...
+// ... with D9 function call 'Mid_Level_Library_Mic_Mode.MicMode_Set("Omni_mode")'       : 2013-12-04 Al 
+// refractor: Optimize code									: 2013-12-02 Jenny
+// Updated IsEnabledPos for InputMode.								: 2013-12-10 Jenny
+// update assertion to false instead of true.				: 2013-12-12 Jenny
+// Updated Set_Program Selection with d9SwMacroProgramIdHp control instead of ID		:	2013-12-17 Sonia Stasiak
+// updated to use physical pos to set features.				: 2013-12-23 Jenny
+// Move MicMode & OpenOptimizer settings to InputModeDD_SetAfterRemapping_with_Adaptive_features and
+// Removed setting of OpenOptimizer OFF in D9 as agreed by Sebastian & Cecil.				: 2014-02-04 Jenny
+// Updated SetNoiseReductionClassifierControls input to integer instead of string and
+// MixMicrophoneEn_For_InputModeDD based on physical pos.								: 2014-02-19 Jenny
+// updated InputModeDD_IsEnabledPhysicalPos to return true for telecoil and dai, since the IsVisible already 
+// taken care of the enablility.														: 2014-03-03 Jenny
+// Added new programs Telecoil MT and Telecoil T for Set_ProgramSelection (FR64541)		: 2014-03-19 Sonia & Jeline
+// Updated the physicalpos for Streaming audio(from 7 to 2), easytek FM (from 8 to 4), DAI (from 6 to 5) for
+// InputModeDD_SetAfterRemapping_with_NoAdapt_features, InputModeDD_IsEnabledPos, 
+// InputModeDD_IsEnabledPhysicalPos, InputMode_Set_ProgramSelection.	: 2014-04-07 Jenny
+// Added High_Level_Library_InputMode.InputModeDD_IsEnabled for checking Tinnitus pure-noiser for 
+// binaural fitting to return false only.									: 2014-04-09 Jenny
+// Sifit7.3 Peer review																: 2014-04-17 Jenny, Judith
+// PEER REVIEW CXX 7.3for program selection											:	2014-05-06 Sonia, Mie Mie, Jenny
+// FR67014 Set SoundBrilliance Slider Default to Minimum in Streaming Audio Input.	: 2014-05-09 Jenny
+// ER66350 update BluetoothDetection_For_InputModeDD OFF to consider HICOSS.		: 2014-05-16 Jenny
+// Added new Induction Loop (T) program into Set_ProgramSelection function			: 2014-07-30 Sonia
+// added Telecoil_SideSelection_IsVisible, Telecoil_SideSelection_Get, DAI_SideSelection_IsVisible and
+// DAI_SideSelection_Get for input mode sideselection panel.						: 2014-08-04 Jenny
+// ER68798: HICOSS Mix with Microphone selection was missing in T-coil Mode. To updated Telecoil_SideSelection_IsVisible, 
+// Telecoil_SideSelection_Get, DAI_SideSelection_IsVisible, DAI_SideSelection_Get.	: 2014-08-22 Jenny
+// rewrite InputModeDD_IsEnabledPos, InputModeDD_Get and InputModeDD_Set - In CXX (directly use the CXXPos), 
+// HICOSS (check for RemappedPos).													: 2014-09-05 Jenny
+// Re-write Set_ProgramSelection to call BLib.Is<program>							: 2014-09-16 Sonia
+// Code clean-up: in DAI_SideSelection_IsVisible, and DAI_SideSelection_Get to call IsAudioInput and IsOppAudioInput
+// instead of IsDAIProgramSetInCurrentSide and IsDAIProgramSetInOppSide.
+// Updated println for only necessary (at start of function).						: 2014-09-22 Jenny
+// ER69304 (partial fix): Updated Telecoil/DAI_SideSelection_Get - Hicoss check env:DetHI.		: 2014-10-01 Jenny
+// ER69304 removed Hicoss checks for Telecoil/DAI_SideSelection Macros.				: 2014-10-10 Jenny
+// InputMode_Set_ProgramSelection: FR68946 to change mic slider from -12dB to 6dB for 
+// Streaming Audio program.															: 2014-10-15 Jenny
+// Cxx 7.4 Peer Review for Program Selection (only)									: 2014-11-18 Sonia, Jenny, Niklas
+/*-------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_InputMode
+	{
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  Sets Bluetooth temporary program to the env:Prog if Bluetooth phone is the current input mode 
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void BluetoothDetection_For_InputModeDD ()
+		{
+			println('[HAL]HlibInputMode.BluetoothDetection_For_InputModeDD');
+			
+			if (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Bluetooth_Phone)
+			{
+				// Bluetooth Phone switching activated in current hearing program.
+				BasicLibrary_InputMode.BluetoothDetection_Set_Mode (env:Prog, 1);
+			}
+			else
+			{
+				// checks which program is Bluetooth detected activated
+				int whichHpBTPhoneInUse = BasicLibrary_InputMode.Is_BluetoothPhone_in_Use();
+				
+				if(whichHpBTPhoneInUse == -1)
+				{
+					// FR66350: Switch to HP1 if Bluetooth phone is not selected in any HP.
+					BasicLibrary_InputMode.BluetoothDetection_Set_Mode (env:Prog, 0);
+				}
+				else if(env:HiDriverWorkMode != HiDriverWorkMode.Fitting && 
+					whichHpBTPhoneInUse != env:Prog)
+				{
+					// CXX will not have any chance to activate BT phone program twice.
+					// therefore, check for Hicoss when multiple BT Phone input can be selected in different HP.
+					// If the BT selected is not in the current HP, reset the Tmp1&Tmp2 to the smallest HP.
+					
+					BasicLibrary_InputMode.BluetoothDetection_Set_Mode (whichHpBTPhoneInUse, 1);
+				}	
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  set input mode controls based on CxxPos    
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void InputModeDD_Set (int CxxPos) 
+		{
+			println('[HAL]HlibInputMode.InputModeDD_Set');
+			
+			// In CXX, use direct pos from CXX
+			int physicalPos = CxxPos;
+			
+			if(env:HiDriverWorkMode != HiDriverWorkMode.Fitting)
+			{
+				// In Hicoss, needs to Remap the pos to pos_wrt_basic_fcn using the Remapping function
+				physicalPos = Mid_Level_Library_InputMode.InputModeDD_Remapping (CxxPos);
+			}
+			
+			// sets input mode based on physical position
+			High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_Adaptive_features (physicalPos);
+		}
+		
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  Set Input mode and the child UIs and OpenOptimizer alone (Does not set the SoundBriliance/EwindScreen)
+				Input Mode	:	0 (10) = Microphone			3 (40) = Bluetooth Phone
+				physicalPos	:	1 (20) = Telecoil			4 (50) = EasyTek FM
+				(remappedPos)	2 (30) = Streaming Audio	5 (60) = Audio Shoe (DAI)
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void InputModeDD_SetAfterRemapping_with_NoAdapt_features (int physicalPos)
+		{
+			println('[HAL]HlibInputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features');
+			
+			// 1) Set the actual HI settings using basic library functions	
+			BasicLibrary_InputMode.InputModeDD_Set_Mode (physicalPos);
+
+			// 2) Activate SoundBrilliance only for SmartRelay only in Streaming Audio input
+			if (physicalPos == 2 &&	// Streaming Audio 
+				Mid_Level_Library_SoundBriliance.SoundBriliance_IsVisible () == true)
+			{
+				// Set Sound Brilliance ON (MED) for Tek/miniTek Input mode
+				println('[HAL]HlibInputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features >> For Tek/miniTek Input >> Sets SoundBrilliance ON (MED)');
+				High_Level_Library_SoundBriliance.SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks (1);
+				High_Level_Library_SoundBriliance.SoundBrilianceSL_Set (Mid_Level_Library_SoundBriliance.SoundBrilianceSL_DefaultPos()); //FR67014 Set SB Slider to Minimum
+			}
+			else
+			{
+				// Soundbrilliance Hardware set to OFF
+				println('[HAL]HlibInputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features >> For NON-Tek/miniTek Input >> Sets SoundBrilliance OFF');
+				High_Level_Library_SoundBriliance.SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks (0);
+			}			
+			
+			// 3) Auto-switching (for Bluetooth Phone)
+			High_Level_Library_InputMode.BluetoothDetection_For_InputModeDD ();
+			
+			// 4) Noise reduction Classifier Controls
+			if (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Microphone)
+			{
+				println('[HAL]HlibInputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features >> Microphone Input >> Sets Classifier ON');
+				BasicLibrary_InputMode.SetNoiseReductionClassifierControls (1);
+			}
+			else
+			{
+				println('[HAL]HlibInputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features >> NON-Microphone Input >> Sets Classifier OFF');
+				BasicLibrary_InputMode.SetNoiseReductionClassifierControls (0);
+			}
+
+			// 5) [Mixed with Microphone Checkbox Updates]
+			High_Level_Library_MicrophoneMix.MixMicrophoneEn_For_InputModeDD (physicalPos);
+
+			// 6) [Slider Updates]
+			High_Level_Library_MicrophoneMix.MixMicrophoneSL_For_InputModeDD ();
+			High_Level_Library_MicrophoneMix.WLSLevelSL_For_InputModeDD ();
+			High_Level_Library_MicrophoneMix.DAILevelSL_For_InputModeDD ();
+
+			// 7) [HW RELATED FEATURES]
+			High_Level_Library_DAI.DAIFeature_For_InputModeDD ();
+			High_Level_Library_AutoPhone.AutoPhoneEn_For_InputModeDD (1);
+			High_Level_Library_AccessibleManually.AccessibleManually_For_InputModeDD (); // TO BE SET after DAIFeature_For_InputModeDD()
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:   Sets Input mode controls and the child UIs, OpenOptimizer and SoundBriliance/EwindScreen) 
+				Input Mode	:	0 = Microphone		3 = Bluetooth Phone
+				PhysicalPos	:	1 = Telecoil		4 = EasyTek FM
+							:	2 = Streaming Audio	5 = Audio Shoe (DAI)
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void InputModeDD_SetAfterRemapping_with_Adaptive_features (int physicalPos) //SIFIT7.3PEERREVIEWED
+		{
+			println('[HAL]HlibInputMode.InputModeDD_SetAfterRemapping_with_Adaptive_features');
+			
+			High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features(physicalPos);
+
+			// ~~~~~~ FOR EWINDSCREEN UPDATES ~~~~~ CAN BE MOVED TO EWINDSCREEN HLIB
+			if (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Microphone)
+			{
+			// [EWindscreen Updates] Ewindscreen only On in Microphone input mode.
+				println('[HAL]HlibInputMode.InputModeDD_SetAfterRemapping_with_Adaptive_features >> Microphone Mode >> Sets EWindscreen ON');
+				High_Level_Library_EWindScreen.EWindScreenEn_Set_For_Microphone (1);
+			}
+
+			// 2) For All Wireless Input modes, set MicMode to Omni & OpenOpt = Off {OpenOptimizer NOT changed for D9}
+			if (Mid_Level_Library_InputMode.Is_Wireless_Input_Mode_basedon_PhysicalPos(physicalPos) &&
+				env:HiDriverWorkMode != HiDriverWorkMode.Fitting)
+			{
+				//D9: Microphone System NOT change in Input Mode for Fitting but need to update for HICOSS
+				// Set to Mic Mode to OMNI
+				println('[HAL]HlibInputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features >> For Wireless Input >> Sets Microphome Mode to OMNI IN HICOSS');
+				Mid_Level_Library_Mic_Mode.MicMode_Set("Omni_mode");
+			}
+		}
+
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  BACKMAPING  dropdown positions;   Reverse of Price point and Family resolving function.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int InputModeDD_HicossGet ()
+		{
+			println('[HAL]HlibInputMode.InputModeDD_HicossGet');
+			
+			int pos = -1;
+			int a = -1;
+			// Get the current position with respect to the Basic function  
+			int physicalPos = BasicLibrary_InputMode.InputModeDD_Get_Mode ();
+			// This function returns the Maxmimum number of steps for this UI
+			int maxstep = Mid_Level_Library_InputMode.InputModeDD_MaxPos ();
+			while (a < maxstep)
+			{ 
+				//  Test each position from 0 to maximum available for this device
+				++ a; // a=a+1
+				if (physicalPos == Mid_Level_Library_InputMode.InputModeDD_Remapping (a))
+				{
+					pos = a;
+				}
+			}
+			println('[HAL]HlibInputMode.InputModeDD_HicossGet >> pos=' + pos + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+			return pos;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  BACKMAPING  dropdown positions;   Reverse of Price point and Family resolving function.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int InputModeDD_Get ()
+		{
+			println('[HAL]HlibInputMode.InputModeDD_Get');
+			int pos = -1;
+			
+			if(env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+			{
+				// In CXX, return physical position of input mode.
+				// when the input mode is microphone and two HI is detected, 
+				// return the opposite side input mode.				
+				pos = BasicLibrary_InputMode.InputModeDD_Get_Mode();
+				
+				if(pos == 0	&& // 0: Microphone input mode 
+					env:DetHi == DetHi.BothSides)
+				{
+					pos = BasicLibrary_InputMode.InputModeDD_Get_Mode_Opp();
+				}
+			}
+			else
+			{
+				// In Hicoss mode, use original way of remapping.
+				pos = InputModeDD_HicossGet();
+			}
+		
+			return pos;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		   Description:  Sets the Menu position to the default after FF position     
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void InputModeDD_Set_Default ()
+		{
+			println('[HAL]HlibInputMode.InputModeDD_Set_Default');
+			int DefaultphysicalPos = 0; // Microphone
+
+			// Input mode set to Microphone, Autophone OFF
+			InputModeDD_SetAfterRemapping_with_NoAdapt_features (DefaultphysicalPos);
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  Decides the IsEnabled for the monaural MPV for Input Mode.
+						For monoaural fitting: only depends on the Tinnitus pure-noiser activated, IsEnabled = FALSE;
+						For binaural fitting: requires both HI have Tinnitus pure-noiser activated, IsEnabled = FALSE;
+						Else, IsEnabled = TRUE
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool InputModeDD_IsEnabled ()
+		{
+			println('[HAL]HlibInputMode.InputModeDD_IsEnabled');
+			
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure () == true)
+			{
+				if (env:DetHi == DetHi.BothSides)
+				{
+					if (BasicLibrary_Noiser.Noiser_IsOnAndPureOpposite () == true)
+					{
+						// disabled since Tinnitus pure-noiser activated in BOTH side
+						return false;
+					}
+					else
+					{
+						// enabled since Tinnitus pure-noiser not activated in THE OTHER side
+						return true;
+					}
+				}
+				else
+				{
+					// disabled since Tinnitus pure-noiser activated in THIS side
+					return false;
+				}
+			}
+			else
+			{
+				// enabled since Tinnitus pure-noiser not activated in THIS side
+				return true;
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  Decides the greyout status of the individual entries in the list (based on Logicalpos)
+				Input Mode	:	0 = Microphone		3 = Bluetooth Phone
+				PhysicalPos	:	1 = Telecoil		4 = EasyTek FM
+							:	2 = Streaming Audio	5 = Audio Shoe (DAI)
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool InputModeDD_IsEnabledPos (int CxxPos)
+		{
+			println('[HAL]HlibInputMode.InputModeDD_IsEnabledPos');
+			
+			// In CXX, pass the CxxPos directly as the physicalPos.
+			int physicalPos = CxxPos;
+			
+			if(env:HiDriverWorkMode != HiDriverWorkMode.Fitting)
+			{
+				// In Hicoss, Remapping is done to address the difference in the List for different devices
+				physicalPos = Mid_Level_Library_InputMode.InputModeDD_Remapping (CxxPos);
+			}
+			
+			return High_Level_Library_InputMode.InputModeDD_IsEnabledPhysicalPos (physicalPos);
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  Decides the greyout status of the individual entries in the list (based on physicalPos)
+				Input Mode	:	0 = Microphone		3 = Bluetooth Phone
+				PhysicalPos	:	1 = Telecoil		4 = EasyTek FM
+							:	2 = Streaming Audio	5 = Audio Shoe (DAI)
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool InputModeDD_IsEnabledPhysicalPos (int physicalPos)//SIFIT7.3PEERREVIEWED
+		{
+			println('[HAL]HlibInputMode.InputModeDD_IsEnabledPhysicalPos');
+			
+			bool retval = false;
+
+			// Switch can be placed in another High Level Function
+			switch (physicalPos)
+			{
+				case 0:
+				{ 
+					// Microphone 
+					retval = true;
+				}
+				case 1:
+				{ 
+					// Telecoil
+					// return true always, since it is not possible in D9 CXX to choose from InputMode DD anymore.
+					retval = true;
+				}
+				case 2:
+				{ 
+					// Streaming Audio
+					retval = Mid_Level_Library_InputMode.Is_available_Inputmode_StreamingAudio ();
+				}
+				case 3:
+				{ 	
+					// Bluetooth Phone
+					retval = Mid_Level_Library_InputMode.Is_available_Inputmode_BluetoothPhone ();
+				}
+				case 4:
+				{ 
+					// EasyTek FM
+					retval = Mid_Level_Library_InputMode.Is_available_Inputmode_EasyTekFM ();
+				}
+				case 5:
+				{ 
+					// Direct Audio Input
+					// return true always, since it is not possible in D9 CXX to choose from InputMode DD anymore.
+					retval = true;
+				}
+				default:
+				{ 
+					// Default, it is not necessary. but anything other than in the above list will not be Enabled
+					retval = false;
+				}
+			}
+			// For wireless input mode, the position in dropdown menu will be disabled in Hearing Program 0 (Universal)
+			// Fixed ER56719 & ER59785: Remove env:Prog==0 for checks in Wireless input mode, so that it can be shown in 
+			// program selection that the wireless programs are selectable when not already in use.
+			if ((Mid_Level_Library_InputMode.Is_Wireless_Input_Mode_basedon_PhysicalPos(physicalPos)) &&
+					env:Prog == 0 &&
+					env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+			{
+				retval = false;
+			}
+			
+			return retval;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  In CXX: Visible when current side is Telecoil programs (for monaural fitting), and either side is Telecoil programs (for binaural fitting).
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool Telecoil_SideSelection_IsVisible ()
+		{
+			println('[HAL]HlibInputMode.Telecoil_SideSelection_IsVisible');
+			
+			bool retval = false;
+			
+			// Only valid in CXX, check if PROGRAM is set to Telecoil
+			if(env:DetHi == DetHi.BothSides)
+			{
+				if(BasicLibrary_ProgramSelection.IsTelecoilProgramSetInCurrentSide() || 
+					BasicLibrary_ProgramSelection.IsTelecoilProgramSetInOppSide() )
+				{
+					// TRUE (for BINAURAL FITTING where either side has Telecoil program activated)
+					retval = true;
+				}
+			}
+			else
+			{
+				// TRUE (for MONAURAL FITTING where the current sides has Telecoil program activated)
+				retval = BasicLibrary_ProgramSelection.IsTelecoilProgramSetInCurrentSide();
+			}
+		
+			return retval;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description :  returns panel to show for the telecoil side selection panel.   
+				 Panel to be shown for Telecoil Side Selection 
+			     * 0 -> None 
+			     * 1 -> Both
+			     * 2 -> Right Only
+			     * 3 -> Left Only   
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int Telecoil_SideSelection_Get ()
+		{
+			println('[HAL]HlibInputMode.Telecoil_SideSelection_Get');
+			int retval = 0;	// default to none
+
+			// Only valid in CXX, check if PROGRAM is set to Telecoil	
+			if(env:DetHi == DetHi.RightSide)
+			{
+				if(BasicLibrary_ProgramSelection.IsTelecoilProgramSetInCurrentSide())
+				{
+					retval = 2; // right only
+				}
+			}
+			else if(env:DetHi == DetHi.LeftSide)
+			{
+				if(BasicLibrary_ProgramSelection.IsTelecoilProgramSetInCurrentSide())
+				{
+					retval = 3; // left only
+				}
+			}
+			else if(env:DetHi == DetHi.BothSides)
+			{
+				// ASSUMPTION: if Both Sides are detected, assume macro called from RIGHT SIDE!
+			 	if(BasicLibrary_ProgramSelection.IsTelecoilProgramSetInCurrentSide())
+			 	{
+					if(BasicLibrary_ProgramSelection.IsTelecoilProgramSetInOppSide())
+					{
+						retval = 1; // both
+					}
+					else
+					{
+						retval = 2; // right only
+					}
+				}
+				else
+				{
+					if(BasicLibrary_ProgramSelection.IsTelecoilProgramSetInOppSide())
+					{
+						retval = 3; // left
+					}
+				}
+			}
+			
+			return retval;
+		}
+		
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  In CXX: Visible when current side is DAI programs (for monaural fitting), and either side is DAI programs (for binaural fitting).
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool DAI_SideSelection_IsVisible ()
+		{
+			println('[HAL]HlibInputMode.DAI_SideSelection_IsVisible');
+			
+			bool retval = false;
+			
+			// Only valid in CXX, check if PROGRAM is set to DAI
+			if(env:DetHi == DetHi.BothSides)
+			{
+				if(BasicLibrary_ProgramSelection.IsAudioInput() || 
+					BasicLibrary_ProgramSelection.IsOppAudioInput())
+				{
+					
+					retval = true;
+				}
+			}
+			else
+			{
+				retval = BasicLibrary_ProgramSelection.IsAudioInput();
+			}
+			
+			return retval;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description :  returns panel to show for the DAI side selection panel.   
+				 Panel to be shown for DAI Side Selection 
+			     * 0 -> None 
+			     * 1 -> Both
+			     * 2 -> Right Only
+			     * 3 -> Left Only   
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int DAI_SideSelection_Get ()
+		{
+			println ('[HAL]HlibInputMode.DAI_SideSelection_Get');
+			
+			int retval = 0;	// default to none
+
+			// Only valid in CXX, check if PROGRAM is set to DAI	
+			if(env:DetHi == DetHi.RightSide)
+			{
+				if(BasicLibrary_ProgramSelection.IsAudioInput())
+				{
+					retval = 2; // right only
+				}
+			}
+			else if(env:DetHi == DetHi.LeftSide)
+			{
+				if(BasicLibrary_ProgramSelection.IsAudioInput())
+				{
+					retval = 3; // left only
+				}
+			}
+			else if(env:DetHi == DetHi.BothSides)
+			{
+				// ASSUMPTION: if Both Sides are detected, assume macro called from RIGHT SIDE!
+			 	if(BasicLibrary_ProgramSelection.IsAudioInput())
+			 	{
+					if(BasicLibrary_ProgramSelection.IsOppAudioInput())
+					{
+						retval = 1; // both
+					}
+					else
+					{
+						retval = 2; // right only
+					}
+				}
+				else
+				{
+					if(BasicLibrary_ProgramSelection.IsOppAudioInput())
+					{
+						retval = 3; // left
+					}
+				}
+			}
+
+			return retval;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------*
+		//	Description	:	Function is setting Input Mode for all listening situation.  --> to be improved for 7.5
+		/*---------------------------------------------------------------------------------------------------------*/		
+		public function void InputMode_Set_ProgramSelection ()
+		{
+			int Microphone = 0;
+			int Telecoil = 1;
+			int SmartRelay = 2;
+			int BluetoothPhone = 3;
+			int EasyTekFM = 4;
+			int DAI = 5;
+						
+			println ('[HAL]HlibInputMode.InputMode_Set_ProgramSelection in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+	
+			if (BasicLibrary_ProgramSelection.IsPhoneAcoustically() == true)
+			// Input mode set to Microphone, Autophone ON
+			{
+				High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features (Microphone);
+				High_Level_Library_AutoPhone.AutoPhoneEn_Set (1);
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsPhonemT() == true) 
+			// Input mode set to Telecoil, Mix with Mic ON, Mic Level slider -6dB
+			{
+				High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features (Telecoil);
+				High_Level_Library_MicrophoneMix.Telecoil_MixMicrophoneEn_Set_Mode (1);
+				High_Level_Library_MicrophoneMix.Set_MicrophoneLevelSL_CxxPos (5);
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsPhoneMT() == true)
+			// Input mode set to Telecoil, Mix with Mic ON, Mic Level slider 0dB
+			{
+				High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features (Telecoil);
+				High_Level_Library_MicrophoneMix.Telecoil_MixMicrophoneEn_Set_Mode (1);
+				High_Level_Library_MicrophoneMix.Set_MicrophoneLevelSL_CxxPos (7);
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsPhoneT() == true)
+			// Input mode set to Telecoil, Mix with Mic OFF
+			{ 
+				High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features (Telecoil);
+				High_Level_Library_MicrophoneMix.Telecoil_MixMicrophoneEn_Set_Mode (0);
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsBluetoothPhone() == true)
+			// Input mode set to Bluetooth Phone, Mix with Mic ON (by default), Mic Level slider -6dB
+			{
+				High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features (BluetoothPhone);
+				High_Level_Library_MicrophoneMix.Set_MicrophoneLevelSL_CxxPos (5);
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsInductionLoopmT() == true)
+			// Input mode set to Telecoil, Autophone OFF, Mix with Mic ON, Mic Level slider -6dB
+			{
+				High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features (Telecoil);
+				High_Level_Library_AutoPhone.AutoPhoneEn_Set (0);
+				High_Level_Library_MicrophoneMix.Telecoil_MixMicrophoneEn_Set_Mode (1);
+				High_Level_Library_MicrophoneMix.Set_MicrophoneLevelSL_CxxPos (5);
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsInductionLoopT() == true)
+			// Input mode set to Telecoil, Autophone OFF, Mix with Mic OFF
+			{
+				High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features (Telecoil);
+				High_Level_Library_AutoPhone.AutoPhoneEn_Set (0);
+				High_Level_Library_MicrophoneMix.Telecoil_MixMicrophoneEn_Set_Mode (0);
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsAudioInput() == true)
+			//Input mode set to Direct Audio Input
+			{ 
+				High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features (DAI);
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsStreamingAudio() == true)
+			//Input Mode set to Streaming Audio, Mix with Mic ON (by default), Mic Level slider -6dB
+			{
+				High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features (SmartRelay);
+				High_Level_Library_MicrophoneMix.Set_MicrophoneLevelSL_CxxPos (5); // FR68946 to change slider from -12dB to -6dB
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsEasyTekFM() == true)
+			// Input Mode set to Smart Relay FM, Mix with Mic ON (by default), Mic Level slider -9 dB
+			{
+				High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features (EasyTekFM);
+				High_Level_Library_MicrophoneMix.Set_MicrophoneLevelSL_CxxPos (4);
+			}
+			
+			else // (all other programs)
+			// Input Mode set to Microphone, Autophone OFF
+			{
+				High_Level_Library_InputMode.InputModeDD_SetAfterRemapping_with_NoAdapt_features (Microphone);
+				High_Level_Library_AutoPhone.AutoPhoneEn_Set (0);
+			}
+		}
+
+	}
+
+}
+
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Higher Level PP LIBRARY    InputMode
+-----------------------------------------------------------------------------------------------------------------*/

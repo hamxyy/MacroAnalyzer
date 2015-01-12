@@ -1,0 +1,93 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									PROGRAM SELECTION - Audio Input
+
+// Initial Version																			: 2011-08-22 Chuah LayYuan
+// Updated the Program ID																	: 2011-11-08 Chuah LayYuan
+// Added THI Weight setting in Apply Function                           					: 2011-11-22 Chuah LayYuan
+// Added GetOrderNumber() and IsSingleUse() function.										: 2012-03-19 Jenny Lin
+// Updated GetID from 14 to 15 due to Universal = 1.										: 2012-03-22 Jenny Lin
+// Replaced InputMode SetPos to non-adaptive (no update of WNC/SoundBrilliance)				: 2012-03-27 Cecil Wilson	
+// Updated IsVisible function 																: 2012-04-04 Cecil Wilson
+// Fixed the microphone mode, set to Omni													: 2012-04-25 Cecil Wilson  
+// Updated the Microphone mode function call												: 2012-05-02 Cecil Wilson
+// Removed print lines from Apply app. function to make code neater            				: 2012-07-18 Al
+// Call the HLIB for Program Selection for all programs.									: 2012-07-20 Cecil, Jenny
+// *********************************************CODE FREEZE*********************************************************
+// CR57156 - Set CBFS to off for HP2-HP6													: 2012-08-22 Nadia Neugeborn
+// Peer Review Changes 7.2.                                                     			: 2013-08-15 Raymond, MangYew, Judith
+// D8 Program Selection code cleaning, apply function to call H_Lib							: 2013-10-24 Sonia Stasiak
+// Updated IsEnabled to call Mid_Level_Library												: 2013-11-01 Sonia Stasiak
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Updated Apply function with d9SwMacroProgramIdHp, code tuning							: 2013-12-17 Sonia Stasiak
+// PEER REVIEW CXX 7.3																		: 2014-05-06 Sonia, Mie Mie, Jenny
+/*--------------------------------------------- Cxx 7.4 -----------------------------------------------------------*
+// Changed package to MonAppProgramSelection, added ApplyComplementary function				: 2014-07-10 Sonia 
+// Revert above changes as requirement is not valid anymore									: 2014-07-25 Sonia
+// Update GetOrderNumber function after adding new Induction Loop program					: 2014-07-31 Sonia
+// Changed package back to MonAppProgramSelection, added ApplyComplementary function		: 2014-08-01 Sonia
+// Change Apply function to call BLib.Set<program> to set d9SwmacroProgramIdHp				: 2014-09-16 Sonia
+// Code clean up																			: 2014-09-17 Sonia
+/*-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package MonAppProgramSelection AudioInput
+	{
+		application function int GetID ()
+		{
+			int retVal = 15;
+			println ('[HAL]PS - AudioInput.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "Audio Input";
+			println ('[HAL]PS - AudioInput.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 15; // Audio Input
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - AudioInput.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 15; // Audio Input
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - AudioInput.IsEnabled = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			return retVal;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetAudioInput();
+			
+			println ('[HAL]PS - AudioInput.Apply started in HP = '+ BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - AudioInput.Apply done in HP = '+ BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function void ApplyComplementary ()
+		{
+			BasicLibrary_ProgramSelection.SetPrivacy();
+			
+			println ('[HAL]PS - AudioInput.ApplyComplementary started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - AudioInput.ApplyComplementary done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function int GetOrderNumber ()
+		{
+			int retVal = 18;
+			println ('[[HAL]PS - AudioInput.GetOrderNumber = ' + retVal);
+			return retVal;
+		}
+	}
+}
+//------------------------------------ END of PROGRAM SELECTION - Audio Input -------------------------------------*/

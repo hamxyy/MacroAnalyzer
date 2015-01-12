@@ -1,0 +1,66 @@
+/*----------------------------------------------------------------------------------------------------------------
+// CXX UI:                        MicMode HICOSS radio buttons
+//----------------------------------------------------------------------------------------------------------------
+// Initial Version                						     							:  2013-12-06  Al
+// 7.3 Peer Review: Replace Mic_Mode_Is_Enabled with IsTinnitusNotPureandMicModeEnabled	:  2014-04-14 Raymond
+// ER67340: Rename MaxPos to MaxPhysicalPos												:  2014-05-16 Raymond
+/*----------------------------------------------------------v7.4-------------------------------------------------
+// Chores																				:  2014-06-30 Sultan 
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{	                                   
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_Hicoss
+	{			
+		application function bool IsVisible() 
+		{
+			bool retVal = true;
+			println('[HAL]MM - Mic_Mode_Hicoss_RB.IsVisible = ' + retVal);						
+			return retVal;
+		}
+				
+		application function int MaxPhysicalPos() 
+		{
+           //3 radio buttons available- 'Omni', 'Dir', and 'Other'.
+           	int retVal = 2;	  		
+	 		println('[HAL]MM - Mic_Mode_Hicoss_RB.MaxPhysicalPos = ' + retVal);			
+			return retVal;
+		}
+											
+		application function bool IsEnabled() 
+		{		
+			bool retVal = BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled();
+			println('[HAL]MM - Mic_Mode_Hicoss_RB.IsEnabled = ' + retVal + ' in' + BasicLibrary_DebugPrint.PrintCurrentProg());			
+			return retVal;
+		}
+							
+	 	application function int GetPos() 
+	 	{	 	
+			int retVal = Mid_Level_Library_Mic_Mode.Mic_Mode_HicossGetPos();  						  		
+	 		println('[HAL]MM - Mic_Mode_Hicoss_RB.GetPos = '+ retVal + ' in' + BasicLibrary_DebugPrint.PrintCurrentProg());		
+			return retVal; 		 
+	 	}
+	 		 		 	
+	 	application function bool IsEnabledPos(int pos) 
+	 	{	 	
+	 		bool retVal = Mid_Level_Library_Mic_Mode.Mic_Mode_HicossIsEnabledPos(pos);	 			 	 	
+	 		println('[HAL]MM - Mic_Mode_Hicoss_RB.IsEnabledPos = ' + retVal + ' in' + BasicLibrary_DebugPrint.PrintCurrentProg());	 			 	
+	 		return retVal;
+	 	}
+	 		 		 	
+	 	application function bool IsVisiblePhysicalPos(int pos) 
+	 	{	 		
+	 		bool retVal = Mid_Level_Library_Mic_Mode.Mic_Mode_HicossVisPhysPos(pos);
+			println('[HAL]MM - Mic_Mode_Hicoss_RB.IsVisiblePhysicalPos = ' + retVal + ' in' + BasicLibrary_DebugPrint.PrintCurrentProg());	 		 			 			 		
+	 		return retVal;
+	 	}
+	 			 			 			
+		application function void SetPos(int pos) 
+		{		
+		 	println('[HAL]MM - Mic_Mode_Hicoss_RB.SetPos = ' + pos + ' in' + BasicLibrary_DebugPrint.PrintCurrentProg());
+			Mid_Level_Library_Mic_Mode.Mic_Mode_HicossSetPos(pos);
+		}
+	}	
+}	

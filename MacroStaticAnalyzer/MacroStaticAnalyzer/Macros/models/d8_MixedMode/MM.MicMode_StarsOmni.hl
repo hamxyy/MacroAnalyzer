@@ -1,0 +1,55 @@
+/*----------------------------------------------------------------------------------------------------------------
+// CXX UI:									Mic Mode Stars for OmniDirectional
+//----------------------------------------------------------------------------------------------------------------
+// Initial version															: 2014-02-03 Raymond
+// Changed 4 to 5 for MaxPos                                      		    : 2014-02-28 Judith
+// Updated println statement for MaxPos										: 2014-03-04 Raymond
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_StarsOmni
+	{
+		application function bool IsVisible ()
+		{
+			bool retVal = Mid_Level_Library_MicModeStars.OmniStarsIsVisible();
+			println ('[HAL]MM - Mic_Mode_StarsOmni.IsVisible = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			bool retVal = true;
+			println ('[HAL]MM - Mic_Mode_StarsOmni.IsEnabled = ' + retVal);
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			int retVal = 5;
+			println ('[HAL]MM - Mic_Mode_StarsOmni.MaxPos == ' + retVal);
+			return retVal;
+		}
+		
+ 		application function bool IsEnabledPos (int pos)
+		{
+			bool retVal = true;
+			println ('[HAL]MM - Mic_Mode_StarsOmni.IsEnabledPos = ' + retVal);
+			return retVal;
+		} 
+		
+ 		application function int GetPos ()
+		{
+			int retVal = Mid_Level_Library_MicModeStars.GetOmniStars();
+			println ('[HAL]MM - Mic_Mode_StarsOmni.GetPos = ' + retVal);
+			return retVal;
+		}
+		
+ 		application function void SetPos (int pos)
+		{
+		
+		}  	
+	}
+}

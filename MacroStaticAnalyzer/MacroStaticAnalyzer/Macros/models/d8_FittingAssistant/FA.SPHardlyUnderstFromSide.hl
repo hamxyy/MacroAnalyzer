@@ -1,0 +1,78 @@
+// First Draft based on FA.AATemplateFitAss.hl 											:2013-06-16 Judith
+// New proposal added for Binaural Features												:2014-08-26 Mang Yew/Judith
+// Added Stroll proposal in proposal 2													:2014-09-17 Mang Yew
+/*------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package FittingAssistent SPHardlyUnderstFromSide
+	{
+		application function bool IsVisible ()
+		{
+			return true;
+		} //closing SPHardlyUnderstFromSide.IsVisible
+		application function bool IsEnabled ()
+		{
+			return true;
+		} //closing SPHardlyUnderstFromSide.IsEnabled
+		application function void SelectProposal1 ()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure())
+			{
+				setApply1IsVisible (false);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_P_Tinnitus");
+			}
+			//Hide it for Sifit7.4 as Binaural Proposal will not be available. Will be used again in Sifit7.5
+//			else if(High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable("FA_P_MicOmni"))
+//			{
+//				setApply1IsVisible(true);
+//				setApply1IsEnabled(true);
+//				setProposalTextID1("FA_P_MicOmni");				
+//			}
+			else if(High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable("FA_P_IncGainSpeech"))
+			{
+				setApply1IsVisible(true);
+				setApply1IsEnabled(true);
+				setProposalTextID1("FA_P_IncGainSpeech");			
+			}
+			else
+			{
+				setApply1IsVisible(true);
+				setApply1IsEnabled(false);
+				setProposalTextID1("FA_N_IncGainSpeech");
+			}
+		} //closing SPHardlyUnderstFromBack.SelectProposal1
+		application function void ApplyProposal1 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID1());
+		} //closing SPHardlyUnderstFromBack.ApplyProposal1
+		application function void SelectProposal2 ()
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+			{
+				setApply2IsVisible (false);
+				setApply2IsEnabled (false);
+				setProposalTextID2 ("FA_P_Tinnitus");
+			}
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_AddStroll"))
+			{
+				setApply2IsVisible (false);
+				setApply2IsEnabled (false);
+				setProposalTextID2 ("FA_P_AddStroll");
+			}
+			else
+			{
+				setApply2IsVisible (false);
+				setApply2IsEnabled (false);
+				setProposalTextID2 ("FA_X_AddStroll");
+			}
+		} //closing SPHardlyUnderstFromBack.SelectProposal2
+		application function void ApplyProposal2 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal(getProposalTextID2());
+		} //closing SPHardlyUnderstFromBack.ApplyProposal2
+		
+	} //package FitAss SPHardlyUnderstFromSide
+
+} //namespace shs_sat

@@ -1,0 +1,48 @@
+/*----------------------------------------------------------------------------------------------------------------
+// CXX UI:                        MicMode SideLook panel
+//----------------------------------------------------------------------------------------------------------------
+// Initial Version                						     							:  2013-11-01 Raymond
+// Removed IsEnabledPos, as not used                                                    :  2014-02-26 Al
+//---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_SL 
+	{
+		application function bool IsVisible() 
+		{
+			bool retVal = Mid_Level_Library_Mic_Mode.SLIsVisible(); 
+			println('[HAL]MM - Mic_Mode_SL.IsVisible = ' + retVal);
+			return retVal;			
+		} 
+		
+		application function bool IsEnabled()
+		{
+			bool retVal = High_Level_Library_Mic_Mode.SL_IsEnabled();
+			println('[HAL]MM - Mic_Mode_SL.IsEnabled = ' + retVal);
+			return retVal;			
+		}
+		
+		application function int MaxPos()
+		{
+			int retVal = 1;
+			println('[HAL]MM - Mic_Mode_SL.MaxPos = ' + retVal);
+			return retVal; // Checkbox with 2 states
+		}
+		
+		application function int GetPos()
+		{
+			int retVal = High_Level_Library_Mic_Mode.SL_GetPos();
+			println('[HAL]MM - Mic_Mode_SL.GetPos = ' + retVal);
+			return retVal;
+		}
+		
+		application function void SetPos(int pos)
+		{
+			println('[HAL]MM - Mic_Mide_SL.Set Pos ' + pos);
+			High_Level_Library_Mic_Mode.Mic_Mode_Set_SL(pos);
+		} 
+	} 
+}

@@ -1,0 +1,317 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            MID LEVEL PRICEPOINT LIBRARY : Microphone Mix 
+// Initial Version                                                                       :  2011-03-14  Cecil Wilson
+// Added Slider functions                                                                :  2011-03-16  Cecil Wilson
+// Added WLS function common for Wireless Audio and Phone								 :  2011-03-28  Cecil Wilson
+// Removed cap: workarounds																 :  2011-05-20  Cecil Wilson
+// Add println for easy debugging								        				 :  2011-06-27  Chuah LayYuan
+// Added default levels for sliders 													 :  2011-06-27  Cecil Wilson
+// Added function for default position for Microphone mode 								 :  2011-09-28  Cecil Wilson
+// Added pricepoint dependence for the MicrophoneLevel slider for 100/75 pp				 :  2011-04-05  Cecil Wilson
+// Default to "false" case, and remove Pricepoint dependencies for IsVisible check.		 :  2012-06-13  Jenny Lin
+// Added peer review comments 															 :  2012-06-21  Cecil/MangYew/Jenny
+// ******SIFIT7.2_PEERREVIEWED: 					  
+// delete Telecoil_MixMicLevelSL_IsVisible, WirelessPhone_MixMicEn_IsVisible, WirelessPhone_MixMicLevelSL_IsVisible,
+// WirelessAudio_MixMicEn_IsVisible, WirelessAudio_MixMicLevelSL_IsVisible				 :  2013-07-30   Jenny, Judith
+// Added MicrophoneLevelSL_MaxPos(), WLSLevelSL_MaxPos(), DAILevelSL_MaxPos()	: 2013-11-04 Jenny
+// refractor: Optimize code									: 2013-12-02 Jenny
+// update assertion to false instead of true.				: 2013-12-12 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib Mid_Level_Library_MicrophoneMix
+	{
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    MicrophoneLevelSL_MaxPos
+//   Input		:  none
+//   Output      :  <int> Basic library function postition for default position
+//   Description:  Decides the Default level of the Microphone Mode's Mix Mic Level Slider after the selection via InputMode 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int MicrophoneLevelSL_MaxPos () //SIFIT7.3PEERREVIEWED
+		{
+			return 7; // total 8 position from 0 to 7.
+		} //Closes Mid_Level_Library_MicrophoneMix.MicrophoneLevelSL_MaxPos
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    WLSLevelSL_MaxPos
+//   Input		:  none
+//   Output      :  <int> Basic library function postition for default position
+//   Description:  Decides the Default level of the Microphone Mode's Mix Mic Level Slider after the selection via InputMode 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int WLSLevelSL_MaxPos ()
+		{
+			return 10; // total 11 position from 0 to 10.
+		} //Closes Mid_Level_Library_MicrophoneMix.WLSLevelSL_MaxPos
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    DAILevelSL_MaxPos
+//   Input		:  none
+//   Output      :  <int> Basic library function postition for default position
+//   Description:  Decides the Default level of the Microphone Mode's Mix Mic Level Slider after the selection via InputMode 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int DAILevelSL_MaxPos () //SIFIT7.3PEERREVIEWED
+		{
+			return 6; // total 11 position from 0 to 7.
+		} //Closes Mid_Level_Library_MicrophoneMix.DAILevelSL_MaxPos
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Low Level PP LIBRARY Function:    MicrophoneLevelSlider_Remapping
+//   Input		:  int
+//   Output      :  int
+//   Description:  returns remapped position of the Slider strength
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int MicrophoneLevelSlider_Remapping (int CxxPos) //SIFIT7.3PEERREVIEWED
+		{
+			int XX_dB = -21; // position 0 = -21dB
+
+			switch (CxxPos)
+			{
+				case 0:{
+					XX_dB = -21;
+				}
+				case 1:{
+					XX_dB = -18;
+				}
+				case 2:{
+					XX_dB = -15;
+				}
+				case 3:{
+					XX_dB = -12;
+				}
+				case 4:{
+					XX_dB = -9;
+				}
+				case 5:{
+					XX_dB = -6;
+				}
+				case 6:{
+					XX_dB = -3;
+				}
+				case 7:{
+					XX_dB = 0;
+				}
+				default:{
+					XX_dB = 0;
+					assertion (false, "[MacroError] MicrophoneLevelSlider_Remapping no valid CxxPos");
+				}
+			}
+			println('[HAL]MLIB.MicrophoneLevelSlider_Remapping CxxPos=' + CxxPos + ' >> XX_dB =' + XX_dB);
+			return XX_dB;
+		} //Closes Mid_Level_Library_MicrophoneMix.MicrophoneLevelSlider_Remapping		
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Low Level PP LIBRARY Function:    WLSLevelSlider_Remapping
+//   Input		:  int
+//   Output      :  int
+//   Description:  returns remapped position of the Slider strength
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int WLSLevelSlider_Remapping (int CxxPos) //SIFIT7.3PEERREVIEWED
+		{
+			int XX_dB = -30; // position 0 = -18dB (D8), -30dB(D9)
+
+			switch (CxxPos)
+			{
+				case 0:{
+					XX_dB = -30;
+				}
+				case 1:{
+					XX_dB = -27;
+				}
+				case 2:{
+					XX_dB = -24;
+				}
+				case 3:{
+					XX_dB = -21;
+				}
+				case 4:{
+					XX_dB = -18;
+				}
+				case 5:{
+					XX_dB = -15;
+				}
+				case 6:{
+					XX_dB = -12;
+				}
+				case 7:{
+					XX_dB = -9;
+				}
+				case 8:{
+					XX_dB = -6;
+				}
+				case 9:{
+					XX_dB = -3;
+				}
+				case 10:{
+					XX_dB = 0;
+				}
+				default:{
+					XX_dB = 0;
+					assertion (false, "[MacroError] WLSLevelSlider_Remapping no valid CxxPos");
+				}
+			}
+			println('[HAL]MLIB.WLSLevelSlider_Remapping CxxPos=' + CxxPos + ' >> XX_dB =' + XX_dB);
+			return XX_dB;
+		} //Closes Mid_Level_Library_MicrophoneMix.WLSLevelSlider_Remapping
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Low Level PP LIBRARY Function:    DAILevelSlider_Remapping
+//   Input		:  int
+//   Output      :  int
+//   Description:  returns remapped position of the Slider strength
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int DAILevelSlider_Remapping (int CxxPos) //SIFIT7.3PEERREVIEWED
+		{
+			int XX_dB = -18; // position 0 = -18dB
+
+			switch (CxxPos)
+			{
+				case 0:{
+					XX_dB = -18;
+				}
+				case 1:{
+					XX_dB = -15;
+				}
+				case 2:{
+					XX_dB = -12;
+				}
+				case 3:{
+					XX_dB = -9;
+				}
+				case 4:{
+					XX_dB = -6;
+				}
+				case 5:{
+					XX_dB = -3;
+				}
+				case 6:{
+					XX_dB = 0;
+				}
+				default:{
+					XX_dB = 0;
+					assertion (false, "[MacroError] DAILevelSlider_Remapping no valid CxxPos");
+				}
+			}
+			println('[HAL]MLIB.DAILevelSlider_Remapping CxxPos=' + CxxPos + ' >> XX_dB =' + XX_dB);
+			return XX_dB;
+		} //Closes Mid_Level_Library_MicrophoneMix.DAILevelSlider_Remapping
+
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    MicrophoneMode_Mix_MicLevelSL_Default_pos
+//   Input		:  none
+//   Output      :  <int> Basic library function postition for default position
+//   Description:  Decides the Default level of the Microphone Mode's Mix Mic Level Slider after the selection via InputMode 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int MicrophoneMode_Mix_MicLevelSL_Default_pos () //SIFIT7.3PEERREVIEWED
+		{
+			println('[HAL]MLIB.MicrophoneMode_Mix_MicLevelSL_Default_pos = 7 (0dB)');
+			return 7; // 0dB
+		} //Closes Mid_Level_Library_MicrophoneMix.MicrophoneMode_Mix_MicLevelSL_Default_pos			
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    Telecoil_Mix_MicLevelSL_Default
+//   Input		:  none
+//   Output      :  <int> Basic library function postition for default position
+//   Description:  Decides the Default level of the Telecoil Mix Mic Level Slider after the selection via InputMode 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int Telecoil_Mix_MicLevelSL_Default_pos () //SIFIT7.3PEERREVIEWED
+		{
+			println('[HAL]MLIB.Telecoil_Mix_MicLevelSL_Default_pos = 7 (0dB)');
+			return 7; // 0dB
+		} //Closes Mid_Level_Library_MicrophoneMix.Telecoil_Mix_MicLevelSL_Default_pos
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    DAI_LevelSL_Default_pos
+//   Input		:  none
+//   Output      :  <int> Denotes the default position of the slider
+//   Description:  Decides the Default level of the DAI  Level Slider after the selection via InputMode 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int DAI_LevelSL_Default_pos () //SIFIT7.3PEERREVIEWED
+		{
+			println('[HAL]MLIB.DAI_LevelSL_Default_pos = 6 (0dB)');
+			return 6;
+		} //Closes Mid_Level_Library_MicrophoneMix.DAI_LevelSL_Default_pos	
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    SpeechActFM_Mix_MicLevelSL_Default_pos
+//   Input		:  none
+//   Output      :  <int> Denotes the default position of the slider for Speech activated FM
+//   Description:  Decides the Default level of the Mix Mic Level for  Speech activated FM ON case
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int SpeechActFM_Mix_MicLevelSL_Default_pos () //SIFIT7.3PEERREVIEWED
+		{
+			println('[HAL]MLIB.SpeechActFM_Mix_MicLevelSL_Default_pos = 4 (-9dB) when Speech Activated FM is ON.');
+			return 4; //-9dB
+		} //Closes Mid_Level_Library_MicrophoneMix.SpeechActFM_Mix_MicLevelSL_Default_pos	
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    MiniTek_Telecoil_Mix_MicLevelSL_Default_pos
+//   Input		:  none
+//   Output      :  <int> Denotes the default position of the slider
+//   Description:  Decides the Default level of the MiniTek_Telecoil MIC  Level Slider after the selection via InputMode
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int MiniTek_Telecoil_Mix_MicLevelSL_Default_pos () //SIFIT7.3PEERREVIEWED
+		{
+			println('[HAL]MLIB.MiniTek_Telecoil_Mix_MicLevelSL_Default_pos = 7 (0dB)');
+			return 7; //0dB
+		} //Closes Mid_Level_Library_MicrophoneMix.MiniTek_Telecoil_Mix_MicLevelSL_Default_pos
+
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    Tek_MiniTek_Mix_MicLevelSL_Default_pos
+//   Input		:  none
+//   Output      :  <int> Denotes the default position of the slider
+//   Description:  Decides the Default level of the Tek_MiniTek MIC  Level Slider after the selection via InputMode 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int Tek_MiniTek_Mix_MicLevelSL_Default_pos () //SIFIT7.3PEERREVIEWED
+		{
+			println('[HAL]MLIB.Tek_MiniTek_Mix_MicLevelSL_Default_pos = 7 (0dB)');
+			return 7; // 0dB;
+		} //Closes Mid_Level_Library_MicrophoneMix.Tek_MiniTek_Mix_MicLevelSL_Default_pos
+
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    MiniTek_FM_Mix_MicLevelSL_Default_pos
+//   Input		:  none
+//   Output      :  <int> Denotes the default position of the slider
+//   Description:  Decides the Default level of the MiniTek FM MIC  Level Slider after the selection via InputMode
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int MiniTek_FM_Mix_MicLevelSL_Default_pos () //SIFIT7.3PEERREVIEWED
+		{
+			println('[HAL]MLIB.MiniTek_FM_Mix_MicLevelSL_Default_pos = 7 (0dB)');
+			return 7; // 0dB;
+		} //Closes Mid_Level_Library_MicrophoneMix.MiniTek_FM_Mix_MicLevelSL_Default_pos
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    BluetoothPhone_Mix_MicLevelSL_Default_pos
+//   Input		:  none
+//   Output      :  <int> Denotes the default position of the slider 
+//   Description:  Decides the Default level of the BluetoothPhone MIC  Level Slider after the selection via InputMode 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int BluetoothPhone_Mix_MicLevelSL_Default_pos () //SIFIT7.3PEERREVIEWED
+		{
+			println('[HAL]MLIB.BluetoothPhone_Mix_MicLevelSL_Default_pos = 7 (0dB)');
+			return 7; // 0dB;
+		} //Closes Mid_Level_Library_MicrophoneMix.BluetoothPhone_Mix_MicLevelSL_Default_pos
+
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    WLS_LevelSL_Default_pos
+//   Input		:  none
+//   Output      :  <int> Denotes the default position of the slider
+//   Description:  Decides the Default level of the WLS Level Slider after the selection via InputMode 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int WLS_LevelSL_Default_pos () //SIFIT7.3PEERREVIEWED
+		{
+			println('[HAL]MLIB.WLS_LevelSL_Default_pos = 6 (0dB)');
+			return 6; // 0dB;
+		} //Closes Mid_Level_Library_MicrophoneMix.WLS_LevelSL_Default_pos
+
+		/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Middle Level PP LIBRARY    Microphone Mix 
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package Mid_Level_Library_MicrophoneMix
+
+} //namespace shs.sat

@@ -1,0 +1,210 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            BASIC LEVEL LIBRARY : THI Training
+// Initial version														: 2011-11-21 CLY
+// Add the isValib checking												: 2011-12-07 CLY
+// Added THI_Learning_Set for Learning/Logging 							: 2012-04-03 Nadia
+// Reworked THI_Learning_Set(int pos)									: 2012-05-11 Nadia
+// Added THI_Logging_Set for logging									: 2012-05-28 Nadia
+// Added assertion message									: 2012-12-18 Jenny Lin
+// Revert prefix from D9 to D8 for SwThiEnable.	: 2013-10-24 Jenny
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat {
+	
+    using shs_sat.*;
+    
+	package  Lib BasicLibrary_THI uselib builtins {
+
+/*---------------------------------------------------------------------------------------------------------------*/
+//   BASIC LIBRARY Function:    THI_Set
+//   Input      :  int pos: Desired stage of THI
+//   Ouput      :  none
+//   Description:  Application weight of the learned offset, determines influence of each single training step 
+/*-----------------------------------------------------------------------------------------------------------------*/		
+public function void THI_Set(int pos) {
+	println('[HAL]BLIB-THI_Set >> pos = ' + pos);	
+	bool varNotValid = false;
+	
+	switch(pos)
+	{
+		case 0:{
+			if(isValid(d8FThiWeight._1)==true){
+				hi:d8FThiWeight = d8FThiWeight._1;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 1:{
+			if(isValid(d8FThiWeight._1_d_2)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_2;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 2:{
+			if(isValid(d8FThiWeight._1_d_4)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_4;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 3:{
+			if(isValid(d8FThiWeight._1_d_8_P_1_d_16)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_8_P_1_d_16;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 4:{
+			if(isValid(d8FThiWeight._1_d_8)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_8;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 5:{
+			if(isValid(d8FThiWeight._1_d_16_P_1_d_32)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_16_P_1_d_32;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 6:{
+			if(isValid(d8FThiWeight._1_d_16)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_16;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 7:{
+			if(isValid(d8FThiWeight._1_d_32_P_1_d_64)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_32_P_1_d_64;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 8:{
+			if(isValid(d8FThiWeight._1_d_32)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_32;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 9:{
+			if(isValid(d8FThiWeight._1_d_64_P_1_d_128)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_64_P_1_d_128;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 10:{
+			if(isValid(d8FThiWeight._1_d_64)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_64;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 11:{
+			if(isValid(d8FThiWeight._1_d_128)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_128;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 12:{
+			if(isValid(d8FThiWeight._1_d_256)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_256;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 13:{
+			if(isValid(d8FThiWeight._1_d_512)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_512;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 14:{
+			if(isValid(d8FThiWeight._1_d_1024)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_1024;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		case 15:{
+			if(isValid(d8FThiWeight._1_d_2048)==true){
+				hi:d8FThiWeight = d8FThiWeight._1_d_2048;
+			}
+			else{
+				varNotValid = true;
+			}
+		}
+		default:
+		{
+			println('[HAL]:ERROR!! Invalid parameter for BLIB-THI_Set pos = '+pos);	
+		}
+	}
+
+	if(varNotValid)
+	{
+		int hp=env:Prog; //Retrive current hearing program
+		println('[HAL]:EXCEPTION - BLIB.THI-THI_Set: Cannot access a step of valid control hi:d8FThiWeight for HP:'+hp);   
+	}
+		assertion(varNotValid == false, "[MacroError] Undefined state of ThiWeight. Cannot access a step of valid control hi:d8FThiWeight!");
+}//closes BasicLibrary_THI.THI_Set
+
+/*---------------------------------------------------------------------------------------------------------------*/
+//   BASIC LIBRARY Function:    THI_Learning_Set
+//   Input      :  Activation/deactivation of learning
+//   Ouput      :  none
+//   Description:  Enable/disable learning through the SW combined control (sets other controls in the background)
+/*-----------------------------------------------------------------------------------------------------------------*/		
+
+public function void THI_Learning_Set(int pos){
+	println('[HAL]BLIB-THI_Learning_Set >> pos = ' + pos);
+	if (pos == 1){
+		hi:d8SwThiEnable = d8SwThiEnable.On;
+	}
+	else{
+		hi:d8SwThiEnable = d8SwThiEnable.Off;
+	}	
+}//closes BasicLibrary_THI.THI_Learning_Set
+
+/*---------------------------------------------------------------------------------------------------------------*/
+//   BASIC LIBRARY Function:    THI_Logging_Set
+//   Input      :  Activation/deactivation of logging
+//   Ouput      :  none
+//   Description:  Enable/disable logging
+/*-----------------------------------------------------------------------------------------------------------------*/		
+
+public function void THI_Logging_Set(int pos){
+println('[HAL]BLIB-THI_Logging_Set >> pos = ' + pos);
+	if (pos == 1){
+		hi:d8FDlgEn = d8FDlgEn.enabled;
+	}
+	else{
+		hi:d8FDlgEn = d8FDlgEn.disabled;
+	}
+}//closes BasicLibrary_THI.THI_Logging_Set
+
+/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY  Training (THI)
+-----------------------------------------------------------------------------------------------------------------*/			
+	}//package BasicLibrary_THI
+}//namespace shs.sat

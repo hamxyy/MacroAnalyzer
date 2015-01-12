@@ -1,0 +1,73 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Speech and Noise Management Speech in Noise only Checkbox
+// Initial Version                						   								: 2011-03-16 Meike Doose
+// include IsEnabled when Tinnitus is set to Noise		   								: 2011-03-22 Meike Doose
+// remove retval from set pos because of warnings          								: 2011-04-01 Nadine Seubert
+// Add println for MPV testing							   								: 2011-09-22 Jenny Lin
+// Deleted comments above application functions that descibe what the functions do  	: 2012-06-05 Alastair Manders 
+// Peer review changes									  					 			: 2012-06-20 Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Added Greyout functions for Speech in Noise Checkbox due to ER55460 					: 2012-08-27 Cecil Wilson
+// updated GetNoiseReductionClassifierControls to read int instead of string.			: 2014-02-19 Jenny
+// Update IsEnabled Function to check SwMacro for SnmEn    								: 2014-03-17 Mang Yew
+// Clean up																				: 2014-10-10 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{	
+	using shs_sat.*;	
+	
+	package MixedMode SpeechNoiseMgmnt_SpeechInNoiseEn
+	{
+		application function bool IsVisible()
+		{
+			println('[HAL]MixedMode.SpeechNoiseMgmnt_SpeechInNoiseEn.IsVisible = TRUE');
+						
+			return true;
+		}
+						
+		application function bool IsEnabled()
+		{
+			bool retVal = false;
+			retVal = High_Level_Library_SpeechNoiseMgmnt.IsSpeechNoiseMgmntSpeechInNoiseEnabled ();
+			println('[HAL]MixedMode.SpeechNoiseMgmnt_SpeechInNoiseEn.IsEnabled = ' + retVal + BasicLibrary_DebugPrint.PrintCurrentProg ());
+			return retVal;
+		}
+		
+		application function int MaxPos()
+		{
+	 		println('[HAL]MixedMode.SpeechNoiseMgmnt_SpeechInNoiseEn.MaxPos = 1');
+	 					
+			return 1;
+		}
+				
+		application function bool IsEnabledPos(int pos)
+		{
+	 		println('[HAL]MixedMode.SpeechNoiseMgmnt_SpeechInNoiseEn.IsEnabledPos = TRUE');
+	 					
+			return true;
+		}
+				
+		application function int GetPos()
+		{
+	 		int retVal = -1;
+	 					
+			if (High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Get() == true)
+			{
+	 			retVal = 1;
+	 		}
+			else{
+				retVal = 0;	
+			} 		 	 		
+	 		println('[HAL]MixedMode.SpeechNoiseMgmnt_SpeechInNoiseEn.GetPos = '+ retVal + BasicLibrary_DebugPrint.PrintCurrentProg ());
+			
+			return retVal;
+		}
+					
+		application function void SetPos(int pos)
+		{
+	 		println('[HAL]MixedMode.SpeechNoiseMgmnt_SpeechInNoiseEn.SetPos = ' + pos + BasicLibrary_DebugPrint.PrintCurrentProg ());	 					
+			High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set (pos);
+		}
+
+	}
+}

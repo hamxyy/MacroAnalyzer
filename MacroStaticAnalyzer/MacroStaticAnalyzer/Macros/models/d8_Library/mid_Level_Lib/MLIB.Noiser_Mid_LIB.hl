@@ -1,0 +1,106 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                                 MID LEVEL LIBRARY  Noiser
+// Initial Version                						   								:  2011-03-17 Meike Doose
+// Removed Cap:  workaround 							   								:  2011-05-16 Cecil Wilson
+// Added Noiser_Visibility checks and updated println 									:  2012-05-03 Jenny
+// Peer review comments implemented														:  2012-06-19 MieMie/Cecil/Nadia
+// *********************************************CODE FREEZE*******************************************************  
+// Added assertion for error messages to be shown in Connexx							:  2012-12-14 Ma Mie Mie Thein
+// CR59420: New function added- Noiser_PresetVisibility()                               :  2013-01-22 Al
+// Sifit 7.2 Peer Review 																: 2013-08-01 Alastair, Raymond
+// ------------------------------------------------------------- SIFIT7.3 -----------------------------------------
+// Update for Sifit7.3: updated for the MPV changes.									: 2014-01-16 Jenny
+// removed hicoss code since it should be the same as cxx implementation. 				: 2014-01-24 Jenny
+// Sifit7.3 Peer review	: Removed NoiserRB_MaxPos since it can be return for MM, Updated comments. 	: 2014-04-14 Jenny, Sonia
+// ------------------------------------------------------------- SIFIT7.4 -----------------------------------------
+// Mid_Level_Library_Noiser.Noiser_PSEnability () and delete dependency function for RB	: 2014-07-25 Meike Steinbuss
+// Replaced High_Level_Library_Noiser.NoiserEn_Get_Entry() to 
+// BasicLibrary_Noiser.NoiserEn_Get_Entry() 											: 2014-08-07 Sultan
+// FR69584: Added Tinnitus program for return true in Noiser_PSEnability function & deleted redundant comments : 2014-10-23 Mie Mie		
+//  7.4 Peer review Changes
+//   -- IsNoiserOnAndPureForSingleHI() renamed to IsNoiserOnAndPureForMonauralFitting     : 2014-11-12 Sultan/Al/Mie Mie/Frauke
+// Peer review update: Add comment NoiserEn_Enability function and
+// comment out Noiser_ChildEnability function  												: 2014-11-14 Mie Mie
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib Mid_Level_Library_Noiser
+	{
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		// Description: Visibility of Tinnitus page is controlled by CXX. 
+		// 				However, this function can be re-used by other packages for Tinnitus checkbox & Radiobutton.
+		//				Tinnitus visible when cap:TinMaskerAvailable.MaskerAvailable and Pricepoint > PP75 else not visible.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool Noiser_Visibility () 
+		{
+			return (cap:TinMaskerAvailable == TinMaskerAvailable.MaskerAvailable && 
+				cap:PricePoint > PricePoint.PP75);
+		}
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		// Description: Visibility of Tinnitus page is controlled by CXX. 
+		// 				However, this function can be re-used by other packages for Tinnitus presets.
+		// 				Tinnitus is visible when cap:TinMaskerAvailable.MaskerAvailable and not visible when Pricepoint > PP100.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool Noiser_PresetVisibility () 
+		{
+			return (cap:TinMaskerAvailable == TinMaskerAvailable.MaskerAvailable &&
+					cap:PricePoint > PricePoint.PP100);
+		}
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		// 	 Description: D9: disabled only in dedicated Tinnitus program
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool NoiserEn_Enability () // This function is superfluous. NoiserMixMicrophoneEn's IsEnable (the calling) function is not used by Connexx.  
+		{
+			//D9: disabled only in dedicated Tinnitus program
+			if(hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID10)
+			{	// Tinnitus Program
+				println ('[HAL]MLIB-NoiserEn_Enability = FALSE for Tinnitus Program');
+				return false;
+			}
+			else
+			{
+				println ('[HAL]MLIB-NoiserEn_Enability = TRUE non-Tinnitus Program');
+				return true;
+			}
+		} 
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		// 	 Description: Return 1 if Tinnitus checkbox is ticked and 0 if it is unticked.
+		-----------------------------------------------------------------------------------------------------------------*/
+		// This function is not in use in 7.4
+		//		public function bool Noiser_ChildEnability () 
+		//		{
+		//			return (BasicLibrary_Noiser.NoiserEn_Get_Entry() == 1);
+		//		} 
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		// 	 Description:	depends on listening program.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool Noiser_PSEnability ()
+		{
+			if(BasicLibrary_ProgramSelection.IsUniversal() == true || 
+				BasicLibrary_ProgramSelection.IsTinnitus() == true)
+			{
+				println ('[HAL]MLIB-Noiser_MixMicrophoneEn - IsEnabled = FALSE  for Universal or Tinnitus Program');
+				return true;
+			}
+			else
+			{
+				println ('[HAL]MLIB-Noiser_MixMicrophoneEn - IsEnabled = TRUE for all listening programs except Universal and tinnitus program');
+				return false;
+			}
+			
+		} 
+
+
+	} //package Mid_Level_Library_Noiser
+
+} //namespace shs.sat

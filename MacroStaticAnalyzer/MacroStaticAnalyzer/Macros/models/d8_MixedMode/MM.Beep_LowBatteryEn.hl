@@ -1,0 +1,56 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Beep LowBattery CheckBox
+// Initial Version      without isEnabled --> still missing          		:	2011-04-19  Meike Doose
+// Add println for MPV testing												 :  2011-09-22  Jenny Lin
+// Updated to call HLIB instead of BLIB										 :  2012-04-20  Jenny Lin
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Delete int hp=env:Prog and removed unecessary println					 :	2012-06-08  Mang Yew
+// *********************************************CODE FREEZE*******************************************************
+// Sifit7.3 Peer review														: 2014-04-28 Jenny, Jeline
+// Sifit7.4 Peer review														: 2014-11-18 MieMie/Sultan/Jeline
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	//e.g. checkbox to enable/disable the BeepLowBattery
+	package MixedMode BeepLowBatteryEn
+	{		
+		application function bool IsVisible()
+		{
+			println('[HAL]MM - BeepLowBatteryEn - IsVisible = TRUE');
+			// Visibility for BeepLowBattery --> is always visible
+			return true;
+		}
+			
+		application function bool IsEnabled()
+		{
+			println('[HAL]MM - BeepLowBatteryEn - IsEnabled = TRUE');		
+			return true;	
+		}
+	
+		application function int MaxPos()
+		{
+	 		println('[HAL]MM - BeepLowBatteryEn - MaxPos = 1');			
+			return 1;     // This is a Check Box with 2 states. 0 and 1
+		}
+		
+		application function bool IsEnabledPos(int pos)
+		{
+	 		println('[HAL]MM - BeepLowBatteryEn - IsEnabledPos = TRUE');			
+			return true;
+		}
+			
+		application function int GetPos()
+		{
+			println('[HAL]MM - BeepLowBatteryEn - GetPos');
+			return High_Level_Library_Beep.BeepLowBatteryEn_Get();
+		}
+		
+		application function void SetPos(int pos)
+		{
+	 		println('[HAL]MM - BeepLowBatteryEn - SetPos = ' + pos);					
+			High_Level_Library_Beep.BeepLowBatteryEn_Set(pos);	
+		}
+	}
+}

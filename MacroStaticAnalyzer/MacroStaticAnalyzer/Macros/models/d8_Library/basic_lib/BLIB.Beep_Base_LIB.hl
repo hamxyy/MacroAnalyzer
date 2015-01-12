@@ -1,0 +1,720 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY Beep
+// Initial Version                                         					 : 	2011-04-18  Meike Doose
+// further work on initial version											 :	2011-04-19 	Meike Doose
+// include missing transpose ctrl											 :	2011-04-21	Meike Doose
+// preliminary setting for sixth beep included								 :	2011-04-21	Meike Doose
+// change of setting for LowBattery after D7 comparison						 :	2011-04-21	Meike Doose
+// include Transpose into BeepAlertProfileDD_Set							 :	2011-05-16	Meike Doose
+// include Println															 :	2011-05-18	Meike Doose
+// moved println to before return statements 								 :  2011-05-19  Cecil Wilson
+// include minus values for SMX_Mel_Gain                    				 :  2011-07-07	Meike Doose
+// Include VcRange_Set_Entry, needed for PostFit							 :  2011-11-28  Nadia Neugeborn
+// Added comments for BeepAlertProfileDD_Set_Entry							 :  2012-04-20  Jenny Lin
+// removed wrt 70xPP, 
+// changed comment from melodic to advance, restructure if else statement 
+in Get functions. Added comment for returning -1 for Advanced Profile due to 
+freq DD should show blank. Added comment for d8FIndTrgMi[14] for 
+BeepVCPowerOnPosEn_Get_Entry() function to indicate same value on 
+both basic and advanced profile.											 :	2012-06-07	Mang Yew
+// *********************************************CODE FREEZE*******************************************************
+// Fixed ER59041  CONF - Porgram Beeps are not level dependent and too soft in general: 2012-11-30 Ma Mie Mie Thein
+// Added assertion for BeepLoudnessDD_Get_Entry()							 :  2012-12-12 Ma Mie Mie Thein
+// Added assertion for other functions	 									 :  2012-12-14 Ma Mie Mie Thein
+// Added set entry for AlertProfile for Nitro CR60971						 :  2013-05-03 Sonia Stasiak
+// Updated capabilities to separate AlertProfile settings for Nitro BTE only :  2013-06-17 Sonia Stasiak 
+// Peer review comments update											   	: 2013-07-31 Sonia & Alastair
+// Fixed ER62721 - All the beep checkbox Get_Entry () functions have been reworked...
+// ...so that values of d8FIndTrgMi [ ] == 0 return a false.                : 2013-08-13 Alastair
+// CR64681: Updated Beeps_Set_Default Frequency default to 1500Hz instead of 750Hz and 
+// updated println statement for debugging.											: 2014-01-10 Jenny
+// Update d8FIndTrgMi [x] == 74 -> 0 to remove firmware bug to turn beeps off. ER64904	:2014-02-10 	Mang Yew
+// FR66291 : added BeepIntelliZoomEn_Get_Entry/Set_Entry.					: 2014-04-30 Jenny
+// Sifit7.3 Peer review														: 2014-04-28 Jenny, Jeline
+// FR67065 included --> Power OFF state (fIndTrgMi[2]=0) deleted			: 2014-05-14 Meike	
+// FR67394 updated BeepPowerOnOffEn_Get_Entry and BeepPowerOnOffEn_Set_Entry to Power on/off beeps to set 
+// the hi:d8FIndTrgMi [ 0 ] = 83 when it should be on, regardless of basic/advance beeps. 
+// The off state remains hi:d8FIndTrgMi [ 0 ] = 0.							: 2014-05-22 Jenny
+// Sifit7.4 Peer review: update comments && code cleanup					: 2014-11-17 MieMie/Sultan/Jeline
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package Lib BasicLibrary_Beep
+	{
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Sets the HI settings based on CxxPos     
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void BeepIntelliZoomEn_Set_Entry (int pos) //FR66291
+		{
+			if (pos == 1){
+				println ('[HAL]BLIB-BeepIntelliZoomEn_Set_Entry set to on');
+				hi:d8FIndTrgMi [ 19 ] = 104;
+			}
+			else{
+				println ('[HAL]BLIB-BeepIntelliZoomEn_Set_Entry set to off');
+				hi:d8FIndTrgMi [ 19 ] = 0;
+			}
+		}
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int BeepIntelliZoomEn_Get_Entry () //FR66291
+		{
+			if (hi:d8FIndTrgMi [ 19 ] == 104)
+			{
+				println ('[HAL]BLIB-BeepIntelliZoomEn_Get_Entry >> ON');
+				return 1;
+			}
+			else{
+				println ('[HAL]BLIB-BeepIntelliZoomEn_Get_Entry >> OFF');
+				return 0;
+			}
+		}
+
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int BeepProgramChangeEn_Get_Entry () //SIFIT7.4PEERREVIEWED
+		{
+			if ( //basic on
+			    hi:d8FIndTrgMi [ 4 ] == 94 &&
+			    hi:d8FIndTrgMi [ 5 ] == 95 &&
+			    hi:d8FIndTrgMi [ 6 ] == 96 &&
+				hi:d8FIndTrgMi [ 7 ] == 97 &&
+				hi:d8FIndTrgMi [ 8 ] == 116 &&
+				hi:d8FIndTrgMi [ 9 ] == 107)
+			{
+				println ('[HAL]BLIB-BeepProgramChangeEn_Get_Entry set to ON (BASIC)');
+				return 1;
+			}
+			else if ( //advanced on
+				hi:d8FIndTrgMi [ 4 ] == 98 &&
+				hi:d8FIndTrgMi [ 5 ] == 99 &&
+				hi:d8FIndTrgMi [ 6 ] == 100 &&
+				hi:d8FIndTrgMi [ 7 ] == 101 &&
+				hi:d8FIndTrgMi [ 8 ] == 112 &&
+				hi:d8FIndTrgMi [ 9 ] == 115)
+			{
+				println ('[HAL]BLIB-BeepProgramChangeEn_Get_Entry set to ON (ADVANCE)');
+				return 1;
+			}
+			else if ((hi:d8FIndTrgMi [ 4 ] == 0) && 
+				(hi:d8FIndTrgMi [ 5 ] == 0) &&
+				(hi:d8FIndTrgMi [ 6 ] == 0) &&
+				(hi:d8FIndTrgMi [ 7 ] == 0) &&
+				(hi:d8FIndTrgMi [ 8 ] == 0) &&
+				(hi:d8FIndTrgMi [ 9 ] == 0))
+			{
+				println ('[HAL]BLIB-BeepProgramChangeEn_Get_Entry set to OFF');
+				return 0;
+			}
+			else{
+				assertion (false, "[MacroError] BeepProgramChangeEn_Get_Entry is NOT defined!");
+				return 0;
+			}
+		} 
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions     
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void BeepProgramChangeEn_Set_Entry (int pos) //SIFIT7.3PEERREVIEWED
+		{
+			if (pos == 1)
+			{
+				if (hi:d8SwMacroAlertToneScheme == d8SwMacroAlertToneScheme._2)
+				{ // basic
+					hi:d8FIndTrgMi [ 4 ] = 94;
+					hi:d8FIndTrgMi [ 5 ] = 95;
+					hi:d8FIndTrgMi [ 6 ] = 96;
+					hi:d8FIndTrgMi [ 7 ] = 97;
+					hi:d8FIndTrgMi [ 8 ] = 116;
+					hi:d8FIndTrgMi [ 9 ] = 107;
+					println ('[HAL]BLIB-BeepProgramChangeEn_Set_Entry set to basic Tones');
+				}
+				else
+				{ // advance
+					hi:d8FIndTrgMi [ 4 ] = 98;
+					hi:d8FIndTrgMi [ 5 ] = 99;
+					hi:d8FIndTrgMi [ 6 ] = 100;
+					hi:d8FIndTrgMi [ 7 ] = 101;
+					hi:d8FIndTrgMi [ 8 ] = 112;
+					hi:d8FIndTrgMi [ 9 ] = 115;
+					println ('[HAL]BLIB-BeepProgramChangeEn_Set_Entry set to melodic Tones');
+				}
+			}
+			else
+			{
+				hi:d8FIndTrgMi [ 4 ] = 0;
+				hi:d8FIndTrgMi [ 5 ] = 0;
+				hi:d8FIndTrgMi [ 6 ] = 0;
+				hi:d8FIndTrgMi [ 7 ] = 0;
+				hi:d8FIndTrgMi [ 8 ] = 0;
+				hi:d8FIndTrgMi [ 9 ] = 0;
+				println ('[HAL]BLIB-BeepProgramChangeEn_Set_Entry set to off');
+			}
+		} 
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int BeepPowerOnOffEn_Get_Entry () //SIFIT7.3PEERREVIEWED
+		{
+			// Sifit7.3: Power on-off beeps is not shown in CXX System Sounds Page anymore, but will be tied to Power-on delay checkbox.			
+			if ( //basic on
+				hi:d8FIndTrgMi [ 0 ] == 83 && //ER67394
+				hi:d8FIndTrgMi [ 1 ] == 80 &&
+				hi:d8FIndTrgMi [ 2 ] == 81)
+			{
+				println ('[HAL]BLIB-BeepPowerOnOffEn_Get_Entry set to ON (Basic)');
+				return 1;
+			}
+			else if ( //advanced on
+				hi:d8FIndTrgMi [ 0 ] == 83 && //ER67394
+				hi:d8FIndTrgMi [ 1 ] == 84 &&
+				hi:d8FIndTrgMi [ 2 ] == 85)
+			{
+				println ('[HAL]BLIB-BeepPowerOnOffEn_Get_Entry set to ON (Advanced)');
+				return 1;
+			}
+			else if ( //off
+				(hi:d8FIndTrgMi [ 0 ] == 0) &&
+				(hi:d8FIndTrgMi [ 1 ] == 0))
+			{
+				println ('[HAL]BLIB-BeepPowerOnOffEn_Get_Entry set to OFF');
+				return 0;
+			}
+			else{
+				assertion (false, "[MacroError] BeepPowerOnOffEn_Get_Entry is NOT defined!");
+				return 0;
+			}
+		}		
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void BeepPowerOnOffEn_Set_Entry (int pos) //SIFIT7.3PEERREVIEWED
+		{
+			// Sifit7.3: Power on-off beeps is not shown in CXX System Sounds Page anymore, but will be tied to Power-on delay checkbox.	
+			if (pos == 1)
+			{
+				if (hi:d8SwMacroAlertToneScheme == d8SwMacroAlertToneScheme._2)
+				{ // basic
+					hi:d8FIndTrgMi [ 0 ] = 83; //ER67394
+					hi:d8FIndTrgMi [ 1 ] = 80;
+					hi:d8FIndTrgMi [ 2 ] = 81;
+					println ('[HAL]BLIB-BeepPowerOnOffEn_Set_Entry set to basic Tones (On Beep)');
+				}
+				else
+				{ // advance
+					hi:d8FIndTrgMi [ 0 ] = 83; //ER67394
+					hi:d8FIndTrgMi [ 1 ] = 84;
+					hi:d8FIndTrgMi [ 2 ] = 85;
+					println ('[HAL]BLIB-BeepPowerOnOffEn_Set_Entry set to melodic Tones (On Beep)');
+				}
+			}
+			else
+			{
+				hi:d8FIndTrgMi [ 0 ] = 0;
+				hi:d8FIndTrgMi [ 1 ] = 0;
+				
+				if (hi:d8SwMacroAlertToneScheme == d8SwMacroAlertToneScheme._2)
+				{ // basic
+					hi:d8FIndTrgMi [ 2 ] = 81;
+					println ('[HAL]BLIB-BeepPowerOnOffEn_Set_Entry set to basic Tones (Off Beep)');
+				}
+				else
+				{ // advance
+					hi:d8FIndTrgMi [ 2 ] = 85;
+					println ('[HAL]BLIB-BeepPowerOnOffEn_Set_Entry set to melodic Tones (Off Beep)');
+				}
+				
+				println ('[HAL]BLIB-BeepPowerOnOffEn_Set_Entry set to off');
+			}
+
+		}
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int BeepVCChangeEn_Get_Entry () //SIFIT7.4PEERREVIEWED
+		{
+			if ( //basic on
+				hi:d8FIndTrgMi [ 10 ] == 77 &&
+				hi:d8FIndTrgMi [ 11 ] == 77)
+			{
+				println ('[HAL]BLIB-BeepVCChangeEn_Get_Entry set to ON (Basic)');
+				return 1;
+			}
+			else if ( //advanced on
+				hi:d8FIndTrgMi [ 10 ] == 90 &&
+				hi:d8FIndTrgMi [ 11 ] == 89)
+			{
+				println ('[HAL]BLIB-BeepVCChangeEn_Get_Entry set to ON (Advanced)');
+				return 1;
+			}
+			else if ( //off
+				(hi:d8FIndTrgMi [ 10 ] == 0) &&
+				(hi:d8FIndTrgMi [ 11 ] == 0))
+			{
+				println ('[HAL]BLIB-BeepVCChangeEn_Get_Entry set to OFF');
+				return 0;
+			}
+			else{
+				assertion (false, "[MacroError] BeepVCChangeEn_Get_Entry is NOT defined!");
+				return 0;
+			}
+		}
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void BeepVCChangeEn_Set_Entry (int pos) //SIFIT7.4PEERREVIEWED
+		{
+			if (pos == 1)
+			{
+				if (hi:d8SwMacroAlertToneScheme == d8SwMacroAlertToneScheme._2)
+				{ // basic
+					hi:d8FIndTrgMi [ 10 ] = 77;
+					hi:d8FIndTrgMi [ 11 ] = 77;
+					println ('[HAL]BLIB-BeepVCChangeEn_Set_Entry set to basic Tones');
+				}
+				else
+				{ // advance
+					hi:d8FIndTrgMi [ 10 ] = 90;
+					hi:d8FIndTrgMi [ 11 ] = 89;
+					println ('[HAL]BLIB-BeepVCChangeEn_Set_Entry set to melodic Tones');
+				}
+			}
+			else
+			{
+				hi:d8FIndTrgMi [ 10 ] = 0;
+				hi:d8FIndTrgMi [ 11 ] = 0;
+				println ('[HAL]BLIB-BeepVCChangeEn_Set_Entry set to off');
+			}
+		}
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions     
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int BeepVCLimitEn_Get_Entry () //SIFIT7.4PEERREVIEWED
+		{
+			if ( //basic on
+				hi:d8FIndTrgMi [ 12 ] == 78 &&
+				hi:d8FIndTrgMi [ 13 ] == 78)
+			{
+				println ('[HAL]BLIB-BeepVCLimitEn_Get_Entry set to ON (Basic)');
+				return 1;
+			}
+			else if ( //advanced on
+				hi:d8FIndTrgMi [ 12 ] == 92 &&
+				hi:d8FIndTrgMi [ 13 ] == 91)
+			{
+				println ('[HAL]BLIB-BeepVCLimitEn_Get_Entry set to ON (Advanced)');
+				return 1;
+			}
+			else if ( //off
+				(hi:d8FIndTrgMi [ 12 ] == 0) &&
+				(hi:d8FIndTrgMi [ 13 ] == 0))
+			{
+				println ('[HAL]BLIB-BeepVCLimitEn_Get_Entry set to OFF');
+				return 0;
+			}
+			else{
+				assertion (false, "[MacroError] BeepVCLimitEn_Get_Entry is NOT defined!");
+				return 0;
+			}
+		}
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions     
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void BeepVCLimitEn_Set_Entry (int pos) //SIFIT7.4PEERREVIEWED
+		{
+			if (pos == 1)
+			{
+				if (hi:d8SwMacroAlertToneScheme == d8SwMacroAlertToneScheme._2)
+				{ // basic
+					hi:d8FIndTrgMi [ 12 ] = 78;
+					hi:d8FIndTrgMi [ 13 ] = 78;
+					println ('[HAL]BLIB-BeepVCLimitEn_Set_Entry set to basic Tones');
+				}
+				else
+				{ // advance
+					hi:d8FIndTrgMi [ 12 ] = 92;
+					hi:d8FIndTrgMi [ 13 ] = 91;
+					println ('[HAL]BLIB-BeepVCLimitEn_Set_Entry set to melodic Tones');
+				}
+			}
+			else
+			{
+				hi:d8FIndTrgMi [ 12 ] = 0;
+				hi:d8FIndTrgMi [ 13 ] = 0;
+				println ('[HAL]BLIB-BeepVCLimitEn_Set_Entry set to off');
+			}
+		}
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions     
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int BeepVCPowerOnPosEn_Get_Entry () //SIFIT7.4PEERREVIEWED
+		{
+			if ( //basic/advance on
+				hi:d8FIndTrgMi [ 14 ] == 93)
+			{
+				println ('[HAL]BLIB-BeepVCPowerOnPosEn_Get_Entry set to ON (Basic/Advanced)');
+				return 1;
+			}
+			else if ( //off
+				hi:d8FIndTrgMi [ 14 ] == 0)
+			{
+				println ('[HAL]BLIB-BeepVCPowerOnPosEn_Get_Entry set to OFF');
+				return 0;
+			}
+			else{
+				assertion (false, "[MacroError] BeepVCPowerOnPosEn_Get_Entry is NOT defined!");
+				return 0;
+			}
+		} 
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void BeepVCPowerOnPosEn_Set_Entry (int pos) //SIFIT7.4PEERREVIEWED
+		{
+			if (pos == 1)
+			{
+				if (hi:d8SwMacroAlertToneScheme == d8SwMacroAlertToneScheme._2)
+				{ // basic
+					hi:d8FIndTrgMi [ 14 ] = 93;
+					println ('[HAL]BLIB-BeepVCPowerOnPosEn_Set_Entry set to basic Tones');
+				}
+				else
+				{ // advance
+					hi:d8FIndTrgMi [ 14 ] = 93;
+					// This control has the same value for both profile as volume should be same for both profiles
+					println ('[HAL]BLIB-BeepVCPowerOnPosEn_Set_Entry set to melodic Tones');
+				}
+			}
+			else
+			{
+				hi:d8FIndTrgMi [ 14 ] = 0;
+				println ('[HAL]BLIB-BeepVCPowerOnPosEn_Set_Entry set to off');
+			}
+		}
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions     
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int BeepLowBatteryEn_Get_Entry () //SIFIT7.4PEERREVIEWED
+		{
+			if ( //basic on
+				hi:d8FIndTrgMi [ 3 ] == 76)
+			{
+				println ('[HAL]BLIB-BeepLowBatteryEn_Get_Entry set to ON (Basic)');
+				return 1;
+			}
+			else if ( //advanced on
+				hi:d8FIndTrgMi [ 3 ] == 82)
+			{
+				println ('[HAL]BLIB-BeepLowBatteryEn_Get_Entry set to ON (Advanced)');
+				return 1;
+			}
+			else if ( //off
+				hi:d8FIndTrgMi [ 3 ] == 0)
+			{
+				println ('[HAL]BLIB-BeepLowBatteryEn_Get_Entry set to OFF');
+				return 0;
+			}
+			else{
+				assertion (false, "[MacroError] BeepLowBatteryEn_Get_Entry is NOT defined!");
+				return 0;
+			}
+		} 
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the UI positions    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void BeepLowBatteryEn_Set_Entry (int pos) //SIFIT7.4PEERREVIEWED
+		{
+			if (pos == 1)
+			{
+				if (hi:d8SwMacroAlertToneScheme == d8SwMacroAlertToneScheme._2)
+				{ // basic
+					hi:d8FIndTrgMi [ 3 ] = 76;
+					println ('[HAL]BLIB-BeepLowBatteryEn_Set_Entry set to basic Tones');
+				}
+				else
+				{ // advance
+					hi:d8FIndTrgMi [ 3 ] = 82;
+					println ('[HAL]BLIB-BeepLowBatteryEn_Set_Entry set to melodic Tones');
+				}
+			}
+			else
+			{
+				hi:d8FIndTrgMi [ 3 ] = 0;
+				println ('[HAL]BLIB-BeepLowBatteryEn_Set_Entry set to off');
+			}
+		}
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the dropdown menu positions    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int BeepAlertProfileDD_Get_Entry () //SIFIT7.4PEERREVIEWED
+		{ 
+			if (hi:d8SwMacroAlertToneScheme == d8SwMacroAlertToneScheme._2)
+			{ // basic
+				println ('[HAL]BLIB-BeepAlertProfileDD_Get_Entry set to basic Tones');
+				return 0;
+			}
+			else if (hi:d8SwMacroAlertToneScheme == d8SwMacroAlertToneScheme._1)
+			{ // advance
+				println ('[HAL]BLIB-BeepAlertProfileDD_Get_Entry set to melodic Tones');
+				return 1;
+			}
+			else
+			{
+				println ('[HAL]BLIB-BeepAlertProfileDD_Get_Entry  ERROR: DropDown position out of SPEC/Range');
+				assertion (false, "[MacroError] Undefined state of Sound Profile");
+				return -1;
+			} // default closes 
+		}
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Sets the BasicLibrary_BeepAlertProfileDD feature based on DropDown selection   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void BeepAlertProfileDD_Set_Entry (int pos) //SIFIT7.4PEERREVIEWED
+		{
+			switch (pos)
+			{
+				case 0:{
+					hi:d8SwMacroAlertToneScheme = d8SwMacroAlertToneScheme._2; // basic
+					BasicLibrary_Beep.BeepFrequencyDD_Set_Entry(3);  // default frequency DD to pos=3 (1500Hz) (CR64681)
+					println ('[HAL]BLIB-BeepAlertProfileDD_Set_Entry set to basic Tones');
+				}
+				case 1:{
+					hi:d8SwMacroAlertToneScheme = d8SwMacroAlertToneScheme._1; // advance
+					println ('[HAL]BLIB-BeepAlertProfileDD_Set_Entry set to melodic Tones');
+
+					if(cap:GMax < 80){
+						BasicLibrary_Beep.BeepFrequencyDD_Set_Entry(4); // adjustment of melody indicator pitch
+						println ('[HAL]BLIB-BeepAlertProfileDD_Set_Entry set to melodic Tones >> d8FIndMiTranspose._4_thirds_up for GMax<80.');
+					}
+					else
+					{
+						BasicLibrary_Beep.BeepFrequencyDD_Set_Entry(5);//for Nitro BTE/Orion SP all beeps (except startup melody) are shifted down one octave
+						println ('[HAL]BLIB-BeepAlertProfileDD_Set_Entry set to melodic Tones for Nitro BTE/Orion SP  >> d8FIndMiTranspose._1_octave_down ');
+					}
+				}
+//				default:{ // Does not make sense to CXX but for implementation CHECK
+//					println ('[HAL]BLIB-BeepAlertProfileDD_Set_Entry  ERROR: DropDown position out of SPEC/Range');
+//					assertion (pos >= 0, "[MacroError] Undefined state of Sound Profile");
+//				}
+
+			} 	
+			assertion ((pos>=0) && (pos <2), "[MacroError] Undefined state of Sound Profile");
+		}
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the dropdown menu positions    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int BeepLoudnessDD_Get_Entry () //SIFIT7.4PEERREVIEWED
+		{
+		// POS -->  should specify the absolute dropdown menue step (with respect to the HI asic controls) 
+			if (hi:d8FSmxMelGain == -35)
+			{ // Soft 55dB
+				println ('[HAL]BLIB-BeepLoudnessDD_Get_Entry set to 55dB');
+				return 0;
+			}
+			else if (hi:d8FSmxMelGain == -25)
+			{ // Moderate 65dB
+				println ('[HAL]BLIB-BeepLoudnessDD_Get_Entry set to 65dB');
+				return 1;
+			}
+			else if (hi:d8FSmxMelGain == -15)
+			{ // Loud 75dB
+				println ('[HAL]BLIB-BeepLoudnessDD_Get_Entry set to 75dB');
+				return 2;
+			}
+			else if (hi:d8FSmxMelGain == -6)
+			{ // Extra Loud 85dB
+				println ('[HAL]BLIB-BeepLoudnessDD_Get_Entry set to 85dB');
+				return 3;
+			}
+			else
+			{
+			// Does not make sense to CXX but for implementation CHECK
+				println ('BeepLoudnessDD_Get_Entry ERROR: DropDown position out of SPEC/Range');
+				assertion (false, "[MacroError] Undefined state of Beep Loudness");
+				return -1;
+			} // default closes 
+		}
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Sets the BasicLibrary_BeepLoudnessDD feature based on DropDown selection   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void BeepLoudnessDD_Set_Entry (int pos) //SIFIT7.4PEERREVIEWED
+		{
+			switch (pos)
+			{
+				case 0:{
+					hi:d8FSmxMelGain = -35; // Soft 55dB
+					hi:d8FSmxMelLevDep = d8FSmxMelLevDep._3_dB;
+					println ('[HAL]BLIB-BeepLoudnessDD_Set_Entry set to 55dB');
+				}
+				case 1:{
+					hi:d8FSmxMelGain = -25; // Moderate 65dB
+					hi:d8FSmxMelLevDep = d8FSmxMelLevDep._9_dB;
+					println ('[HAL]BLIB-BeepLoudnessDD_Set_Entry set to 65dB');
+				}
+				case 2:{
+					hi:d8FSmxMelGain = -15; // Loud 75dB
+					hi:d8FSmxMelLevDep = d8FSmxMelLevDep._15_dB;
+					println ('[HAL]BLIB-BeepLoudnessDD_Set_Entry set to 75dB');
+				}
+				case 3:{
+					hi:d8FSmxMelGain = -6; // Extra Loud 85dB
+					hi:d8FSmxMelLevDep = d8FSmxMelLevDep._15_dB;
+					println ('[HAL]BLIB-BeepLoudnessDD_Set_Entry set to 85dB');
+				}
+				default:{ // Does not make sense to CXX but for implementation CHECK
+					println ('BeepLoudnessDD_Set_Entry ERROR: DropDownMenue position out of SPEC/Range');
+					assertion (pos >= 0, "[MacroError] Undefined state of Beep Loudness");
+				} // default closes 
+
+			} // switch pos closes	
+		}
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Compares the HI settings and returns the dropdown menue positions     
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int BeepFrequencyDD_Get_Entry () //SIFIT7.4PEERREVIEWED
+		{
+		// POS -->  should specify the absolute dropdown menue step (with respect to the HI asic controls) 
+			if (hi:d8FIndMiTranspose == d8FIndMiTranspose._1_third_down)
+			{ // 500 Hz
+				println ('[HAL]BLIB-BeepFrequency_Get set to 500HZ');
+				return 0;
+			}
+			else if (hi:d8FIndMiTranspose == d8FIndMiTranspose.normal)
+			{ // 750 Hz
+				println ('[HAL]BLIB-BeepFrequency_Get set to 750HZ');
+				return 1;
+			}
+			else if (hi:d8FIndMiTranspose == d8FIndMiTranspose._2_thirds_up)
+			{ // 1000 Hz
+				println ('[HAL]BLIB-BeepFrequency_Get set to 1000Hz');
+				return 2;
+			}
+			else if (hi:d8FIndMiTranspose == d8FIndMiTranspose._1_octave_up)
+			{ // 1500 Hz
+				println ('[HAL]BLIB-BeepFrequency_Get set to 1500HZ');
+				return 3;
+			}
+			else if (hi:d8FIndMiTranspose == d8FIndMiTranspose._4_thirds_up ||
+				hi:d8FIndMiTranspose == d8FIndMiTranspose._1_octave_down)
+			{ // No frequency
+				println ('[HAL]BLIB-BeepFrequency_Get set to BLANK because Sound Profile is set to Melodic');
+				return -1;
+			}
+			else
+			{
+			// Does not make sense to CXX but for implementation CHECK
+				println ('[HAL]BLIB-BeepFrequencyDD_Get_Entry ERROR: DropDown position out of SPEC/Range');
+				assertion (false, "[MacroError] Undefined state of System Sounds Frequency");
+				return 10; // for Advance Profile to blank the Frequency Values
+			
+			} // default closes 
+		}
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Sets the BasicLibrary_BeepFrequencyDD feature based on DropDown selection   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void BeepFrequencyDD_Set_Entry (int pos) //SIFIT7.4PEERREVIEWED
+		{
+			switch (pos)
+			{
+				case 0:{
+					hi:d8FIndMiTranspose = d8FIndMiTranspose._1_third_down; // 500 Hz
+					println ('[HAL]BLIB-BeepFrequencyDD_Set_Entry set to 500HZ');
+				}
+				case 1:{
+					hi:d8FIndMiTranspose = d8FIndMiTranspose.normal; // 750 Hz
+					println ('[HAL]BLIB-BeepFrequencyDD_Set_Entry set to 750HZ');
+				}
+				case 2:{
+					hi:d8FIndMiTranspose = d8FIndMiTranspose._2_thirds_up; // 1000 Hz
+					println ('[HAL]BLIB-BeepFrequencyDD_Set_Entry set to 1000HZ');
+				}
+				case 3:{
+					hi:d8FIndMiTranspose = d8FIndMiTranspose._1_octave_up; // 1500 Hz
+					println ('[HAL]BLIB-BeepFrequencyDD_Set_Entry set to 1500HZ');
+				}
+				case 4:{
+					hi:d8FIndMiTranspose = d8FIndMiTranspose._4_thirds_up;
+					println ('[HAL]BLIB-BeepFrequencyDD_Set_Entry adjust pitch for melodic 4_thirds_up'); 
+				}
+				case 5:{
+					hi:d8FIndMiTranspose = d8FIndMiTranspose._1_octave_down;
+					println ('[HAL]BLIB-BeepFrequencyDD_Set_Entry adjust pitch for melodic 1_octave_down'); 
+				}
+				default:{ // Does not make sense to CXX but for implementation CHECK
+					println('[HAL]BLIB-BeepFrequencyDD_Set_Entry ERROR: DropDownMenue position out of SPEC/Range');
+					assertion (pos >= 0, "[MacroError] Undefined state of System Sounds Frequency");
+				} // default closes 
+
+			} // switch pos closes	
+
+		}
+
+		/*----------------------------------------------------------------------------------------------------------------
+		//   Description:  Sets the VC range  
+		----------------------------------------------------------------------------------------------------------------*/
+		public function void VcRange_Set_Entry (int pos) //SIFIT7.3PEERREVIEWED
+		{
+			switch (pos)
+			{
+				case 0:{
+					hi:d8PhlVcRange = d8PhlVcRange.off;
+					println ('[HAL]BLIB-VcRange_Set_Entry set to OFF');
+				}
+				case 1:{
+					hi:d8PhlVcRange = d8PhlVcRange._8dB;
+					println ('[HAL]BLIB-VcRange_Set_Entry set to 8dB');
+				}
+				case 2:{
+					hi:d8PhlVcRange = d8PhlVcRange._16dB; // 16dB for Motion devices
+					println ('[HAL]BLIB-VcRange_Set_Entry set to 16dB');
+				}
+				case 3:{
+					hi:d8PhlVcRange = d8PhlVcRange._24dB;
+					println ('[HAL]BLIB-VcRange_Set_Entry set to 24dB');
+				}
+				case 4:{
+					hi:d8PhlVcRange = d8PhlVcRange._32dB;
+					println ('[HAL]BLIB-VcRange_Set_Entry set to 32dB');
+				}
+				default:{
+					println ('[HAL]VcRange_Set_Entry ERROR: VC range not set');
+				} // default closes 
+
+			} // switch pos closes	
+		}
+	}
+
+}

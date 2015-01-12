@@ -1,0 +1,38 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            MID LEVEL PRICEPOINT LIBRARY : TestSettings
+// Initial Version                                         :  2012-01-27   Nadine Seubert
+// Sifit 7.2 Peer Review					: 2013-07-31 Jenny, Judith, Raymond
+*/
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	package Lib Mid_Level_Library_TestSettings
+	{
+
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    TestSettings_IsVisible
+//   Input		:  none
+//   Ouput      :  <bool> Returns True if visible; False if Not Visible 
+//   Description:  decides the visibility of the TestSettings
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool TestSettings_IsVisible ()
+		{ // Reviewed 7.3
+			bool retval = false;
+			if (cap:DirMicAvailable == DirMicAvailable.omni)
+			{
+				retval = false;
+			}
+			else
+			{ //default should be true due to the fact that most of the devices are delivered with directional mics		                
+				retval = true;
+			}
+			return retval;
+		} //Closes Mid_Level_Library_TestSettings.TestSettings_IsVisible
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Middle Level PP LIBRARY   TestSettings 
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package Mid_Level_Library_TestSettings
+
+} //namespace shs.sat

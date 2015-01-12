@@ -1,0 +1,44 @@
+Name: nUnit
+Version: 2.6.3
+Release date: 2013-10-10
+Intended use:  Unit Testing framework
+
+Added by: M.Bannert
+Added at: 2014-07-03
+
+Description:  nUnit Testing framework to run unit / component/integration tests
+
+# Where does the SOUP comes from?
+# Using this information it should be possible to update the SOUP
+Source: http://www.nunit.org/index.php?p=home
+
+# for usage, enter "Product" or  "Development"
+# "Product" means that it gets delivered to the customer, including statically linked SOUP
+Usage: Development
+
+# if the SOUP is not for a "Product", then you can stop here and enter n.a.
+# Otherwise, specify the list of Products that will use this SOUP
+Products: n.a.
+
+# enter details about license clearance , refer to reproducable information like CRs, checked in Emails/protocols,...
+License Clearance: n.a.
+License: provided as-is
+
+# try to analyze and list which SOUPs this SOUP is using (e.g. indirect dependencies). In case of open source, SAT would
+# also be in charge for this indirect depencies.
+IndirectSOUP: n.a.
+
+# enter "n.a" for SOUP without DLLs, "By Creator" if already signed, "By Us" if we created signature, "Unsigned" otherwise
+# check in also the emails/protocols with the vendor/originator of the SOUP for signature clearance
+DLL Signature: Unsigned
+
+# enter "n.a." for SOUP without strong named DLLs. List all assemblies which provide a strong name to document
+# that you considered the implications of using strong named assemblies.
+Strong Names used:  no
+
+# whatever may be important to remember: enter it under Comments
+Comments: Note that there are multiple nUnit packages in the system , which should have the same version
+	-> Resharper, 
+	-> CmTools/nUnitTest Adapter, 
+	-> FittingTestAutomation
+

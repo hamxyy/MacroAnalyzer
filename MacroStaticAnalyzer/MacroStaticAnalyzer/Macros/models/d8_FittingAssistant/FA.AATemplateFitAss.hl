@@ -1,0 +1,87 @@
+//// First Draft																			:2013-04-15: Judith & Alastair
+//// updated formatting																	:2013-04-16: Frauke
+//// Updated Package Name																			:2013-05-06	Judith
+//// NOTE: SelectProposal2 and ApplyProposal2 needs to be there at least in an empty way	:2013-05-21 Judith	
+//// application function void SelectProposal2 ()  {} 
+//// application function void ApplyProposal2 () {}
+///*------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+		
+//	package FittingAssistant Packagename
+//	{
+//		application function bool IsVisible ()
+//		{
+//			return true;
+//		} // Controls visibility of the sub-question
+//		
+//		application function bool IsEnabled ()
+//		{
+//			return true;
+//		} // Controls enabled-ability of the sub-question
+//		
+//		application function void SelectProposal1 ()
+//		{
+//			if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("Proposal_name1") == true)
+//			{ //"Input String" is the proposal (A ..B..)
+//				SetApply1IsVisible (true); // Controls visibility of Apply button 1
+//				SetApply1IsEnabled (true); // Controls enabled-ability of Apply button 1
+//				SetProposalTextID1 ("Proposal_name1"); // Controls the text in proposal text-box 1. 
+//				//(NOTE! The input to this function is only an identifier string. The actual text displayed in Cxx is stored in another file
+//
+//			}
+//			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("Proposal_name3") == true)
+//			{
+//				setApply1IsVisible(true);
+//				setApply1IsEnabled(true);
+//				setPropopsalTextID1("Proposal_name3"); //e.g. "Increase gain for loud sounds and decrease master gain"
+//
+//			}
+//			else
+//			{
+//				SetApply1IsVisible(true);
+//				SetApply1IsEnabled(false);
+//				SetProposalTextID1("cannot_apply_proposal");
+//			}
+//		} // closing SelectProposal1
+//		
+//		application function void ApplyProposal1 ()
+//		{
+//			string TextID = GetProposalTextID1();
+//			High_Level_Library_FitAssApply.ApplyProposal(TextID);
+//		} // closing ApplyProposal1
+//		
+//		application function void SelectProposal2 ()
+//		{
+//			if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable("Proposal_name2") == true)
+//			{ //"Input String" is the proposal (A ..B..)
+//				SetApply2IsVisible(true); // Controls visibility of Apply button 2
+//				SetApply2IsEnabled(true); // Controls enabled-ability of Apply button 2
+//				SetProposalTextID2("Proposal_name2"); // Controls the text in proposal text-box 2.
+//				//(NOTE! The input to this function is only an identifier string. The actual text displayed in Cxx is stored in another file
+//
+//			}
+//			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable("Proposal_name3") = true)
+//			{
+//				SetApply2IsVisible(true);
+//				SetApply2IsEnabled(true);
+//				SetPropopsalTextID2("Proposal_name3"); //e.g. "Increase gain for loud sounds and decrease master gain"
+//			}
+//			else {
+//				SetApply2IsVisible(true);
+//				SetApply2IsEnabled(false);
+//				SetProposalTextID2("cannot_apply_proposal");
+//			}
+//		} // closing SelectProposal2
+//		
+//		application function void ApplyProposal2()
+//		{
+//			string TextID = GetProposalTextID2();
+//			High_Level_Library_FitAssApply.ApplyProposal(TextID);
+//		} // closing ApplyProposal2
+//	} //package FitAss Template
+} //namespace shs.sat
+//
+//// End Of File

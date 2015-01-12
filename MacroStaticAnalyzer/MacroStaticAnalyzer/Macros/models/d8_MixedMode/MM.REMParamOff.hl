@@ -1,0 +1,81 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                 REM Adaptive Parameters Off
+// Initial Version                                      							   	:  2012-11-28  Judith Köppe
+// peer review									                                         : 2012-01-03  MieMie and Judith	
+// Review with Judith and added the Super Power HI & Traditional formula default to DUAL. : 2013-07-01 Jenny 
+// Compression: As per Uli's recommendation: No change for proprietary formula. 
+// For Traditional always to Syllabic													: 2013-07-08 Jenny
+*****************************************CODE FREEZE***************************************************
+// ******SIFIT7.2_PEERREVIEWED: updated comments for prefit.				  :  2013-07-31   Jenny, Judith, Alastair, Raymond
+//------------------------------------------------7.3----------------------------------------------------------------
+// FR64913: Replace ConnexxFit with BinaxFit												: 2014-02-27 Raymond
+// Sifit7.3 Peer review 						  				: 2014-04-24 Meike, Judith
+*/
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode REMParamOff
+	{
+		application function bool IsVisible ()
+		{
+		// Visibility is always true						
+			println ('[HAL]TestSettings - REMParamOff - IsVisible = TRUE');
+			return true;
+		} // close REMParamOff.IsVisible
+		application function bool IsEnabled ()
+		{
+		// Enabled only in Universal Programm (Program 0)	
+			int hp = env:Prog;
+			if (hp == 0)
+			{
+				println ('[HAL]TestSettings - REMParamOff - IsEnabled = TRUE in HP=' + hp);
+				return true;
+			}
+			else
+			{
+				println ('[HAL]TestSettings - REMParamOff - IsEnabled = FALSE in HP=' + hp);
+				return false;
+			}
+		} // close REMParamOff.IsVisible
+		application function bool IsEnabledPos (int pos)
+		{
+			return true;
+		} // close REMParamOff.IsEnabledPos
+		application function int GetPos ()
+		{
+			int retval = -1;
+			//Cxx does not read the GetPos for REMParamOff
+			int hp = env:Prog;
+			println ('[HAL]TestSettings - REMParamOff - GetPos = ' + retval + ' in HP=' + hp);
+			return retval;
+		} // close REMParamOff.GetPos
+		application function void SetPos (int pos)
+		{
+		//All settings same as TestSettings Omnidirection except: 
+		//(1) Compression: Only reset the Traditional formula to Syllabic and No changes to the Proprietary formula.
+		
+			// Set Adaptive Parameters Off (except from Fbc) and MicMode to Omnidirectional			
+			println ('[HAL]TestSettings - REMParamOff - SetPos');
+			
+			//Reuse OmniBu_Set because settings are the same BUT COMPRESSION is different >> TestSettings(1: Sets Off), REMOff(2: No change).
+			High_Level_Library_TestSettings.TestSettingsOmniBu_Set (2); 
+
+			// No change for proprietary formula. For Traditional always to Syllabic
+			if (fit:SelectableFormula != SelectableFormula.BinaxFit)
+			{
+			// Set Compression type to Syllabic
+				High_Level_Library_Compression.Compression_Set_SyllabicDual (0); // (1 = dual or syllabic = 0)
+				println
+				('[HAL]TestSettings - REMParamOff - SetPos - Compression type set to Syllabic for TRADITIONAL FORMULA');
+			}
+			else
+			{
+				println
+				('[HAL]TestSettings - REMParamOff - SetPos - Compression type NOT CHANGE for Proprietary formula');
+			}
+		} // close REMParamOff.SetPos
+
+	} //package REMParamOff
+
+} // namespace shs.sat

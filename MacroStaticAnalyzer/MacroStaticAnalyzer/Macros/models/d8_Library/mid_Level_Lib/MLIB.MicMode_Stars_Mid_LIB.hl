@@ -1,0 +1,292 @@
+/*---------------------------------------------------------------------------------------------------------------
+//                                 MID LEVEL PRICEPOINT LIBRARY 		 : Mid_Level_Library_MicModeStars
+/*---------------------------------------------------------------------------------------------------------------
+// Initial version															: 2014-02-03 Raymond
+// Added stars value for switchcase default									: 2014-02-05 Raymond
+// Updated wireless checks													: 2014-02-10 Raymond
+// 7.3 Peer Review: Remove NFStars_IsEnabled								: 2014-04-16 Raymond
+/*----------------------------------------------------------v7.4-------------------------------------------------*/
+// Amended NFStarsIsVisible to show stars from pp300						: 2014-06-30 Sultan
+// Added NFStarsIsEnabled 													: 2014-06-30 Sultan 
+// Extended Omni stars code for ITEs                                        : 2014-08-05 Al
+// FR69523-->Updated NFStarsIsEnabled(),GetNFStars() for pp300bx NF.		: 2014-10-16 Sultan		
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{
+	using shs_sat.*;
+	
+	package Lib Mid_Level_Library_MicModeStars
+	{
+/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    OmniDirStars_IsVisible
+   Input      :  none
+   Ouput      :  <bool> Omni and Dir stars IsVisible status 
+   Description:  Stars IsVisible for Omni and Dir panel  
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool OmniStarsIsVisible() // 7.3 Reviewed
+		{	
+			bool retVal = false;
+			if (Mid_Level_Library_Mic_Mode.OmniIsVisible() == true)
+			{
+				retVal = true;
+			}
+			return retVal;	
+		} 
+		
+/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    DirStarsIsVisible
+   Input      :  none
+   Ouput      :  <bool> Dir stars IsVisible status 
+   Description:  Stars IsVisible for Dir panel  
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool DirStarsIsVisible() // 7.3 Reviewed
+		{	
+			bool retVal = false;
+			if (Mid_Level_Library_Mic_Mode.DirIsVisible() == true)
+			{
+				retVal = true;
+			}
+			return retVal;			
+		} 
+/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    NFStarsIsVisible
+   Input      :  none
+   Ouput      :  <bool> Speech focus and Narrow focus IsVisible status 
+   Description:  Stars IsVisible for Narrow Focus
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool NFStarsIsVisible() // 7.3 Reviewed
+		{	
+			bool retVal = false;
+			if (Mid_Level_Library_Mic_Mode.NFIsVisible() == true)
+			{
+				retVal = true;
+			}
+			return retVal;	
+		}
+		
+		
+/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    SFStarsIsVisible
+   Input      :  none
+   Ouput      :  <bool> Speech focus IsVisible status 
+   Description:  Stars IsVisible for SF
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SFStarsIsVisible()
+		{	
+			bool retVal = false;			
+			if (Mid_Level_Library_Mic_Mode.SFIsVisible() == true ||
+				Mid_Level_Library_Mic_Mode.SLIsVisible() == true)
+			{
+				retVal = true;
+			}
+			return retVal;		
+		} 	
+
+/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    SingleDirMicStarsIsVisible
+   Input      :  none
+   Ouput      :  <bool> 
+   Description:  Stars IsVisible for SingleDirMic
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SingleDirMicStarsIsVisible() 
+		{	
+			bool retVal = false;			
+			if (Mid_Level_Library_Mic_Mode.SingleDirMicIsVisible() == true)
+			{
+				retVal = true;
+			}
+			return retVal;		
+		} 	
+
+/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    NFStarsIsEnabled
+   Input      :  none
+   Ouput      :  <bool>Narrow focus IsEnabled status 
+   Description:  Stars IsEnabled Status for NF. Pls note that this function is used in two places for simplicity.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool NFStarsIsEnabled() // 7.3 Reviewed
+		{
+			bool retVal =  Mid_Level_Library_Mic_Mode.IsNarrowFocusAvailable() || Mid_Level_Library_Mic_Mode.IsNarrowFocusSPASSAvailable();		
+			return retVal;
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    SingleDirMicStarsIsEnabled
+   Input      :  none
+   Ouput      :  <bool>Single Dir mic IsEnabled status 
+   Description:  Stars IsEnabled Status for Single Dir Mic.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SingleDirMicStarsIsEnabled() 
+		{
+			bool retVal =  Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable();	
+			return retVal;
+		}
+/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    GetOmniStars()
+   Input      :  none
+   Ouput      :  <int> Num of Stars 
+   Description:  Stars count for Omni  
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int GetOmniStars() 
+		{
+			int stars = 0;
+			
+			if(cap:HICategory == HICategory.ITE)
+			{
+			      switch (cap:PricePoint)
+			   {
+				    case PricePoint.PP700:{
+					   stars = 5;
+				    }
+				    case PricePoint.PP500:{
+					   stars = 3;
+				    }
+				    case PricePoint.PP300:{
+					   stars = 3;
+				    }
+				    default:{
+					   stars = 0;
+				    }
+			   }
+			}
+			else
+			{
+			      switch (cap:PricePoint)
+			   {
+				    case PricePoint.PP700:{
+					   stars = 5;
+				    }
+				    case PricePoint.PP500:{
+					   stars = 4;
+				    }
+				    case PricePoint.PP300:{
+					   stars = 3;
+				    }
+				    default:{
+					   stars = 0;
+				    }
+			   }
+			}			
+			return stars;
+		} // Closing Mid_Level_Library_MicModeStars.GetOmniStars
+
+/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    GetDirStars()
+   Input      :  none
+   Ouput      :  <int> Num of Stars 
+   Description:  Stars count for Dir  
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int GetDirStars() // 7.3 Reviewed
+		{
+			int stars = 0;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{
+					stars = 5;
+				}
+				case PricePoint.PP500:{
+					stars = 4;
+				}
+				case PricePoint.PP300:{
+					stars = 3;
+				}
+				default:{
+					stars = 0;
+				}
+			}
+			return stars;
+		} // Closing Mid_Level_Library_MicModeStars.GetDirStars
+
+/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    GetNFStars()
+   Input      :  none
+   Ouput      :  <int> Num of Stars 
+   Description:  Stars count for Nf
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int GetNFStars() // 7.3 Reviewed
+		{
+			int stars = 0;
+			
+			//If by capability wise, HI does not offers NF, then return stars as 0.
+			if(NFStarsIsEnabled() == false)
+			{
+				return stars;
+			}
+			
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:
+				{
+					stars = 5;
+				}
+				case PricePoint.PP500:
+				{
+					stars = 4;
+				}
+				case PricePoint.PP300:
+				{
+					stars = 3;
+				}
+				default:
+				{
+					stars = 0;
+				}
+			}
+			return stars;
+		} // Closing Mid_Level_Library_MicModeStars.GetNfStars
+
+/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    GetSfStars()
+   Input      :  none
+   Ouput      :  <int> Num of Stars 
+   Description:  Stars count for Sf
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int GetSFStars() // 7.3 Reviewed
+		{
+			int stars = 0;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{
+					if (Mid_Level_Library_Mic_Mode.IsNarrowFocusAvailable())
+					{
+						stars = 5; // For Sidelook
+					}
+					else
+					{
+						stars = 4; // For Speechfocus
+					}
+				}
+				case PricePoint.PP500:{
+					stars = 4;
+				}
+				case PricePoint.PP300:{
+					stars = 0;
+				}
+				default:{
+					stars = 0;
+				}
+			}
+			return stars;
+		} // Closing Mid_Level_Library_MicModeStars.GetSfStars
+	
+	/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    GetSingleDirMicStars()
+   Input      :  none
+   Ouput      :  <int> Num of Stars 
+   Description:  Stars count for SingleDirMic
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int GetSingleDirMicStars() 
+		{
+			int stars = 0;
+			
+			if(Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable() == true)
+			{
+				stars = 5;
+			}			
+			return stars;
+		} 
+		
+		
+	} // package Mid_Level_Library_MicModeStars
+} // namespace shs.sat

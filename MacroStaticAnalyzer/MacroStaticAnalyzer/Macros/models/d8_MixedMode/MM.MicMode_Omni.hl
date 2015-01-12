@@ -1,0 +1,50 @@
+/*----------------------------------------------------------------------------------------------------------------
+// CXX UI:                        MicMode Omnidirectional panel
+//----------------------------------------------------------------------------------------------------------------
+// Initial Version                						     							:  2013-11-11 Raymond
+// Removed IsEnabledPos, as not used                                                    :  2014-02-26 Al
+// MaxPos and GetPos now return 0.                                                      : 2014-04-16 Al
+//--------------------------------------------------v7.4---------------------------------------------------------
+//Amended IsEnabled instead of OmniIsEnabled											: 2014-06-27 Sultan
+//---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_Omni
+	{
+		application function bool IsVisible()
+		{
+			bool retVal = true;
+			println('[HAL]MM - Mic_Mode_Omni.IsVisible = ' + retVal);
+			return retVal;
+		} 
+		
+		application function bool IsEnabled()
+		{
+			bool retVal = High_Level_Library_Mic_Mode.OmniIsEnabled();
+	    	println('[HAL]MM - Mic_Mode_Omni.IsEnabled = ' + retVal);
+			return retVal;
+		}
+		
+		application function int MaxPos()
+		{
+			int retVal = 0;
+			println('[HAL]MM - Mic_Mode_Omni.MaxPos = ' + retVal);
+			return retVal; 
+		}
+			
+		application function int GetPos()
+		{
+			int retVal = 0;
+		    println('[HAL]MM - Mic_Mode_Omni.GetPos = ' + retVal);
+			return retVal; 
+		}
+		
+		application function void SetPos(int pos)
+		{
+			println('[HAL]MM - Mic_Mode_Omni.SetPos - ');		 
+		}
+	} 
+} 

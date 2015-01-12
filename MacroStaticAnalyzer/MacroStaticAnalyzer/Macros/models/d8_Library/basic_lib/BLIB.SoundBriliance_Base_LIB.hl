@@ -1,0 +1,326 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY  SoundBriliance
+// Initial Version                                         			   : 2011-02-22 Nadine Seubert
+// add SoundBrilianceEn_Set                                			   		: 2011-03-01 Nadine Seubert
+// update to new HAL version                               			   		: 2011-03-04 Nadine Seubert
+// Removed Package LIB workaround(application fcns)        			   		: 2011-03-07 Cecil Wilson
+// change dependencies for 501 pricepoints                 			   		: 2011-03-25 Nadine Seubert
+// change dependencies for TEK                            			   		: 2011-03-25 Nadine Seubert
+// delete pricepoint scan                                  			   		: 2011-04-11 Nadine Seubert
+// change call for Fitformula to HIVar                     			   		: 2011-04-26 Nadine Seubert
+// update for new Macro variable                                       		: 2011-06-08 Nadine Seubert
+// delete comments and therefore include if MacroVarConnexxFit... loop 		: 2011-06-15 Meike Doose
+// Change hiControl index [19],[20] to [18],[19]                       		: 2011-06-28 Chuah LayYuan
+// Temporary Command out d8FAgcInvcr1,2,d8FAgcCk1,1 which cause exception   : 2011-06-28 Chuah LayYuan
+// ER50115 fix, remove the temporary command out.                           : 2011-07-11 Chuah LayYuan
+// Add function to retrive FCO status information                           : 2011-07-18 Chuah LayYuan
+// Added println statement for CR51079:AgcChannelGain is not set correctly.	: 2011-08-25 Jenny Lin
+// Rework the checkbox due to FCO dependencies and added "SwMacroVarEn5Hp". *** CR51080 To rework 
+// when "SwMacroVarEn5Hp" changed to "SwMacroSoundBrillianceHp".
+// Added SoundBrilliance_Set_for_Fco.										: 2011-08-29 Jenny Lin
+// removed comment on the CR51080, Sw variabled changed. Update comment.	: 2011-11-22 Jenny Lin
+// rename "SoundBrilianceEn_Set" to "SoundBrilianceEn_SetHwSw" and 
+// rename "SoundBrilianceEn_Set_For_FCO" to "SoundBrilianceEn_SetHwOnly" and
+// rename "SoundBrilianceEn_Get" to "SoundBrilianceEn_GetSw"				: 2011-11-29 Jenny Lin
+// replaced SoundBrillianceEn_ApplyOffset with SoundBrillianceEn_ApplyOffset: 2012-01-20 Jenny Lin
+// updated SB slider values have to be set to -9dB (min), -6 dB (med) and -3 dB (max) 
+// according to Johannes email												: 2012-01-25 Jenny Lin
+// added the different way to adjust the offset curve. (for testing only)	: 2012-02-03 Jenny Lin
+// updated the setpos and getpos for the checkbox & slider					: 2012-02-14 Jenny Lin
+// rework SoundBrillianceEn_ApplyOffset to call the curvelib				: 2012-03-19 Jenny Lin
+// Updated the ApplyOffset to use ApplyMultipleOffsets_LowMedHigh_Partial	: 2012-04-15 Jenny Lin
+// Removed the SoundBrillianceEn_ApplyOffset due to it is no longer based on D00087684 (version 4)
+// footnote 4, SoundBrilliance only for aux input.							: 2012-06-04 Jenny Lin 
+// Updated the control name wrong.											: 2012-06-21 Jenny Lin
+// Updated SoundBrilianceSetGainandAGC based on discussion with Hannes		: 2012-06-29 Frauke
+// Undone previous (2012-06-29) changes and covered loss of high frequencies in HLIB	:2012-07-03 Frauke, Nadia, Nadine
+// Updated d8PAgcChannelGain from LogicalPosition_115 to LogicalPosition_53	based on feedback
+// via email (CR55357).														: 2012-07-17 Jenny Lin
+// ER56647: FITU: SoundBrilliance available for Ace but must not                : 2012-08-24 Nadine Seubert
+// CR57038: SoundBrilliance Implementation                                      : 2012-08-24 Nadine Seubert
+// ER58971: SoundBrilianceEn_Set_For_HwOnly(int pos_remapped) has been re-worked to allow processing for
+// devices where the control 'd8SwNumberOfActiveAgcChanGain' cannot be set to 44 channels, i.e. Aquaris   : 2012-11-20 Alastair
+// Added assertion error messages   	 									 :  2012-12-19 Ma Mie Mie Thein
+// ******SIFIT7.2_PEERREVIEWED: 					  :  2013-07-30   Jenny, Judith
+// refractor: Optimize code									: 2013-12-02 Jenny
+// FR64179: set d9PSmxAuxGainBandsAtten[12 to 15] 0dB (on), and -63dB (off).		: 2013-12-02 Jenny
+// FR64179: corrected the -63dB to 63dB attenuation.						: 2013-12-06 Jenny
+// update assertion to false instead of true.				: 2013-12-12 Jenny
+// Remove Aquaris dependent code from SoundBrilianceEn_Set_For_HwOnly : 2014-03-03 Raymond
+// FR65770: update d9PSmxAuxGainBandsAtten[12 to 15] and rename SoundBriliance_Set_AuxGainAtten 
+// to Set_AuxGainAtten12to15															: 2014-03-26 Jenny
+// Sifit7.3 Peer review																: 2014-04-14 Jenny, Judith
+// Code cleanup: Updated printlines.												: 2014-10-20 Jenny
+---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_SoundBriliance
+	{
+		/*$----------------------------------------------------------------------------------------------------------------
+		  Description:  Sets the HI settings based on Cxx Pos
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SoundBriliance_Set_Slider_Strength (int pos)
+		{
+			println ('[HAL]BLIB.BasicLibrary_SoundBriliance.SoundBriliance_Set_Slider_Strength');
+
+			switch (pos)
+			{
+				case 2:
+				{ 
+					// (max)
+					hi:d8PSmxShifiStyleGainAux = d8PSmxShifiStyleGainAux.M3_dB;
+					hi:d8PSmxShifiStyleGainMic = d8PSmxShifiStyleGainMic.M3_dB;
+				}
+//				case 1:
+//				{ 
+//					// (med)
+//					hi:d8PSmxShifiStyleGainAux = d8PSmxShifiStyleGainAux.M6_dB;
+//					hi:d8PSmxShifiStyleGainMic = d8PSmxShifiStyleGainMic.M6_dB;
+//				}
+				case 0:
+				{ 
+					// (min)
+					hi:d8PSmxShifiStyleGainAux = d8PSmxShifiStyleGainAux.M9_dB;
+					hi:d8PSmxShifiStyleGainMic = d8PSmxShifiStyleGainMic.M9_dB;
+				}
+				default:
+				{ 
+					// default to MED position.
+					hi:d8PSmxShifiStyleGainAux = d8PSmxShifiStyleGainAux.M6_dB;
+					hi:d8PSmxShifiStyleGainMic = d8PSmxShifiStyleGainMic.M6_dB;
+				}
+			}
+		}
+
+		/*$----------------------------------------------------------------------------------------------------------------
+		  Description:  Compares the HI settings and returns the Slider positions
+			pos=0(min)	0
+			pos=1(med)	1
+			pos=2(max) 	2
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int SoundBriliance_Get_Slider_Strength()
+		{
+			println ('[HAL]BLIB.BasicLibrary_SoundBriliance.SoundBriliance_Get_Slider_Strength');
+
+			int retVal = -1;
+			
+			if (hi:d8PSmxShifiStyleGainAux == d8PSmxShifiStyleGainAux.M3_dB)
+			{
+				// max position w.r.t to 500 Price point
+				retVal = 2;
+			}
+			else if (hi:d8PSmxShifiStyleGainAux == d8PSmxShifiStyleGainAux.M6_dB)
+			{
+				// med position w.r.t to 500 Price point
+				retVal = 1;
+			}
+			else if (hi:d8PSmxShifiStyleGainAux == d8PSmxShifiStyleGainAux.M9_dB)
+			{
+				// min position w.r.t to 500 Price point
+				retVal = 0;
+			}
+			else
+			{
+				assertion (false,"[Macro Error]SoundBriliance_Get_Slider_Strength >> Please ignore this error if you see it without performing firstfit. -> [MacroError] Undefined state of SoundBriliance Slider");
+				retVal = -1;
+			}
+
+			return retVal;
+		}
+		
+		/*$----------------------------------------------------------------------------------------------------------------
+		  Description:  checks the swmacro variable to return the state of SB checkbox.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SoundBrilianceEn_GetSwOnly()
+		{
+			println ('[HAL]BLIB.BasicLibrary_SoundBriliance.SoundBrilianceEn_GetSwOnly');
+
+			bool retVal = (hi:d8SwMacroSoundBrillianceHp == d8SwMacroSoundBrillianceHp.on); 
+			return retVal;
+		}
+		
+		/*$----------------------------------------------------------------------------------------------------------------
+		  Description:  Checks if the sound brilliance is activated or not. 
+			pos_remapped:
+				10 - OFF for 700
+				20 - OFF for 500 deactivates higher channel
+				30 - ON w.r.t. PP700
+				40 - ON w.r.t. PP500 activates higher channel
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int SoundBrilianceEn_GetHwOnly()
+		{
+			println ('[HAL]BLIB.BasicLibrary_SoundBriliance.SoundBrilianceEn_GetHwOnly');
+
+			int pos_remapped = -1;
+			
+			// Checks if SoundBrilliance enabled for Aux input
+			if (hi:d8PSmxShifiAuxEn == d8PSmxShifiAuxEn.on) 
+			{
+				if (hi:d8PSmxShifiMicEn == d8PSmxShifiMicEn.on)
+				{
+					// with respect to PP500 (on): If Mic hifi enabled, PP500
+					pos_remapped = 40;
+				}
+				else
+				{
+					// d8PSmxShifiMicEn.off, when PP700 does not need Mic hifi enabled
+					pos_remapped = 30;
+				}
+			}
+			else 
+			{
+				// with respect to (off)	
+				pos_remapped = 10;
+			}
+
+			return pos_remapped;
+		}
+		
+		/*$----------------------------------------------------------------------------------------------------------------
+		  Description:  Sets the SoundBrilliance HW controls on/off .
+			pos_remapped:
+				10 - OFF for 700
+				20 - OFF for 500 deactivates higher channel
+				30 - ON w.r.t. PP700
+				40 - ON w.r.t. PP500 activates higher channel
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SoundBrilianceEn_Set_For_HwOnly (int pos_remapped)
+		{
+			println ('[HAL]BLIB.BasicLibrary_SoundBriliance.SoundBrilianceEn_Set_For_HwOnly');
+		
+			switch (pos_remapped)
+			{
+				case 40:
+				{ 
+					// PP500 + SB = on
+					hi:d8PSmxShifiMicEn = d8PSmxShifiMicEn.on; // PP500, MicInput need SoundBrilliance
+					hi:d8PSmxShifiAuxEn = d8PSmxShifiAuxEn.on; // Wireless input with SoundBrilliance
+					
+					// FR64179 : Sets Auxiliary Gain Attenuation Settings (0: 63dB - attenuated, 1: 0dB - not attenuated)
+					BasicLibrary_SoundBriliance.Set_AuxGainAtten12to15(1); // FR64179
+
+					// For PP500, have to set the d9SwNumberOfActiveAgcChanGain to have SB.
+					
+					// For Aquaris, it is required to set d9SwNumberOfActiveAgcChanGain to ._38_Channels
+					// (Aquaris dependent code is removed in 7.3 D9 as it is not relevant
+					
+					if (isValid (d9SwNumberOfActiveAgcChanGain._44_Channels) == true)
+					{ // For all other devices
+						hi:d9SwNumberOfActiveAgcChanGain = d9SwNumberOfActiveAgcChanGain._44_Channels;
+					}
+					else
+					{
+						assertion (false,"[MacroError]BLIB.BasicLibrary_SoundBriliance.SoundBrilianceEn_Set_For_HwOnly >> Invalid HI control setting: d9SwNumberOfActiveAgcChanGain needs to be either 38channels or 44 channels.");
+					}
+				}
+				case 30:
+				{ 
+					// PP700 + SB = on
+					hi:d8PSmxShifiMicEn = d8PSmxShifiMicEn.off; // PP700 MicInput does not need SoundBrilliance
+					hi:d8PSmxShifiAuxEn = d8PSmxShifiAuxEn.on; // Wireless input with SoundBrilliance
+					
+					// FR64179 : Sets Auxiliary Gain Attenuation Settings (0: 63dB - attenuated, 1: 0dB - not attenuated)
+					BasicLibrary_SoundBriliance.Set_AuxGainAtten12to15(1); // FR64179
+					// dont need to set d9SwNumberOfActiveAgcChanGain, PP700 have hifi frequency beyond 8KHz.
+				}
+				case 20:
+				{ 
+					// PP500 + SB = off
+					hi:d8PSmxShifiMicEn = d8PSmxShifiMicEn.off;
+					hi:d8PSmxShifiAuxEn = d8PSmxShifiAuxEn.off;
+					
+					// FR64179 : Sets Auxiliary Gain Attenuation Settings (0: 63dB - attenuated, 1: 0dB - not attenuated)
+					BasicLibrary_SoundBriliance.Set_AuxGainAtten12to15(0); // FR64179
+					
+					// For PP500, have to reset the d9SwNumberOfActiveAgcChanGain to the original value.
+					if (isValid (d9SwNumberOfActiveAgcChanGain._34_Channels) == true)
+					{ // For SB OFF CASE
+						hi:d9SwNumberOfActiveAgcChanGain = d9SwNumberOfActiveAgcChanGain._34_Channels;
+					}
+					else
+					{
+						assertion (false,"[MacroError]BLIB.BasicLibrary_SoundBriliance.SoundBrilianceEn_Set_For_HwOnly >> Invalid HI control setting: d9SwNumberOfActiveAgcChanGain needs to be either 34 channels.");
+					}
+				}
+				case 10:
+				{
+					// PP700 + SB = off AND DEVICES THAT DOES NOT SUPPORT SoundBrilliance
+					hi:d8PSmxShifiMicEn = d8PSmxShifiMicEn.off;
+					hi:d8PSmxShifiAuxEn = d8PSmxShifiAuxEn.off;
+				
+					// FR64179 : Sets Auxiliary Gain Attenuation Settings (0: 63dB - attenuated, 1: 0dB - not attenuated)
+					BasicLibrary_SoundBriliance.Set_AuxGainAtten12to15(0); // FR64179
+					// dont need to reset d9SwNumberOfActiveAgcChanGain, PP700 have hifi frequency beyond 8KHz.
+				}
+				default:
+				{ 
+					// Does not make sense to CXX but for implementation CHECK
+					assertion (false, "[MacroError]BLIB.BasicLibrary_SoundBriliance.SoundBrilianceEn_Set_For_HwOnly >> Undefined state of SoundBriliance enabled checkbox");
+				}
+			}
+		}
+		
+		/*$----------------------------------------------------------------------------------------------------------------
+		  Description:  Sets the Macro Variable for SoundBrilliance feature based on Checkbox selection
+			pos_remapped:
+				10 - OFF for 700
+				20 - OFF for 500 deactivates higher channel
+				30 - ON w.r.t. PP700
+				40 - ON w.r.t. PP500 activates higher channel
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SoundBrilianceEn_Set_For_SwOnly (int pos_remapped)
+		{
+			println ('[HAL]BLIB.BasicLibrary_SoundBriliance.SoundBrilianceEn_Set_For_SwOnly');
+
+			switch (pos_remapped)
+			{
+				case 40:{
+					hi:d8SwMacroSoundBrillianceHp = d8SwMacroSoundBrillianceHp.on;
+				}
+				case 30:{
+					hi:d8SwMacroSoundBrillianceHp = d8SwMacroSoundBrillianceHp.on;
+				}
+				case 20:{
+					hi:d8SwMacroSoundBrillianceHp = d8SwMacroSoundBrillianceHp.off;
+				}
+				default:
+				{
+					// case 10:
+					hi:d8SwMacroSoundBrillianceHp = d8SwMacroSoundBrillianceHp.off;
+				}
+			}
+		}
+
+		/*$----------------------------------------------------------------------------------------------------------------
+		   Description:  sets the d9PSmxAuxGainBandsAtten[12-15] based on the SoundBrilliance, and Input Mode.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Set_AuxGainAtten12to15 (int AuxAtten)
+		{
+			println ('[HAL]BLIB.BasicLibrary_SoundBriliance.Set_AuxGainAtten12to15');
+
+			// FR64179 : To set d9PSmxAuxGainBandsAtten[12-15] = 0 when SB is on, and 63 when SB is OFF
+			// FR65770 : AUX-filter-bank parameter: SmartRelay out-of-the-box streaming & fitted modes
+			//			0dB for all Telecoil (only and mixed-mode), or DAI (only and mixed-mode) or SoundBrilliance activated. 
+			//			63dB otherwise.
+			
+			if(AuxAtten == 1)
+			{
+				hi:d9PSmxAuxGainBandsAtten[12] = 0;
+				hi:d9PSmxAuxGainBandsAtten[13] = 0;
+				hi:d9PSmxAuxGainBandsAtten[14] = 0;
+				hi:d9PSmxAuxGainBandsAtten[15] = 0;
+			}
+			else
+			{
+				hi:d9PSmxAuxGainBandsAtten[12] = 63;
+				hi:d9PSmxAuxGainBandsAtten[13] = 63;
+				hi:d9PSmxAuxGainBandsAtten[14] = 63;
+				hi:d9PSmxAuxGainBandsAtten[15] = 63;	
+			}	
+	
+		}
+
+	}
+
+}

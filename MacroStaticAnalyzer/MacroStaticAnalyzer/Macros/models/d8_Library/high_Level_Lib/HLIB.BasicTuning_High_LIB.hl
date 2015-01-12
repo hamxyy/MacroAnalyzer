@@ -1,0 +1,447 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                                 HIGH LEVEL LIBRARY :  Basic Tuning
+// Initial Version                						    						    :  2014-08-29 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_BasicTuning
+	{
+
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    LoudSoundsDownBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if Loud Sound Down button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool LoudSoundsDownBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				if(isOffsetApplicable("BT_LoudSoundsDown", ToSubject.LevHigh, Apply.Partial))
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.LoudSoundsDownBuIsEnabled
+
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    LoudSoundsUpBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if Loud Sound Up button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool LoudSoundsUpBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				if(isOffsetApplicable("BT_LoudSoundsUp", ToSubject.LevHigh, Apply.Partial))
+				{
+					return true;
+				}
+				else
+				{
+					return false;	
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.LoudSoundsUpBuIsEnabled
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    MedSoundsDownBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if Med Sound Down button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool MedSoundsDownBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				if(isOffsetApplicable("BT_MedSoundsDown", ToSubject.LevMed, Apply.Partial))
+				{
+					return true;
+				}
+				else
+				{
+					return false;	
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.MedSoundsDownBuIsEnabled
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    MedSoundsUpBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if Med Sound Up button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool MedSoundsUpBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				if(isOffsetApplicable("BT_MedSoundsUp", ToSubject.LevMed, Apply.Partial))
+				{
+					return true;
+				}
+				else
+				{
+					return false;	
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.MedSoundsUpBuIsEnabled
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    MoreCompressiveBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if More Compressive button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool MoreCompressiveBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				// if we are able to apply either the low level or high level curve, return TRUE.
+				// Only when both curves are not applicable, this button shall be greyed out.
+				if (isOffsetApplicable ("BT_LoudSoundsDown", ToSubject.LevHigh, Apply.Partial) == false &&
+						isOffsetApplicable ("BT_SoftSoundsUp", ToSubject.LevLow, Apply.Partial) == false)
+				{
+					println ('[HAL]: BT.BasicTuning_MoreCompressiveBu-IsEnabled FALSE since low & high curve not applicable.');
+					return false;
+				}
+				else
+				{
+					println ('[HAL]: BT.BasicTuning_MoreCompressiveBu-IsEnabled TRUE');
+					return true;
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.MoreCompressiveBuIsEnabled
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    MoreLinearBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if More Linear button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool MoreLinearBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				// if we are able to apply either the low level or high level curve, return TRUE.
+				// Only when both curves are not applicable, this button shall be greyed out.
+				if (isOffsetApplicable ("BT_LoudSoundsUp", ToSubject.LevHigh, Apply.Partial) == false &&
+						isOffsetApplicable ("BT_SoftSoundsDown", ToSubject.LevLow, Apply.Partial) == false)
+				{
+					println ('[HAL]: BT.BasicTuning_MoreLinearBu-IsEnabled FALSE');
+					return false;
+				}
+				else
+				{
+					println ('[HAL]: BT.BasicTuning_MoreLinearBu-IsEnabled TRUE');
+					return true;
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.MoreLinearBuIsEnabled
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    OwnVoiceDownBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if Own Voice Down button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool OwnVoiceDownBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				if (BasicLibrary_Curves.VentOutisOpen() == true){
+					if(isOffsetApplicable("BT_OwnVoiceOpen_MedHighLevDown", ToSubject.LevMed, Apply.Partial)||
+					isOffsetApplicable("BT_OwnVoiceOpen_MedHighLevDown", ToSubject.LevHigh, Apply.Partial))
+					{
+						println('[HAL]: BT.BasicTuning_OwnVoiceDownBu-IsEnabled TRUE (open fitting)');
+						return true;
+					}
+					else
+					{
+						println('[HAL]: BT.BasicTuning_OwnVoiceDownBu-IsEnabled FALSE (open fitting)');
+						return false;	
+					}
+				}
+				else
+				{
+					if(isOffsetApplicable("BT_OwnVoiceClosed_Down", ToSubject.LevALL, Apply.Partial))
+					{
+						println('[HAL]: BT.BasicTuning_OwnVoiceDownBu-IsEnabled TRUE (closed fitting)');
+						return true;
+					}
+					else
+					{
+						println('[HAL]: BT.BasicTuning_OwnVoiceDownBu-IsEnabled FALSE (closed fitting)');
+						return false;	
+					}
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.OwnVoiceDownBuIsEnabled
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    OwnVoiceUpBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if Own Voice Up button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool OwnVoiceUpBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				if (BasicLibrary_Curves.VentOutisOpen() == true){
+					if(isOffsetApplicable("BT_OwnVoiceOpen_MedHighLevUp", ToSubject.LevMed, Apply.Partial)||
+					isOffsetApplicable("BT_OwnVoiceOpen_MedHighLevUp", ToSubject.LevHigh, Apply.Partial))
+					{
+						println('[HAL]: BT.BasicTuning_OwnVoiceUpBu-IsEnabled TRUE (open fitting)');
+						return true;
+					}
+					else
+					{
+						println('[HAL]: BT.BasicTuning_OwnVoiceUpBu-IsEnabled FALSE (open fitting)');
+						return false;	
+					}
+				}
+				else
+				{
+					if(isOffsetApplicable("BT_OwnVoiceClosed_MedHighLevUp", ToSubject.LevALL, Apply.Partial))
+					{
+						println('[HAL]: BT.BasicTuning_OwnVoiceUpBu-IsEnabled TRUE (closed fitting)');
+						return true;
+					}
+					else
+					{
+						println('[HAL]: BT.BasicTuning_OwnVoiceUpBu-IsEnabled FALSE (closed fitting)');
+						return false;	
+					}
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.OwnVoiceUpBuIsEnabled
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SoftSoundsDownBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if Soft Sound Down button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SoftSoundsDownBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				if(isOffsetApplicable("BT_SoftSoundsDown", ToSubject.LevLow, Apply.Partial))
+				{
+					return true;
+				}
+				else
+				{
+					return false;	
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.SoftSoundsDownBuIsEnabled
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SoftSoundsUpBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if Soft Sound Up button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SoftSoundsUpBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				if(isOffsetApplicable("BT_SoftSoundsUp", ToSubject.LevLow, Apply.Partial))
+				{
+					return true;
+				}
+				else
+				{
+					return false;	
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.SoftSoundsUpBuIsEnabled
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SoundQualitySharperBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if Sound Quality Sharper Up button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SoundQualitySharperBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				if (cap:GMax >= 80)
+				{
+					if (isOffsetApplicable ("BT_SQ_SharpGmaxMore80dB", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: BasicTuning_SoundQualitysharperBu-IsEnabled TRUE');
+						return true;
+					}
+					else
+					{
+						println ('[HAL]: BasicTuning_SoundQualitysharperBu-IsEnabled FALSE');
+						return false;
+					}
+				}
+				else
+				{
+					if (isOffsetApplicable ("BT_SoundQualitySharper", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: BasicTuning_SoundQualitysharperBu-IsEnabled TRUE');
+						return true;
+					}
+					else
+					{
+						println ('[HAL]: BasicTuning_SoundQualitysharperBu-IsEnabled FALSE');
+						return false;
+					}
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.SoundQualitySharperBuIsEnabled
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SoundQualitySofterBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if Sound Quality Softer Up button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SoundQualitySofterBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				if (cap:GMax >= 80)
+				{
+					if (isOffsetApplicable ("BT_SQ_SofterGmaxMore80dB", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: BasicTuning_SoundQualitysofterBu-IsEnabled TRUE');
+						return true;
+					}
+					else
+					{
+						println ('[HAL]: BasicTuning_SoundQualitysofterBu-IsEnabled FALSE');
+						return false;
+					}
+				}
+				else
+				{
+					if (isOffsetApplicable ("BT_SoundQualitySofter", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: BasicTuning_SoundQualitysofterBu-IsEnabled TRUE');
+						return true;
+					}
+					else
+					{
+						println ('[HAL]: BasicTuning_SoundQualitysofterBu-IsEnabled FALSE');
+						return false;
+					}
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.SoundQualitySofterBuIsEnabled
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SpeechDownBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if Speech Down button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SpeechDownBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				if(isOffsetApplicable("BT_SpeechLowLevelDown", ToSubject.LevALL, Apply.Complete))
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.SpeechDownBuIsEnabled
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SpeechUpBuIsEnabled
+//   Input      :  void
+//   Output     :  <bool> 
+//   Description:  Checks if Speech Up button should be enabled or greyed-out.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SpeechUpBuIsEnabled()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				if(isOffsetApplicable("BT_SpeechLowLevelUp", ToSubject.LevALL, Apply.Complete))
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		} // Closing High_Level_Library_BasicTuning.SpeechUpBuIsEnabled
+		/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of High Level LIBRARY Basic Tuning    
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package High_Level_Library_BasicTuning
+
+} //namespace shs.sat

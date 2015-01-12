@@ -1,0 +1,165 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY PowerOnDelay
+// Initial Version                                       		  	:  	2011-04-20  Meike Doose
+// include println													:	2011-05-18	Meike Doose
+// updated the println for PowerOnDelayEn_Get_Entry 
+// to make it before return statement							    :   2011-05-19  Cecil Wilson 
+// change MacroVar13 into MacroPowerOnDelay							:	2011-06-15	Meike Doose
+// Added  println for debug and default case for  Checkbox(En)
+// setpos & replaced the DD getpos hicontol to macro variable		:   2011-06-30  Cecil Wilson
+// include missing control hi:d8FFbcStartupCtrl                     :   2011-06-30  Meike Doose
+// Macro Peer Review												:	2012-06-21  Nadia/Frauke/MangYew
+// Added BasicLibrary_FeedbackStopper.FBCStartUpCtrl_Set()
+// due to ER56215.													:  2012-07-30 Mang Yew
+*********************************************CODE FREEZE**********************************************************
+// Added assertion error messages									:  2012-12-19 Ma Mie Mie Thein 
+// Sifit 7.2 Peer Review												: 2013-07-31 Raymond
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_PowerOnDelay
+	{
+	// All the functions we need can be added in here
+
+
+	/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    PowerOnDelayEn_Get_Entry
+//   Input      :  none 
+//   Ouput      :  <bool> Current State of checkbox 
+//   Description:  Compares the HI settings and returns the UI positions    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool PowerOnDelayEn_Get_Entry ()
+		{ // REVIEWED 7.2
+			if (hi:d8FUctPonDelay == d8FUctPonDelay.off)
+			{
+				println ("[HAL]Blib. PowerOnDelayEn_Get set to false");
+				return false;
+			}
+			else
+			{
+				println ("[HAL]Blib. PowerOnDelayEn_Get set to true");
+				return true;
+			}
+		} // close BasicLibrary_PowerOnDelay.PowerOnDelayEn_Get_Entry		
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    PowerOnDelayEn_Set_Entry
+//   Input      :  <int> Desired State of checkbox 
+//   Ouput      :  none 
+//   Description:  Compares the HI settings and returns the UI positions   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void PowerOnDelayEn_Set_Entry (int pos) // REVIEWED 7.2
+
+		{
+			if (pos == 1)
+			{
+				if (hi:d8SwMacroPowerOnDelay == d8SwMacroPowerOnDelay._6_s)
+				{
+					hi:d8FUctPonDelay = d8FUctPonDelay._6_s;
+					println ("[HAL]Blib.PowerOnDelayEn_Set set to 6s");
+				}
+				else if (hi:d8SwMacroPowerOnDelay == d8SwMacroPowerOnDelay._12_s)
+				{
+					hi:d8FUctPonDelay = d8FUctPonDelay._12_s;
+					println ("[HAL]Blib.PowerOnDelayEn_Set set to 12s");
+				}
+				else if (hi:d8SwMacroPowerOnDelay == d8SwMacroPowerOnDelay._18_s)
+				{
+					hi:d8FUctPonDelay = d8FUctPonDelay._18_s;
+					println ("[HAL]Blib.PowerOnDelayEn_Set set to 18s");
+				}
+				else
+				{ // i.e. d8SwMacroPowerOnDelay is not configured, causing empty dropdown menu;  so set it to detault 
+				// This can be removed when etemplates is available and delivery is set for this control
+					hi:d8SwMacroPowerOnDelay = d8SwMacroPowerOnDelay._12_s;
+					hi:d8FUctPonDelay = d8FUctPonDelay._12_s;
+					println ("[HAL]Blib.PowerOnDelayEn_Set set to Defaults -> 12s");
+				}
+			}
+			else
+			{ // check box is off
+				hi:d8FUctPonDelay = d8FUctPonDelay.off;
+				println ("[HAL]Blib.PowerOnDelayEn_Set set to off");
+			}
+			BasicLibrary_FeedbackStopper.FBCStartUpCtrl_Set ();
+		} // Closes	BasicLibrary_PowerOnDelay.PowerOnDelayEn_Set_Entry
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   Basic LIBRARY Function:    PowerOnDelayDD_Get_Entry
+//   Input      :  None
+//   Ouput      :  <int> Actual dropdown menu position
+//   Description:  Compares the HI settings and returns the dropdown menu positions  
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int PowerOnDelayDD_Get_Entry () // REVIEWED 7.2
+
+		{
+			int pos = -1;
+			if (hi:d8SwMacroPowerOnDelay == d8SwMacroPowerOnDelay._6_s)
+			{
+				pos = 0;
+				println ("[HAL]Blib.PowerOnDelay_Get set to 6s");
+			}
+			else if (hi:d8SwMacroPowerOnDelay == d8SwMacroPowerOnDelay._12_s)
+			{
+				pos = 1;
+				println ("[HAL]Blib.PowerOnDelay_Get set to 12s");
+			}
+			else if (hi:d8SwMacroPowerOnDelay == d8SwMacroPowerOnDelay._18_s)
+			{
+				pos = 2;
+				println ("[HAL]Blib.PowerOnDelay_Get set to 18s");
+			}
+			else
+			{
+			// Does not make sense to CXX but for implementation CHECK
+				println ('[HAL]Blib.ERROR: DropDown position out of SPEC/Range');
+				assertion (pos >= 0, "[MacroError] Undefined state of Power On Delay ");
+			} // default closes 
+			return pos;
+		} // Closes	BasicLibrary_PowerOnDelay.PowerOnDelayDD_Get_Entry()	
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    PowerOnDelayDD_Set_Entry
+//   Input      :  <int> Desired State of DrobDown Menue 
+//   Ouput      :  none 
+//   Description:  Sets the BasicLibrary_PowerOnDelayDD feature based on DropDown selection   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void PowerOnDelayDD_Set_Entry (int pos) // REVIEWED 7.2
+
+		{
+			switch (pos)
+			{
+				case 0:{
+					hi:d8FUctPonDelay = d8FUctPonDelay._6_s;
+					hi:d8SwMacroPowerOnDelay = d8SwMacroPowerOnDelay._6_s;
+					println ("[HAL]Blib.PowerOnDelay_Set set to 6s");
+				}
+				case 1:{
+					hi:d8FUctPonDelay = d8FUctPonDelay._12_s;
+					hi:d8SwMacroPowerOnDelay = d8SwMacroPowerOnDelay._12_s;
+					println ("[HAL]Blib.PowerOnDelay_Set set to 12s");
+				}
+				case 2:{
+					hi:d8FUctPonDelay = d8FUctPonDelay._18_s;
+					hi:d8SwMacroPowerOnDelay = d8SwMacroPowerOnDelay._18_s;
+					println ("[HAL]Blib.PowerOnDelay_Set set to 18s");
+				}
+				default:{ // Does not make sense to CXX but for implementation CHECK
+					println ('[HAL]Blib.ERROR: DropDownMenue position out of SPEC/Range');
+					assertion (pos >= 0, "[MacroError] Undefined state of Power On Delay ");
+				} // default closes 
+
+			} // switch pos closes	
+			BasicLibrary_FeedbackStopper.FBCStartUpCtrl_Set ();
+		} // Closes	BasicLibrary_PowerOnDelay.PowerOnDelayDD_Set_Entry
+
+		/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY  PowerOnDelay
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package BasicLibrary_PowerOnDelay
+
+} //namespace shs.sat

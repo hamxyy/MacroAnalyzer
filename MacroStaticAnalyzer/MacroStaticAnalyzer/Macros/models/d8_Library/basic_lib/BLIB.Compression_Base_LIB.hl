@@ -1,0 +1,230 @@
+/*-----------------------------------------------------------------------------------------------------------------
+//                            BASIC FUNCTION LIBRARY : Compression 
+-------------------------------------------------------------------------------------------------------------------
+// Initial Version                                         			   				: 2011-08-18 Nadia Neugeborn
+// add comrpession update for TestSettings GET                         				: 2012-01-23 Nadine Seubert
+// reworked while loop for channel compression                         				: 2012-01-27 Nadine Seubert/Cecil
+// reworked Compression_Set (cleaner code)							   				: 2012-03-20 Nadia Neugeborn
+// Updated the Compression_Get_TestSettings() to include workaround for break 
+// statement not working (CR54053) and added in switch Pricepoint to workaround the 
+// logChanCount(Xf.XfCompression) not working.										: 2012-03-21 Jenny Lin 
+// ALM compression: uncommented out control											: 2012-06-12 Nadia Neugeborn
+// FR53491 implemented compression radio buttons									: 2012-07-25 Nadia Neugeborn
+// CR56505 updated compression getPos and defaults									: 2012-07-30 Nadia Neugeborn
+// Compression_Set:removed break as it would only set the very first channel		: 2012-08-07 Frauke
+**************************************************CODE FREEZE*****************************************************
+// CR51742: Fix of logChanCount - replace workarounds								: 2012-08-20 Nadia Neugeborn
+//  ER57318: HIDB eTemp/macro - Wrong xclfit parameter for lower pricepoints 		: 2012-09-03 Nadine Seubert
+// FR56052: FITU - micon-Amp: Kneepoints and Ratios shall be greyed out 			: 2012-09-06 Nadine Seubert
+// Add assertion error message for Compression_Method_Get							: 2012-12-14 Ma Mie Mie Thein	
+// CR59113: Compression_Method_Get() and annotation changed, as Pp300 now uses 
+// ALMfit compression. 																: 2013-01-08 Al Manders	
+// Changed back the Compression CK&CR to be grey out for Cxx-fit					: 2013-04-12 Sonia & Jenny 
+// FR61464: Updated Compression_Method_Set (int pos) to include remapped_pos==41. 
+* (for PP75 devices)																: 2013-04-19 Al.
+// FR61464: Updated Compression_Method_Get() to include PP75 devices    			: 2013-04-19 Al.
+// Updated compression based on RP20. mini-peer review with Al						: 2013-07-17 Jenny & AL
+// ******SIFIT7.2_PEERREVIEWED: 					  								: 2013-07-31 Jenny/Judith/Al/Raymond
+// FRFR64299 due to remove of Compression tab for Proprietory Formula, 				: 2014-03-20 Mang Yew
+// grey out of CR/CK is removed when Proprietory Formula is selected
+// FR64299: Remove CK/CR tab for binax-Fit >> revert back to have the control, 
+*  updated the Compression_Method_Set() to include d8SwMacroDisableCompressionInUi
+*  used for CXX to decide the Visibility of the CK/CRs.								: 2014-05-21 Jenny
+// Code cleanup and commented two redundant functions Compression_Get(),
+*  Compression_Get_TestSettings() not been used elsewhere							: 2014-09-18 Sultan
+//---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package Lib BasicLibrary_Compression
+	{	
+		/*$----------------------------------------------------------------------------------------------------------------
+		//   BASIC LIBRARY Function:    Compression_Set
+		//   Input      :  <int> Total number of channels for a price point, <int> Desired State of Compression Type 
+		//   Ouput      :  none 
+		//   Description:  Sets the desired compression type in all channels, 0: syllabic, 1: dual
+		// ******SIFIT7.2_PEERREVIEWED
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Compression_Set (int pos)
+		{
+			int i = 0;
+			int count = logChanCount (Xf.XfCompression); //get total number of compression channels
+			println ('[HAL]BLIB - BasicLibrary_Compression.Compression_Set: Number of compression channels = ' + count);
+			do
+			{
+				if (pos == 0)
+				{
+					hi:d8PAgcType [ i ] = d8PAgcType.syllabic;
+					println ('[HAL] - BasicLibrary_Compression.Compression_Set syllabic for channel ' + i);
+				}
+				else
+				{
+					hi:d8PAgcType [ i ] = d8PAgcType.dual;
+					println ('[HAL] - BasicLibrary_Compression.Compression_Set dual for channel ' + i);
+				}
+				// break statement not working due to CR54053 HAL unable to "break" the while-loop. 
+				// break;
+				++ i;
+			}
+			while (i < count);
+		}
+
+		/*$----------------------------------------------------------------------------------------------------------------
+		//   BASIC LIBRARY Function:    Compression_Method_Set
+		//   Input      :  <int> Desired compression method 
+		//   Ouput      :  none 
+		//   Description:  Sets the desired compression method controls
+		//				   10 = ALM  (PP700/PP500/PP300)
+		//				   20 = XCEL  (PP100)
+		//				   30 = SIRION  (PP75)
+		//				   50 = TRADITIONAL  (ALL PP)
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Compression_Method_Set (int remapped_pos)
+		{
+			if (remapped_pos == 10)
+			{
+				// "ALM"
+				hi:d8PAgcAlmEn = d8PAgcAlmEn.on;
+				hi:d8PAgcCc = d8PAgcCc.asymmetric_narrow;
+				hi:d8PAgcDualSlow = d8PAgcDualSlow.forced_slow;
+				hi:d8SwMacroDisableCompressionInUi = d8SwMacroDisableCompressionInUi.Yes;	//FR64299
+				println ("[HAL] - BasicLibrary_Compression.Compression_Method_Set = ALM Proprietary for PP700/PP500/PP300!");
+			}
+			else if (remapped_pos == 20)
+			{
+				// "XCEL"
+				hi:d8PAgcAlmEn = d8PAgcAlmEn.off;
+				hi:d8PAgcCc = d8PAgcCc.asymmetric_narrow;
+				hi:d8PAgcDualSlow = d8PAgcDualSlow.forced_slow;
+				hi:d8SwMacroDisableCompressionInUi = d8SwMacroDisableCompressionInUi.Yes;	//FR64299
+				println ("[HAL] - BasicLibrary_Compression_Method_Set = XCEL Proprietary for PP100!");
+			}
+			else if (remapped_pos == 30)
+			{
+				// "SIRION"
+				hi:d8PAgcAlmEn = d8PAgcAlmEn.off;
+				hi:d8PAgcCc = d8PAgcCc.symmetric;
+				hi:d8PAgcDualSlow = d8PAgcDualSlow.fastdslow;
+				hi:d8SwMacroDisableCompressionInUi = d8SwMacroDisableCompressionInUi.Yes;	//FR64299
+				println ("[HAL] - BasicLibrary_Compression_Method_Set = SIRION Proprietary for PP75!");
+			}
+			else if (remapped_pos == 50)
+			{
+				// "TRADITIONAL"
+				hi:d8PAgcAlmEn = d8PAgcAlmEn.off;
+				hi:d8PAgcCc = d8PAgcCc.symmetric;
+				hi:d8PAgcDualSlow = d8PAgcDualSlow.fastdslow;
+				hi:d8SwMacroDisableCompressionInUi = d8SwMacroDisableCompressionInUi.No;	//FR64299
+				println ("[HAL] - BasicLibrary_Compression_Method_Set = Traditional for PP700/PP500/PP300/PP100/PP75!");
+			}
+			else
+			{
+				println ("[HAL] - BasicLibrary_Compression_Method_Set = ERROR!");
+			}
+		}
+
+		/*$----------------------------------------------------------------------------------------------------------------
+		//   BASIC LIBRARY Function:    Compression_Method_Get
+		//   Input      :  none
+		//   Ouput      :  <int> Desired compression concept (10 or 30 = traditional, 20 or 40 = ALM / XcelAmp, 41=PP75 CxxFit 'closed')
+		//   Description:  Gets the desired Compression Concept controls
+		//					It is important to remap with PPs due to confusion of traditional compression methods
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int Compression_Method_Get ()
+		{
+			int remapped_pos = -1;
+			if(hi:d8SwMacroConnexxFitEn == d8SwMacroConnexxFitEn.on)
+			{
+				if (hi:d8PAgcAlmEn == d8PAgcAlmEn.on)
+				{
+						remapped_pos = 10; // "ALM"						
+						println ("[HAL] - BasicLibrary_Compression_Method_Get = ALM Proprietary for PP700/PP500/PP300!");
+				}
+				else
+				{
+					// NOTE: do not use d8PAgcCc as the getter!!!! 
+					if (hi:d8PAgcDualSlow == d8PAgcDualSlow.forced_slow)
+					{
+						remapped_pos = 20; // "XCEL"
+						println ("[HAL] - BasicLibrary_Compression_Method_Get = XCEL Proprietary for PP100!");
+					}
+					else if (hi:d8PAgcDualSlow == d8PAgcDualSlow.fastdslow)
+					{
+						remapped_pos = 30; // "SIRION"
+						println ("[HAL] - BasicLibrary_Compression_Method_Get = SIRION Proprietary for PP75!");
+					}
+				}
+			}
+			else
+			{
+				remapped_pos = 50; // "TRADITIONAL"
+				println ("[HAL] - BasicLibrary_Compression_Method_Get = Traditional for PP700/PP500/PP300/PP100/PP75!");
+			}
+			return remapped_pos;
+		}
+		
+		//		/*$----------------------------------------------------------------------------------------------------------------
+		//		//   BASIC LIBRARY Function:    Compression_Get
+		//		//   Input      :  none 
+		//		//   Ouput      :  <int> Current State of Compression type 
+		//		//   Description:  Checks if compression is syllabic or dual  
+		//		-----------------------------------------------------------------------------------------------------------------$*/
+		//		public function bool Compression_Get ()
+		//		{
+		//			if (hi:d8PAgcType [ 0 ] == d8PAgcType.syllabic) //Note: this is just checking for 1st AgcType and not 20 (might want to expand later)
+		//			{
+		//				println ('[HAL]BLIB-Compression_Get = syllabic');
+		//				return true;
+		//			}
+		//			else
+		//			{
+		//				println ('[HAL]BLIB-Compression_Get = dual');
+		//				return false;
+		//			}
+		//		}
+
+		//		/*$----------------------------------------------------------------------------------------------------------------
+		//		//   BASIC LIBRARY Function:    Compression_Get_TestSettings
+		//		//   Input      :  none 
+		//		//   Ouput      :  <int> Current State of Compression type 
+		//		//   Description:  Checks if compression is syllabic or dual  
+		//		-----------------------------------------------------------------------------------------------------------------$*/
+		//		public function int Compression_Get_TestSettings ()
+		//		{
+		//			int i = 0;
+		//			int pos = 0;
+		//			int count = logChanCount (Xf.XfCompression); //get total number of compression channels
+		//			int IsSyllabic = -1; //to workaround the CR54053
+		//
+		//			// if all AGC Types are adjusted to Syllabic the get pos is 1	
+		//			do
+		//			{
+		//				if (hi:d8PAgcType [ i ] != d8PAgcType.syllabic)
+		//				{
+		//					//move forward to the next channel
+		//					println ('[HAL]BLIB-Compression_Get not syllabic');
+		//					//					// comment out the break statement due to CR54053 HAL unable to "break" the while-loop. 							
+		//					//					break;
+		//				}
+		//				else
+		//				{
+		//					++ IsSyllabic; //to workaround the CR54053
+		//				}
+		//				++ i;
+		//			}
+		//			while (i < count);
+		//			if (IsSyllabic == count)
+		//			{
+		//				pos = 1;
+		//				println ('[HAL]BLIB-Compression_Get = syllabic  >>> where count = ' + count);
+		//			}
+		//			
+		//			println ('[HAL]BLIB-Compression_Get retval = ' + pos);
+		//			return pos;
+		//		}		
+	}
+}
+		
+	

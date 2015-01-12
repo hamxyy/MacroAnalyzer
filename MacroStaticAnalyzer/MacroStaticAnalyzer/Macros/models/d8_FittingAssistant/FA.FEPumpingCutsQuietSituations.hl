@@ -1,0 +1,73 @@
+// First Draft based on FA.AATemplateFitAss.hl 											:2013-04-18 Raymond
+// Updated Package Name                                                                 :2013-05-06 Judith
+// Updated builtin functions name														:2013-05-14 Raymond
+// Added empty SelectProposal2 and ApplyProposal2 for there is no code completion       :2013-05-21 Judith
+// Update setApply2IsVisible to true													:2013-05-30 Raymond
+// Update due to CR62325																:2013-07-02 Judith
+//FR62273: FIAS - Display propsal cannot be applied text for Tinnitus ear side          :2013-07-05 Judith
+// update due to optimization                                                           :2013-07-22  Judith
+// update due to optimization                                                           :2013-07-23 Judith
+//------------------------------------------------7.3----------------------------------------------------------------
+// Clean up comments and refractor method argument										:2013-12-13 Raymond
+/*------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package FittingAssistent FEPumpingCutsQuietSituations
+	{
+		application function bool IsVisible ()
+		{
+			return true;
+		} //closing FEPumpingCutsQuietSituations.IsVisible
+		application function bool IsEnabled ()
+		{
+			return true;
+		} //closing FEPumpingCutsQuietSituations.IsEnabled
+		application function void SelectProposal1 ()
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+			{
+				setApply1IsVisible (false);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_P_Tinnitus");
+			}
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_DecGainSoftSound"))
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (true);
+				setProposalTextID1 ("FA_P_DecGainSoftSound");
+			}
+			else
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_N_DecGainSoftSound");
+			}
+		} //closing FEPumpingCutsQuietSituations.SelectProposal1
+		application function void ApplyProposal1 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID1 ());
+		} //closing FEPumpingCutsQuietSituations.ApplyProposal1
+		application function void SelectProposal2 ()
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+			{
+				setApply2IsVisible (false);
+				setApply2IsEnabled (false);
+				setProposalTextID2 ("FA_P_Tinnitus");
+			}
+			else 
+			{
+				setApply2IsVisible (false);
+				setApply2IsEnabled (false);
+				setProposalTextID2 ("FA_P_CheckInstrument_NoApply");
+			}
+		} //closing FEPumpingCutsQuietSituations.SelectProposal2
+		application function void ApplyProposal2 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID2 ());
+		} //closing FEPumpingCutsQuietSituations.ApplyProposal2
+
+	} //package FitAss FEPumpingCutsQuietSituations
+
+} //namespace shs_sat

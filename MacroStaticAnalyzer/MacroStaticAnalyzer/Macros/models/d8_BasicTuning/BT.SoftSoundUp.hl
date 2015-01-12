@@ -1,0 +1,47 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Basic Tuning: BasicTuning_SoftSoundsUpBu
+// Initial Version                						     						:2011-08-18 Chuah LayYuan
+// Updated SetPos and IsEnable														:2011-11-21 Frauke Schall
+// Updated SetPos (3dB broadband, partial: for test purposes)						:2012-01-13 Frauke Schall
+// Updated SetPos (3dB broadband, complete: for test purposes)						:2012-01-18 Frauke Schall
+// Updated IsEnabled (grey out if curve cannot be applied)							:2012-02-01 Frauke Schall
+// Added println in IsEnabled														:2012-02-10	Frauke Schall
+// *********************************************CODE FREEZE*******************************************************
+// FR68941 to disable Basic Tuning Button when tinnitus is ON and Pure				:2014-09-02 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat {
+	using shs_sat.*;
+
+	package MixedMode BasicTuning_SoftSoundsUpBu{	
+		application function bool IsVisible(){
+			return true;
+		}
+			
+		application function bool IsEnabled()
+		{
+			bool retVal = false;
+			retVal = High_Level_Library_BasicTuning.SoftSoundsUpBuIsEnabled();
+			println('[HAL]: BT.BasicTuning_SoftSoundsUpBu-IsEnabled = ' + retVal);
+			return retVal;
+		}
+
+		application function int MaxPos(){
+			return 1;    	
+		}
+		
+	 	application function bool IsEnabledPos(int pos){
+	 		return true;
+	 	}
+	 		
+	 	application function int GetPos(){	
+			return 1; 	//Always return 1	 
+	 	}
+	 	
+		application function void SetPos(int pos){		
+			println('[HAL]: BT.BasicTuning_SoftSoundsUpBu-SetPos');
+			CL_CurveLibrary.ApplyOffset_LevLow_Partial("BT_SoftSoundsUp");
+		}
+		
+	}// closes MixedMode BasicTuning_SoftSoundsUpBu
+}//namespace shs.sat
+// end of file

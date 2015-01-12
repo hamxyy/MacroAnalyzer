@@ -1,0 +1,60 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                       DAI_SideSelection
+// Initial Version					                						    				: 2014-08-04 Jenny
+// Updated the println to call the BasicLibrary_DebugPrint.PrintEnvSettings.					: 2014-08-22 Jenny
+// Updated IsEnabled, return false for monaural fitting -> do not show the panel in CXX.
+// Code cleanup: Updated printlines																: 2014-10-17 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode DAI_SideSelection
+	{
+		/* Panel to be shown for DAI Side Selection 
+	     * 0 -> None 
+	     * 1 -> Both
+	     * 2 -> Right Only
+	     * 3 -> Left Only   
+	     */	
+	     
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MixedMode.DAI_SideSelection.IsVisible'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+
+			bool retVal = High_Level_Library_InputMode.DAI_SideSelection_IsVisible();
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.DAI_SideSelection.IsEnabled');
+
+			// false -> selection panel not visible >> Selection panel should not be visible in monaural fitting.
+			bool retVal = BasicLibrary_CommUtil.IsBinaurallyFitting(); 
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.DAI_SideSelection.MaxPos');
+
+			int retVal = 3;
+			return retVal;
+		}
+		
+		application function int GetPos ()
+		{
+			println ('[HAL]MixedMode.DAI_SideSelection.GetPos');
+
+			int retVal = High_Level_Library_InputMode.DAI_SideSelection_Get ();
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.DAI_SideSelection.SetPos'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+			
+			assertion(false, "[HAL]MixedMode.DAI_SideSelection.SetPos ==> NOT IMPLEMENTED");
+		}
+	}
+}

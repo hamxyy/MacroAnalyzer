@@ -1,0 +1,286 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                             MID LEVEL LIBRARY : User Control
+// Initial version																		: 2012-03-27 Cecil Wilson
+// Updated function name for program change check and added VC user control check		: 2012-03-27 Cecil Wilson
+// Added Wireless coupling controls which checks for Program and Volume coupling CR54939: 2012-06-12 Cecil Wilson
+// Added function to check for wireless Rc and program control for DAI Toggle checkbox 
+// greyed-out. CR 56697.																			: 2012-08-16 Mang Yew
+// Added check for RCU control. ER58413  												: 2012-10-09 Mang Yew
+// Added Check_For_UserControl() to check user control type								:	2012-10-30 Mang Yew
+// Added assertion message									: 2012-12-18 Jenny Lin
+// Removed ProgramControlLocal and update IsEnabled() due to ER59269 and added 
+//Check_Volume_Change_Capability 														: 2013-01-31 Mang Yew
+// ******SIFIT7.2_PEERREVIEWED: partially related to InputMode macros. Outstanding: Beeps related review  :  2013-07-30   Jenny, Judith
+// refractor: Optimize code									: 2013-12-02 Jenny
+// Sifit7.3 Peer review	: Removed Check_For_UserControl() since not in use.								: 2014-04-15 Jenny, Judith
+// Sifit7.4 Peer review : update comment for Check_Program_Change_Capability()							: 2014-11-19 MieMie/Sultan/Jeline
+// Sifit7.4 Peer review : Removed Check_Program_Change_UserControl_For_Toggle_Greyed_Outx () 
+// because it is the same function as check_Program_Change_UserControl ()								: 2014-11-20 MieMie/Sultan/Jeline
+-----------------------------------------------------------------------------------------------------------------
+*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib Mid_Level_Library_UserControl
+	{
+
+		/*---------------------------------------------------------------------------------------------------------------
+		Description:  This function returns true if the device has any user control or WLS UserControl to change the 
+		   			  Hearing Programs, else it returns false.	
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool Check_Program_Change_UserControl () //SIFIT7.4PEERREVIEWED
+		{
+			if (BasicLibrary_UserControl.IsRCUConnected() == false){
+				//To check if the instrument has any program change capability.
+				return Mid_Level_Library_UserControl.Check_Program_Change_Capability ();				
+			}
+			else
+			{
+				// This device have WLS UserControl or E2e Wireless activated, able to change the hearing programs.
+				println ('[HAL] MLIB.Check_Program_Change_UserControl >> return TRUE');
+				return true;
+			}
+		} 
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   MID LEVEL LIBRARY Function: Check_Volume_Change_UserControl
+//   Input		:  <none>
+//   Output      :  <bool> True if the "Volume Change" user control is available in the device, else False 
+//   Description:  This function checks if the device has any user control or Remote control to change the Volume 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool Check_Volume_Change_UserControl ()
+		{
+			println ('[HAL] MLIB.Check_Volume_Change_UserControl');
+			
+			if (BasicLibrary_UserControl.IsRCUConnected() == false 
+//				&&	hi:d8SwWlsVcScEn == d8SwWlsVcScEn.off)
+			){
+			// This device does not have any REMOTE controls with VC change and E2e Volume coupling.
+				return Mid_Level_Library_UserControl.Check_Volume_Change_Capability ();
+			}
+			else{
+			// This device have REMOTE controls to change the hearing programs.
+				return true;
+			}
+		} // Close Mid_Level_Library_UserControl.Check_Volume_Change_UserControl()
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Basic Level LIBRARY Function: Check_Volume_Change_Capability()
+//   Input		:  <none>
+//   Output      :  <bool> "True" / "False".
+//   Description:  This function checks the capability of VCLocal.
+* 					If device is capable of local volume change control, return "True". Else "False".
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool Check_Volume_Change_Capability () //SIFIT7.3PEERREVIEWED
+		{
+			println ('[HAL] MLIB.Check_Volume_Change_Capability');
+			if (cap:VcLocal == VcLocal.noVC)
+			{
+			// This device does not have a local Volume change user control.
+				return false;
+			}
+			else if (cap:VcLocal == VcLocal.endlessVC || cap:VcLocal == VcLocal.endstopVC)
+			{
+			// This device does has a local endlessVC user control for Volume Change.
+				return true;
+			}
+			else 
+			{
+			//(cap:VcLocal == VcLocal.SwUcConfigurableVC)
+			// This device does has a Software configurable user control
+			// So need to check if it is configured for Program change  
+				if (BasicLibrary_UserControl.Check_UserControl_ProgramVc_Config () == "VolumeOnly" ||
+						BasicLibrary_UserControl.Check_UserControl_ProgramVc_Config () == "ProgramVolume")
+				//if (Mid_Level_Library_UserControl.Check_ProgramVolume_Change_Capability("VolumeOnly"))
+				{
+				// This device does has a Software configurable user control for Volume change	
+					return true;
+				}
+				else
+				{
+				// This device does NOT have a Software configurable user control for PROG change						
+					return false;
+				} // closing SwUcConfigurableVC					
+
+			} // closing cap:VcLocal
+		} // Close Mid_Level_Library_UserControl.Check_Volume_Change_Capability()
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Basic Level LIBRARY Function: Check_Program_Change_Capability()
+//   Input		:  <none>
+//   Output      :  <bool> "True" / "False".
+//   Description:  This function checks the capability of Program Change Control.
+* 					If device is capable of local program change control, return "True". Else "False".
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool Check_Program_Change_Capability () //SIFIT7.4PEERREVIEWED: to revist in 7.5 to remove redundant check
+		{
+			println ('[HAL] MLIB.Check_Program_Change_Capability');
+			if (cap:UserControl == UserControl.NoUserCtrl)
+			{
+				println ('[HAL] MLIB.Check_Program_Change_Capability >> NoUserCtrl');
+				return false;
+			}
+			else if (cap:UserControl == UserControl.PushBtn)
+			{
+				println ('[HAL] MLIB.Check_Program_Change_Capability >> PushBtn');
+				if (BasicLibrary_UserControl.Check_UserControl_PushButton_Config () == "ProgramOnly")
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else if (cap:UserControl == UserControl.RockerSwt)
+			{
+				println ('[HAL] MLIB.Check_Program_Change_Capability >> RockerSwt');
+				if (BasicLibrary_UserControl.Check_UserControl_RockerSwt_Config () == "ProgramOnly" ||
+						BasicLibrary_UserControl.Check_UserControl_RockerSwt_Config () == "ProgramVolume")
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else if (cap:UserControl == UserControl.PushBtnOrFlatCvr)
+			{
+				println ('[HAL] MLIB.Check_Program_Change_Capability >> PushBtnOrFlatCvr');
+				if (BasicLibrary_UserControl.Check_UserControl_None_Config () == "None")
+				{
+					return false;
+				}
+				else
+				{
+					if (BasicLibrary_UserControl.Check_UserControl_PushButton_Config () == "ProgramOnly")
+					{
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				}
+			}
+			else if (cap:UserControl == UserControl.PushBtnOrRockerSwtOrFlatCvr)
+			{
+				println ('[HAL] MLIB.Check_Program_Change_Capability >> PushBtnOrRockerSwtOrFlatCvr');
+				if (BasicLibrary_UserControl.Check_UserControl_ProgramVc_Config () == "ProgramOnly" ||
+						BasicLibrary_UserControl.Check_UserControl_ProgramVc_Config () == "ProgramVolume")
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else // For the case of PushBtnNonConfAndRockerSwtNonConf, PushBtnConfAndRockerSwtNonConf,
+			//PushBtnNonConfAndRockerSwtConf
+
+			{
+				println ('[HAL] MLIB.Check_Program_Change_Capability >> PushBtnNonConfAndRockerSwtNonConf, PushBtnConfAndRockerSwtNonConf,PushBtnNonConfAndRockerSwtConf');
+				if (BasicLibrary_UserControl.Check_UserControl_PushButton_Config () == "ProgramOnly" ||
+						BasicLibrary_UserControl.Check_UserControl_RockerSwt_Config () == "ProgramOnly" ||
+						BasicLibrary_UserControl.Check_UserControl_RockerSwt_Config () == "ProgramVolume")
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			} // closing UserControl
+		} // Close Mid_Level_Library_UserControl.Check_Program_Change_Capability()
+
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Basic Level LIBRARY Function: Check_ProgramVolume_Change_Capability()
+//   Input		:  <none>
+//   Output      :  <bool> "True" / "False".
+//   Description:  This function checks the capability of Program Change Control.
+* 					If device is capable of local program change control, return "True". Else "False".
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool Check_ProgramVolume_Change_Capability (string PgmVol)
+		{
+			println ('[HAL] MLIB.Check_ProgramVolume_Change_Capability');
+			if (cap:UserControl == UserControl.NoUserCtrl)
+			{
+				return false;
+			}
+			else if (cap:UserControl == UserControl.PushBtn)
+			{
+				if (BasicLibrary_UserControl.Check_UserControl_PushButton_Config () == PgmVol)
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else if (cap:UserControl == UserControl.RockerSwt)
+			{
+				if (BasicLibrary_UserControl.Check_UserControl_RockerSwt_Config () == PgmVol ||
+						BasicLibrary_UserControl.Check_UserControl_RockerSwt_Config () == "ProgramVolume")
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else if (cap:UserControl == UserControl.PushBtnOrFlatCvr)
+			{
+				if (BasicLibrary_UserControl.Check_UserControl_None_Config () == "None")
+				{
+					return false;
+				}
+				else
+				{
+					if (BasicLibrary_UserControl.Check_UserControl_PushButton_Config () == PgmVol)
+					{
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				}
+			}
+			else if (cap:UserControl == UserControl.PushBtnOrRockerSwtOrFlatCvr)
+			{
+				if (BasicLibrary_UserControl.Check_UserControl_ProgramVc_Config () == PgmVol ||
+						BasicLibrary_UserControl.Check_UserControl_ProgramVc_Config () == "ProgramVolume")
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else // For the case of PushBtnNonConfAndRockerSwtNonConf, PushBtnConfAndRockerSwtNonConf,
+			//PushBtnNonConfAndRockerSwtConf
+
+			{
+				if (BasicLibrary_UserControl.Check_UserControl_PushButton_Config () == PgmVol ||
+						BasicLibrary_UserControl.Check_UserControl_RockerSwt_Config () == PgmVol ||
+						BasicLibrary_UserControl.Check_UserControl_RockerSwt_Config () == "ProgramVolume")
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			} // closing UserControl
+		} // Close Mid_Level_Library_UserControl.Check_ProgramVolume_Change_Capability()
+
+	} //package Mid_Level_Library_UserControl
+
+} //namespace shs.sat

@@ -1,0 +1,52 @@
+/*----------------------------------------------------------------------------------------------------------------
+// CXX UI:                        Macro that selects the Mic Mode UI page
+//----------------------------------------------------------------------------------------------------------------
+// Initial Version                						     							: 2013-11-12 Al
+// Corrected annotation                                                                 : 2014-03-11 Al
+// MaxPos increased to 5 (invalid micmode tab added)
+// FR66287:MaxPos increased to 6 (Non-wireless NoisyEnv panel added)					: 2014-05-02 Raymond
+// MaxPos increased to 7 (Sdm checkbox panel added)					                    : 2014-07-15 Al
+// ER69222 MaxPos increased to 8 (two Stroll panels now)								: 2014-09-26 Al, Sultan, Frauke
+//---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_Selection
+	{
+		application function bool IsVisible() 
+		{
+			bool retVal = Mid_Level_Library_Mic_Mode.SelectionIsVisible(); 
+		    println('[HAL]MM - Mic_Mode_Selection.IsVisible = ' + retVal);
+			return retVal;
+		} 
+	
+		application function bool IsEnabled()
+		{
+			bool retVal = High_Level_Library_Mic_Mode.MicModeUIsAreEnabled();
+			println('[HAL]MM - Mic_Mode_Selection.IsEnabled = ' + retVal);
+            return retVal;
+		}
+		
+		application function int MaxPos()
+		{
+			//9 different UIs are selectable, 0-8. 
+			int retVal = 8;
+			println('[HAL]MM - Mic_Mode_Selection.MaxPos = ' + retVal);
+			return retVal; 
+		}
+		
+		application function int GetPos()
+		{
+			int retVal = High_Level_Library_Mic_Mode.Selection_GetPos(); 
+			println('[HAL]MM - Mic_Mode_Selection.GetPos = ' + retVal);
+			return retVal;		
+		}
+		
+		application function void SetPos(int pos)
+		{
+			
+		}
+	}
+}

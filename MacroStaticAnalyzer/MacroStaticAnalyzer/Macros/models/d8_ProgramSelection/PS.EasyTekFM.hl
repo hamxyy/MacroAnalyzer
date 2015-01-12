@@ -1,0 +1,74 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									PROGRAM SELECTION - easyTek FM
+
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Initial version based on Program Selection miniTekFM				         				: 2013-10-23 Sonia Stasiak
+// Updated Apply function with d9SwMacroProgramIdHp, code tuning							: 2013-12-17 Sonia Stasiak 
+// PEER REVIEW CXX 7.3																		: 2014-05-06 Sonia, Mie Mie, Jenny
+/*--------------------------------------------- Cxx 7.4 -----------------------------------------------------------*
+// Update GetOrderNumber function after adding new Induction Loop program					: 2014-07-31 Sonia
+// Change Apply function to call BLib.Set<program> to set d9SwmacroProgramIdHp				: 2014-09-16 Sonia
+// Code clean up																			: 2014-09-17 Sonia
+//-----------------------------------------------------------------------------------------------------------------*/ 
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package ProgramSelection EasyTekFM
+	{
+		application function int GetID ()
+		{
+			int retVal = 18;
+			println ('[HAL]PS - EasyTekFM.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "easyTek FM";
+			println ('[HAL]PS - EasyTekFM.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 18; // easyTek FM
+ 			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - EasyTekFM.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 18; // easyTek FM
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - EasyTekFM.IsEnabled = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			return retVal;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetEasyTekFM();
+ 				
+ 			println ('[HAL]PS - EasyTekFM.Apply started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - EasyTekFM.Apply done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+ 		application function int GetOrderNumber ()
+		{
+			int retVal = 17;
+			println ('[HAL]PS - EasyTekFM.GetOrderNumber = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool CanCopy ()
+		{
+			// easyTek FM is a program which cannot be copied
+			bool retVal = false;
+			println ('[HAL]PS - EasyTekFM.CanCopy = ' + retVal);
+			return false;
+		}	
+	}
+}
+//------------------------------------ END of PROGRAM SELECTION - easyTek FM --------------------------------------*/

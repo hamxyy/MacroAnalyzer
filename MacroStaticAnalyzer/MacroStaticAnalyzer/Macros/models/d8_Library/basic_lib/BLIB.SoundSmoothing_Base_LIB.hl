@@ -1,0 +1,214 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                  BASIC FUNCTION LIBRARY  :  Sound Smoothing
+// Initial Version                                         :  2011-02-11   Cecil Wilson
+// Modified the Package name to proper naming convention   :  2011-02-14   Cecil Wilson
+// Modified the Strength of slider switch case to 10,20,30 :  2011-02-15   Cecil Wilson
+// Removed the SpeechnNoise_Mgmt function from the file    :  2011-02-16   Cecil Wilson
+// Renamed Library name due to conflicts in HAL            :  2011-02-21   Cecil Wilson
+// Updated package name,comments and initial values 	   :  2011-02-24   Cecil Wilson
+// Removed Package LIB workaround and added actual Hi Ctrls:  2011-03-02   Cecil Wilson
+// Updated formating and added return values			   :  2011-04-26   Cecil Wilson
+// Add println for easy debugging						   :  2011-09-06   Chuah LayYuan
+// Updated SoundSmoothingEn_Get to return remapped_pos.	   :  2011-12-09   Jenny Lin
+// Updated min, med, max settings based on email from Eva and Sebastian:  2012-05-02 Frauke Schall
+// Peer review changes															: 2012-06-13 Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Added assertion message									: 2012-12-18 Jenny Lin
+// Sifit 7.2 Peer Review										: 2013-07-31 Raymond
+// Revert back to d8MFinStart (int).									: 2013-10-24 Jenny
+// Added new function for SIFIT 7.3							: 2013-11-29	Mang Yew
+// update on setpos to remove unused return argument		: 2014-03-04    Mang Yew
+// Update for Sifit 7.3 Peer Review							: 2014-04-22	Mang Yew
+// Sifit 7.4 Peer Review code cleanup						: 2014-11-14 	Mang Yew
+//--------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using builtins.*;
+	using shs_sat.*;
+
+	package  Lib BasicLibrary_SoundSmoothing
+	{	   
+
+/*$----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the Hearing instrument controls based on the selected slider step     
+-----------------------------------------------------------------------------------------------------------------$*/   		
+		public function void SoundSmoothingSL_Set_Strength(int pos)
+		{
+			switch (pos){
+				case 2:{
+					hi:d8MFinStart = 8;
+				}
+				case 1:{
+					hi:d8MFinStart = 2;
+				}			
+				case 0:{
+					hi:d8MFinStart = 1;
+				}		
+				case 11:{ // Sifit 7.3 for OFF case
+					println('[HAL]BLIB-SoundSmoothingSL_Set_Strength >> pos' + pos + '.m_fin_start = 0, is at OFF state!');
+					hi:d8MFinStart = 0;
+				}		
+				default:{ 
+					// sifit 7.3 check for slider position that sets soundsmoothing to be off
+					println('[HAL]BLIB-SoundSmoothingSL_Set_Strength >> ERROR: pos = ' + pos + ' is invalid! return -1');
+					assertion(false, "[MacroError] Undefined state of SoundSmoothing Slider! 
+								BasicLibrary_SoundSmoothing.SoundSmoothingSL_Set_Strength");
+				}
+			}
+			println("[HAL]BLIB-SoundSmoothingSL_Set_Strength, pos =  " + pos );
+		
+		}
+
+/*$----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the position
+-----------------------------------------------------------------------------------------------------------------$*/ 
+		public function int SoundSmoothingSL_Get_Strength()
+		{
+			if (hi:d8MFinStart == 8)
+			{
+				println("[HAL]BLIB-SoundSmoothingSL_Get_Strength, pos =  2");
+				return 2; 
+			}		
+			else if(hi:d8MFinStart == 2)
+			{
+				println("[HAL]BLIB-SoundSmoothingSL_Get_Strength, pos =  1");
+				return 1; 
+			}
+	 		else if(hi:d8MFinStart == 1)
+	 		{
+				println("[HAL]BLIB-SoundSmoothingSL_Get_Strength, pos =  0");
+				return 0; 
+			}
+			else
+			{
+				println('[HAL]BLIB-SoundSmoothingSL_Get_Strength >> ERROR: pos = -1 is invalid!');
+				assertion(false, "[MacroError] Undefined state of SoundSmoothing Slider! 
+				BasicLibrary_SoundSmoothing.SoundSmoothingSL_Get_Strength");
+				return -1;
+			}
+			    
+		}
+		
+/*$----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the Sound Smoothing feature to ON
+-----------------------------------------------------------------------------------------------------------------$*/ 
+		public function void SoundSmoothingEn_Set()
+		{
+			hi:d8PhlFineOn = d8PhlFineOn.on; //FR64178
+			
+	    }
+
+/*$----------------------------------------------------------------------------------------------------------------
+//   Description:  Checks the Sound Smoothing feature based on checkbox selection. 
+-----------------------------------------------------------------------------------------------------------------$*/		
+		public function int SoundSmoothingEn_Get()
+		{
+			if (hi:d8PhlFineOn == d8PhlFineOn.on)
+			{
+				println("[HAL]BLIB-SoundSmoothingEn_Get, pos = 1");
+				return 1;
+			}
+			else
+			{
+				println("[HAL]BLIB-SoundSmoothingEn_Get, pos = 0");
+				return 0;
+			}
+		}
+
+//-------------------------------------------------Sifit 7.3-------------------------------------------------------
+/*$----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the Hearing instrument SW controls based on the selected slider step     
+-----------------------------------------------------------------------------------------------------------------$*/   		
+		public function void SoundSmoothingSL_Set_Strength_Sw(int pos)
+		{
+			switch (pos){
+				case 2:{
+					hi:d8SwMacroSsSlHp = 2;
+				}
+				case 1:{
+					hi:d8SwMacroSsSlHp = 1;
+				}			
+				case 0:{
+					hi:d8SwMacroSsSlHp = 0;
+				}
+				case 11:{
+					//do nothing, does not change sw macro position
+				}		
+				default:{
+					println('[HAL]BLIB-SoundSmoothingSL_Set_Strength_Sw >> ERROR: invalid pos! ');
+					assertion(false, "[MacroError] Undefined state of SoundSmoothing Slider! 
+								BasicLibrary_SoundSmoothing.SoundSmoothingSL_Set_Strength_Sw");	
+				}
+			} 
+			println("[HAL]BLIB-SoundSmoothingSL_Set_Strength_Sw, pos =  " + pos);
+		}
+
+/*$----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the Sound Smoothing SW variable based on checkbox selection.
+-----------------------------------------------------------------------------------------------------------------$*/ 
+		public function void SoundSmoothingEn_Set_Sw(int pos)
+		{
+			if (pos==1)
+			{
+				hi:d8SwMacroSsEnHp = d8SwMacroSsEnHp.on;
+			}
+			else
+			{
+				hi:d8SwMacroSsEnHp = d8SwMacroSsEnHp.off;
+			}
+			println("[HAL]BLIB-SoundSmoothingEn_Set_Sw, pos = " + pos);
+	    }
+	    
+/*$----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI Sw settings and returns the position
+-----------------------------------------------------------------------------------------------------------------$*/ 
+		public function int SoundSmoothingSL_Get_Strength_Sw()
+		{
+			if (hi:d8SwMacroSsSlHp == 2)
+			{
+				println("[HAL]BLIB-SoundSmoothingSL_Get_Strength_Sw, pos =  2");
+				return 2;  
+			}		
+			else if(hi:d8SwMacroSsSlHp == 1)
+			{
+				println("[HAL]BLIB-SoundSmoothingSL_Get_Strength_Sw, pos =  1"); 
+				return 1; 
+			}
+	 		else if(hi:d8SwMacroSsSlHp == 0)
+	 		{
+				println("[HAL]BLIB-SoundSmoothingSL_Get_Strength_Sw, pos =  0"); 
+				return 0; 
+			}
+			else
+			{
+				println('[HAL]BLIB-SoundSmoothingSL_Get_Strength_Sw >> ERROR: pos = -1 is invalid!');
+				assertion(false, "[MacroError] Undefined state of SoundSmoothing Slider! 
+							BasicLibrary_SoundSmoothing.SoundSmoothingSL_Get_Strength_Sw");
+				return -1;
+			}
+			    		
+		}
+		
+/*$----------------------------------------------------------------------------------------------------------------
+//   Description:  Checks the Sound Smoothing SW state based on checkbox selection. 
+-----------------------------------------------------------------------------------------------------------------$*/		
+		public function int SoundSmoothingEn_Get_Sw()
+		{
+			if (hi:d8SwMacroSsEnHp == d8SwMacroSsEnHp.on)
+			{
+				println("[HAL]BLIB-SoundSmoothingEn_Get_Sw, pos = 1");
+				return 1;
+			}
+			else
+			{
+				println("[HAL]BLIB-SoundSmoothingEn_Get_Sw, pos = 0");
+				return 0;
+			}
+		}
+
+/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY  : Sound Smoothing   
+-----------------------------------------------------------------------------------------------------------------*/			
+	}
+}

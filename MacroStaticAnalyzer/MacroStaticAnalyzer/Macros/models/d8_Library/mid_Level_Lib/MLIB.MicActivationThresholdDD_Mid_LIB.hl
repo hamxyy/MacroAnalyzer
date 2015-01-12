@@ -1,0 +1,104 @@
+//---------------------------------------------------------------------------------------------------------------*
+//                           MID LEVEL PRICEPOINT LIBRARY 		 : ActivationThresholdDD
+// Initial Version                						  		 :  2011-10-10   Ma Mie Mie Thein
+// Peer review changes									   :  2012-06-20 Nadine and Frauke
+// Added new function, MicActivationThresholdDD_IsVisible(). Returns false for <= PP75. : 2013-04-22 Al 
+// *********************************************CODE FREEZE*******************************************************
+//-------------------------------------------------- 7.3 ---------------------------------------------------------
+// Refractor for 7.3											: 2013-11-11 Raymond
+//-------------------------------------------------- 7.4 ---------------------------------------------------------
+// Updated MicActivationThresholdDD_IsVisible                      :  2014-09-05 Al
+/*----------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat {
+    using shs_sat.*;
+	
+	package  Lib Mid_Level_Library_ActivationThresholdDD{		
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    MicActivationThresholdDD_IsVisible
+//   Input		:  none
+//   Ouput      :  <bool> Returns True if visible; False if Not Visible (PP75 and below)
+//   Description:  decides the visibility of the MicActivationThresholdDD
+-----------------------------------------------------------------------------------------------------------------$*/ 	
+	public function bool MicActivationThresholdDD_IsVisible(){
+	
+		if (cap:DirMicAvailable == DirMicAvailable.omni || cap:PricePoint <= PricePoint.PP75)
+		{
+		    return false;
+		}
+		else
+		{
+		    return true;
+		}
+	} //Closes Mid_Level_Library_ActivationThresholdDD.MicActivationThresholdDD_IsVisible
+		
+/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    ActivationThresholdDD_Remapping
+//   Input      :  none 
+//   Ouput      :  remappedpos 
+//   Description:  
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int ActivationThresholdDD_Remapping(int pos,int pos1,int pos2,int pos3){
+						
+			int remappos=9; 
+			if(pos==0){remappos = pos1;}
+			if(pos==1){remappos = pos2;}
+			if(pos==2){remappos = pos3;}						
+			println('[HAL] MLIB MicActivationThresholdDD  remap_pos = '+ remappos);
+	
+			return remappos;
+		} // Closing MiddleLevel_Library_ActivationThresholdDD.ActivationThresholdDD_Remapping()
+		
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Mid Level LIBRARY    ActivationThresholdDD
+-----------------------------------------------------------------------------------------------------------------*/		
+	}	//package Mid_Level_Library_ActivationThresholdDD
+}	//namespace shs.sat
+
+//namespace shs_sat 
+//{
+//    using shs_sat.*;	
+//	package  Lib Mid_Level_Library_ActivationThresholdDD
+//	{		
+///*$---------------------------------------------------------------------------------------------------------------*
+////   Mid Level PP LIBRARY Function:    MicActivationThresholdDD_IsVisible
+////   Input		:  none
+////   Ouput      :  <bool> Returns True if visible; False if Not Visible (PP75 and below)
+////   Description:  decides the visibility of the MicActivationThresholdDD
+//-----------------------------------------------------------------------------------------------------------------$*/ 	
+//	public function bool MicActivationThresholdDD_IsVisible()
+//	{
+//		return cap:PricePoint > PricePoint.PP75;
+//	} //Closes Mid_Level_Library_ActivationThresholdDD.MicActivationThresholdDD_IsVisible
+//		
+///*----------------------------------------------------------------------------------------------------------------
+////   BASIC LIBRARY Function:    ActivationThresholdDD_Remapping
+////   Input      :  none 
+////   Ouput      :  remappedpos 
+////   Description:  
+//-----------------------------------------------------------------------------------------------------------------*/
+//		public function int ActivationThresholdDD_Remapping(int pos)
+//		{
+//			switch(pos)
+//			{
+//				case 0:{
+//					return 0;
+//				}
+//				case 1:{
+//					return 2;
+//				}
+//				case 2:{
+//					return 4;
+//				}
+//				default:{
+//					return 9;
+//				}
+//			}
+//		} // Closing MiddleLevel_Library_ActivationThresholdDD.ActivationThresholdDD_Remapping()
+//		
+///*---------------------------------------------------------------------------------------------------------------*
+//// 								  END Of Mid Level LIBRARY    ActivationThresholdDD
+//-----------------------------------------------------------------------------------------------------------------*/		
+//	}	//package Mid_Level_Library_ActivationThresholdDD
+//}	//namespace shs.sat

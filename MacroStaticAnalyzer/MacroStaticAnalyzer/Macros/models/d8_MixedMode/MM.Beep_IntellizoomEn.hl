@@ -1,0 +1,44 @@
+//---------------------------------------------------------------------------------------------------------------
+// CXX UI:                        Beep IntelliZoom checkbox
+// Initial Version (FR66291)  						     							:  2014-04-16 Jenny
+// 7.4 Peer review: IsVisible -> Add reval											: 2014-11-18 MieMie/Sultan/Jeline
+//---------------------------------------------------------------------------------------------------------------
+
+namespace shs_sat 
+{
+	using shs_sat.*;
+	
+	package MixedMode BeepIntelliZoomEn 
+	{
+		application function bool IsVisible() 
+		{
+			bool retVal = Mid_Level_Library_IntelliZoom.BeepIntelliZoomEn_IsVisible();
+			println('[HAL]MM - BeepIntelliZoomEn - IsVisible = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsEnabled()
+		{
+			println('[HAL]MM - BeepIntelliZoomEn - IsEnabled');
+			return Mid_Level_Library_IntelliZoom.BeepIntelliZoomEn_IsEnabled();
+		}
+		
+		application function int MaxPos()
+		{
+			println('[HAL]MM - BeepIntelliZoomEn - MaxPos = 1');
+			return 1; // Checkbox with 2 states, on or off.			
+		}
+		
+		application function int GetPos()
+		{
+			println('[HAL]MM - BeepIntelliZoomEn - GetPos');
+			return BasicLibrary_Beep.BeepIntelliZoomEn_Get_Entry();
+		}
+		
+		application function void SetPos(int pos)
+		{
+			println('[HAL]MM - BeepIntelliZoomEn - SetPos');
+			BasicLibrary_Beep.BeepIntelliZoomEn_Set_Entry(pos);
+		}
+	} 
+}

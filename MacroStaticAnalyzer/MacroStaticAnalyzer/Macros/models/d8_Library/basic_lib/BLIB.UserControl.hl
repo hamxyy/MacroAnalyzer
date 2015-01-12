@@ -1,0 +1,185 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            BASIC LEVEL LIBRARY : User Control
+// Initial version														: 2011-11-09 Jenny Lin
+// Updated the function name to reflect the config cases				: 2012-03-27 Cecil Wilson
+// Updated Program control check using Configurable controls instead	: 2013-01-21 Mang Yew
+// Removed ProgramControlLocal and update IsEnabled() due to ER59269 .  : 2013-01-31 MAng Yew		
+// ******SIFIT7.2_PEERREVIEWED: Partially reviewed related to input mode. Need to be reviewed again by Beeps.  :  2013-07-30   Jenny, Judith
+// Revert prefix from D9 to D8 for SwConfigurableUserControl.		: 2013-10-24 Jenny
+// added IsRCUConnected()							: 2013-11-04 Jenny
+// refractor: Optimize code									: 2013-12-02 Jenny
+// FR66291: added Is_UserControl_RockerSwt_Config_as_IntelliZoom				: 2014-04-16 Jenny
+// Sifit7.3 Peer review																: 2014-04-16 Jenny, Judith
+// Sifit7.3 Peer review	(for Beeps)													: 2014-04-30 Jenny, Jeline
+// Code cleanup: Updated printlines.												: 2014-10-20 Jenny
+// 7.4 Peer review for Is_UserControl_RockerSwt_Config_as_IntelliZoom()				: 2014-11-18 MieMie/Sultan/Jeline 
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_UserControl
+	{
+		/*---------------------------------------------------------------------------------------------------------------*
+		  Description: To check if RCU is connected
+		-----------------------------------------------------------------------------------------------------------------$*/ 	
+		public function bool IsRCUConnected()
+		{
+			println ('[HAL]BLIB.BasicLibrary_UserControl.IsRCUConnected');
+			
+			bool retVal = (hi:d9SwEasyPocketConf == d9SwEasyPocketConf.Yes ||
+								hi:d9SwSmartRelayConf == d9SwSmartRelayConf.Yes);
+			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		  Description: To check if easyTek is connected
+		-----------------------------------------------------------------------------------------------------------------$*/ 	
+		public function bool IsEasyTekConnected()
+		{
+			println ('[HAL]BLIB.BasicLibrary_UserControl.IsRCUConnected');
+			
+			bool retVal = hi:d9SwSmartRelayConf == d9SwSmartRelayConf.Yes;
+			
+			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		  Description:  This function checks the availability of Program and/or VC controls via exchangeable or configurable
+			Return the string,
+				"ProgramOnly"  - If only Program user control available from configurable Usercontrols.
+				"VolumeOnly"  - If only Volume user control available from configurable Usercontrols.
+				"ProgramVolume"  - If  Program and Volume user control available from configurable Usercontrols.
+				"None"  - If no Program and Volume user control available from configurable Usercontrols.
+		-----------------------------------------------------------------------------------------------------------------$*/ 	
+		public function string Check_UserControl_ProgramVc_Config()
+		{
+			println('[HAL]BLIB.BasicLibrary_UserControl.Check_UserControl_ProgramVc_Config');
+			
+			string retVal = "Invalid";
+			
+			if(hi:d8SwConfigurableUserControl == d8SwConfigurableUserControl.NotAvailable ||
+				hi:d8SwConfigurableUserControl == d8SwConfigurableUserControl.FlatCover){
+
+				retVal = "None";
+			}
+			else if(hi:d8SwConfigurableUserControl == d8SwConfigurableUserControl.PushButton){
+
+				retVal = BasicLibrary_UserControl.Check_UserControl_PushButton_Config();
+			} 
+			else{
+				retVal = BasicLibrary_UserControl.Check_UserControl_RockerSwt_Config();
+			}
+			
+			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		  Description:  This function checks the availability of Program and/or VC controls.
+				"ProgramOnly"  - If only Program user control available from configurable Usercontrols.
+				"VolumeOnly"  - If only Volume user control available from configurable Usercontrols.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function string Check_UserControl_PushButton_Config()
+		{
+			println('[HAL]BLIB.BasicLibrary_UserControl.Check_UserControl_PushButton_Config');
+			
+			string retVal = "Invalid";
+				
+			if(hi:d9SwConfigurableUserControlPushButton ==d9SwConfigurableUserControlPushButton.Program_Up || 
+						hi:d9SwConfigurableUserControlPushButton ==d9SwConfigurableUserControlPushButton.Program_Down)
+			{
+				retVal = "ProgramOnly";
+			}
+			else if(hi:d9SwConfigurableUserControlPushButton ==d9SwConfigurableUserControlPushButton.Volume_Up || 
+						hi:d9SwConfigurableUserControlPushButton ==d9SwConfigurableUserControlPushButton.Volume_Down)
+			{
+				retVal = "VolumeOnly";
+			}
+			else
+			{
+				retVal = "None";
+			}
+			
+			return retVal;
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		  Description:  This function checks the availability of Program and/or VC controls via exchangeable or configurable
+			Return the string,
+				"ProgramOnly"  - If only Program user control available from configurable Usercontrols.
+				"VolumeOnly"  - If only Volume user control available from configurable Usercontrols.
+				"ProgramVolume"  - If  Program and Volume user control available from configurable Usercontrols.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function string Check_UserControl_RockerSwt_Config()
+		{
+			println('[HAL]BLIB.BasicLibrary_UserControl.Check_UserControl_RockerSwt_Config');
+			
+			string retVal = "Invalid";
+				
+			if (hi:d9SwConfigurableUserControlRockerSwitch == d9SwConfigurableUserControlRockerSwitch.Program)
+			{
+				retVal = "ProgramOnly";
+			}
+			else if (hi:d9SwConfigurableUserControlRockerSwitch == d9SwConfigurableUserControlRockerSwitch.Volume)
+			{
+
+				retVal = "VolumeOnly";
+			}
+			else if (hi:d9SwConfigurableUserControlRockerSwitch ==d9SwConfigurableUserControlRockerSwitch.Volume_Program)
+			{
+				retVal = "ProgramVolume";
+			}
+			else
+			{
+				retVal = "None";
+			}
+			
+			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		  Description:  This function checks the availability of Program and/or VC controls via exchangeable or configurable
+				Return the string,
+				"None"  - If no Program and Volume user control available from configurable Usercontrols.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function string Check_UserControl_None_Config()
+		{
+			println('[HAL]BLIB.BasicLibrary_UserControl.Check_UserControl_None_Config');
+			
+			string retVal = "Invalid";
+				
+			if (hi:d8SwConfigurableUserControl == d8SwConfigurableUserControl.NotAvailable ||
+					hi:d8SwConfigurableUserControl == d8SwConfigurableUserControl.FlatCover)
+			{
+				retVal = "None";
+				
+			}
+			else
+			{
+				retVal = "Config";
+			}
+			
+			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		  Description:  Returns true/false based on Rocker Switch configuration by user.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool Is_UserControl_RockerSwt_Config_as_IntelliZoom() // 7.4 Peer review
+		{
+			println('[HAL]BLIB.BasicLibrary_UserControl.Is_UserControl_RockerSwt_Config_as_IntelliZoom');
+			
+			bool retVal = false;
+				
+			if(hi:d8SwConfigurableUserControl == d8SwConfigurableUserControl.RockerSwitch &&
+				(hi:d9SwConfigurableUserControlRockerSwitch == d9SwConfigurableUserControlRockerSwitch.iZoom || 
+				hi:d9SwConfigurableUserControlRockerSwitch == d9SwConfigurableUserControlRockerSwitch.iZoom_Program))
+			{
+				retVal = true;
+			}
+			
+			return retVal;
+		}
+
+	}
+
+}

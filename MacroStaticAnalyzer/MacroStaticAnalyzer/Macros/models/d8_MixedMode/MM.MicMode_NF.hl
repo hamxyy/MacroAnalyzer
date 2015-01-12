@@ -1,0 +1,55 @@
+/*----------------------------------------------------------------------------------------------------------------
+// CXX UI:                        MicMode Narrow Focus panel
+//----------------------------------------------------------------------------------------------------------------
+// Initial Version                						     							: 2013-10-31 Raymond
+// Removed IsEnabledPos                                                                 : 2014-02-26 Al
+//-------------------------------------------------v7.4----------------------------------------------------------
+// Code Cleanup																			: 2014-06-26 Sultan
+// Calling IsVisible from Mid Level Library                                             : 2014-06-26 Sultan
+/*----------------------------------------------------------v7.4-------------------------------------------------
+// Chores																                : 2014-06-30 Sultan 
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_NF 
+	{
+		application function bool IsVisible() 
+		{
+			bool retVal = Mid_Level_Library_Mic_Mode.NFIsVisible();
+			println('[HAL]MM - Mic_Mode_NF.IsVisible = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsEnabled()
+		{
+			bool retVal = High_Level_Library_Mic_Mode.NFIsEnabled();
+			println('[HAL]MM - Mic_Mode_NF.IsEnabled = ' + retVal);
+			return retVal;
+		} 
+		
+		application function int MaxPos()
+		{
+			// This control is a checkbox with 2 states with 0 and 1. So max value is 1.
+			int retVal = 1;
+			println('[HAL]MM - Mic_Mode_NF.MaxPos = ' + retVal);
+			return retVal; 
+		} 
+		
+
+		application function int GetPos()
+		{
+			int retVal = High_Level_Library_Mic_Mode.NF_GetPos();
+			println('[HAL]MM - Mic_Mode_NF.GetPos = ' + retVal);
+			return retVal;
+		} 
+		
+		application function void SetPos(int pos)
+		{
+			println('[HAL]MM - Mic_Mode_NF.SetPos = ' + pos);
+  			High_Level_Library_Mic_Mode.Mic_Mode_Set_NF(pos);			
+		} 
+	} 
+}

@@ -1,0 +1,1011 @@
+// First Draft																			:2013-04-15: Judith & Alastair
+// updated formatting																	:2013-04-16: Frauke
+// Added Increase_MPO, Decrease_MPO, DecGain_SoftSound, IncGain_LoudSound_DecMasterGain	:2013-04-23: Raymond
+// Modify Increase_MPO, Decrease_MPO to correct behaviour 									:2013-04-24: Raymond
+// Added IncGainSS, DecGainSS, IncGainLS, DecGainLS											:2013-04-24: Raymond
+// Added more proposal																	:2013-04-25: Raymond
+// Corrected proposal curves name														:2013-04-29: Raymond
+// Updated proposals curve name and ApplyOffset arguments									:2013-05-06: Raymond
+// Updated proposals description and added FA_P_CGMFSituation_NoApply proposal				:2013-05-08: Raymond
+// Added proposals for Mic mode													   		:2013-05- 14: Mie Mie
+// Updated Curve Apply functions All/High/Med/Low                                   						:2013-05-14: Judith
+// Deleted FA_P_AddMusic																:2013-05-15: Mie Mie
+// Updated Curve Apply 			 All/High/Med/Low                           					        	:2013-05-16: Judith
+// Added case "FA_P_IncGainLoudSoundsDecGain"                                       						:2013-05-21: Judith
+// Added FeedbackStopperRB_IsVisible() check for "FA_P_FbcTurbo" & "FA_P_FbcSlow"				:2013-05-28 Mie Mie
+// Added cap:DirMicAvailable == DirMicAvailable.omni check for mic moded except omni mic mode 	:2013-05-28 Mie Mie
+// Updated FCO proposals																:2013-05-30 Raymond
+// Updated FCOFMinDec/IncApplicable to call from HLIB										:2013-05-31 Raymond
+// Added validation for FCO proposals														:2013-06-04 Raymond
+// Corrected wrong parameter value for FCO proposals										:2013-06-05 Raymond
+// Added FA_P_MicAuto_BackCar & changed FA_P_SpeechFocC to FA_P_SpeechFocC_BackCar for SPHardlyUnderstBackCar :2013-06-05 Mie Mie
+// Corrected wrong curve apply level for FA_P_IncGainSpeech									:2013-06-07 Raymond
+// Changed || "or" to && "and" for two curve checks                                     						:2013-06-08 Judith
+// Added FA_IncGainFco to FA_P_IncGainHighFreq3_4kHz                                    					:2013-06-07: Judith
+// Removed FA_P_ActivateFCO																:2013-06-10 Raymond
+// Updated FMax proposals																:2013-06-10 Raymond
+// Added Wnc, SouSm, Snm proposals														:2013-06-14 Raymond
+// Corrected '==' for FA_P_IncSnm and FA_P_DecSnm										:2013-06-14 Raymond
+// Updated Snm, Wnc and SouSm applicable conditions										:2013-06-17 Raymond
+// Commented out FA_P_FCOIncfmaxuntil1_3 due to faulty CR control						:2013-06-21 Raymond
+// Added FA_P_ActSouSm proposal															:2013-06-27 Raymond
+// Uncommented FA_P_FCOIncfmaxuntil1_3 and corrected Inc/Dec fminfmax proposals			:2013-07-02 Raymond
+// Rename FA_P_FCOIncfmaxuntil1_3 to FA_P_FCODecfmaxuntil1_3							:2013-07-02 Raymond
+// Added FA_P_ActSpass																	:2013-07-03 Raymond
+// Rename FA_P_FCOon to FA_P_ActivateFCO												:2013-07-04 Raymond
+// Added price point checks for FA_P_ActSnm												:2013-07-04 Raymond
+// Changed FA_P_IncSoftSoundUpperSpeechSpec to FA_P_IncGainSoftSoundUpperSpeechSpec     :2013-07-04 Judith
+// Changed Reuse of BT Curves                                                           :2013-07-04 Judith
+// Rename FA_P_IncGainSoftSoundUpperSpeechSpec to FA_P_IncSoftSoundUpperSpeechSpec		:2013-07-09 Raymond
+// Rename the curves 'BT_SoundQuality_softer' and 'BT_SoundQuality_sharper' to..
+// ..'BT_SQ_SofterGmaxMore80dB' / 'BT_SQ_SofterGmaxLess80dB' and..
+// ..'BT_SQ_SharperGmaxMore80dB' / 'BT_SQ_SharperGmaxLess80dB'                          :2013-07-16 Alastair.
+// Bugfix Micmode																		:2013-07-24 Judith
+//Added FA_P_ActivateFBC and closing functions                                          :2013-07-30 Judith
+//update due to peer review 7.2                                                         :2013-08-14 Judith
+// Revert prefix from D9 to D8 for d8SwFcoCompressionRatio, SwFcoFreqCutoff, 
+// SwFcoFreqDestination, SwFcoCompressionRatio.											:2013-10-24 Jenny
+// ********************************************************** 7.3 ****************************************************
+// Add checks for NoiseReductionEn for SNM, SouSm and SPASS proposals					:2013-12-03 Raymond
+// Replace Mic_Mode_Get_RadioButton_Entrie with MicMode_Get function					:2013-12-03 Raymond
+// Remove proposals not supported in 7.3												:2013-12-17 Raymond
+// Added checks for Automatic MicMode in FA_P_MicDir									: 2014-02-04 Raymond
+// FR64944 - Commented out all MPO proposals											: 2014-02-26 Raymond
+// ER65924 - Change && to || for IncGainOwnVoice, DecGainOwnVoice						: 2014-03-26 Raymond
+// 7.3 Peer Review: Replace Mic_Mode_Is_Enabled with IsTinnitusNotPureandMicModeEnabled	: 2014-04-14 Raymond
+// ER67768 - Adapt FA_P_SpeechFocus to check for MicMode SW control for SL and SF		: 2014-06-04 Raymond
+// ER67835 - Mic Mode proposal to be available only in Universal Program				: 2014-06-16 Mang Yew
+// ********************************************************** 7.4 ****************************************************
+// Replaced calls to MicModeIsAutomatic() with MicModeIsTwinMicDirAutomatic(). This new function..
+// ..is the same but has just been renamed.                                             : 2014-07-02 Al
+// Update FA_P_ActSpass to consider PP500 for SPASS										: 2014-07-21 Mang Yew
+// Bug fix for FA_P_ActivateFBC															: 2014-08-04 Mang Yew
+// Bug fix for FA_P_ActSnm: Remove PP75 check.											: 2014-08-27 Mang Yew
+// Update check isvisible function for Stroll and Noisy Env proposal					: 2014-09-17 Mang Yew
+// Calling the BinFeaturesForDirectionalDevices_MinPossReqmts from 
+// Mid_Level_Library_Mic_Mode.HasMinReqmtForBinFeaturesForDir() 						: 2014-10-16 Sultan
+// Comment out FA_P_ActivatebWNC proposal. To be considered in Sifit 7.5				: 2014-10-16 Mang Yew
+/*------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_FitAssApplicable
+	{
+		public function bool FitAssIsProposalApplicable (string proposalType)
+		{
+//			int mPOChanCount = logChanCount (Xf.XfChanMpo); // Retrieve available MPO channels 
+			bool isApplicable = false;
+			switch (proposalType)
+			{
+//				FR64944 - All MPO proposals commented out in 7.3, to be considered in 7.4
+//				case "FA_P_IncMPO":{ // Increase MPO
+//					while (mPOChanCount > 0) //Loop thru all available MPO channels
+//
+//					{
+//						if (isMin (hi:d8SwChanOutLim [ mPOChanCount - 1 ]) == false) //Check all MPO channels for _0dB
+//
+//						{
+//							println ('[HAL]: FitAssApplicable - FA_P_IncMPO Applicable = TRUE');
+//							isApplicable = true;
+//							break; // Break loop as long as any one channel is not at max setting
+//
+//						}
+//						-- mPOChanCount;
+//					}
+//				} //closing High_Level_Library_FitAssApplicable.FA_P_IncMPO
+//				case "FA_P_DecMPO":{ // Decrease MPO
+//					while (mPOChanCount > 0) //Loop thru all available MPO channels
+//
+//					{
+//						if (isMax (hi:d8SwChanOutLim [ mPOChanCount - 1 ]) == false) //Check all MPO channels for M30dB
+//
+//						{
+//							println ('[HAL]: FitAssApplicable - FA_P_DecMPO Applicable = TRUE');
+//							isApplicable = true;
+//							break; // Break loop as long as any one channel is not at min setting
+//
+//						}
+//						-- mPOChanCount;
+//					}
+//				} //closing High_Level_Library_FitAssApplicable.FA_P_DecMPO
+				case "FA_P_IncGain":{ // Increase overall gain
+					if (isOffsetApplicable ("FA_IncMaster", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncGain Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGain Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_IncMaster
+				case "FA_P_DecGain":{ // Decrease overall gain
+					if (isOffsetApplicable ("FA_DecMaster", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_DecGain Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_DecGain Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_DecMaster
+				case "FA_P_IncGainSoftSound":{ // Increase gain for soft sounds
+					if (isOffsetApplicable ("BT_SoftSoundsUp", ToSubject.LevLow, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncGainSoftSound Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGainSoftSound Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainSoftSound
+				case "FA_P_DecGainSoftSound":{ // Decrease gain for soft sounds
+					if (isOffsetApplicable ("BT_SoftSoundsDown", ToSubject.LevLow, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_DecGainSoftSound Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_DecGainSoftSound Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_DecGainSoftSound
+				case "FA_P_IncGainLoudSound":{ // Increase gain for loud sounds
+					if (isOffsetApplicable ("BT_LoudSoundsUp", ToSubject.LevHigh, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncGainLoudSound Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGainLoudSound Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainLoudSound
+				case "FA_P_DecGainLoudSound":{ // Decrease gain for loud sounds
+					if (isOffsetApplicable ("BT_LoudSoundsDown", ToSubject.LevHigh, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_DecGainLoudSound Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_DecGainLoudSound Applicable = False');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_DecGainLoudSound
+				case "FA_P_IncGainLowFreq":{ // Increase gain for low frequencies
+					if (isOffsetApplicable ("FA_IncLowFreq", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncGainLowFreq Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGainLowFreq Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainLowFreq
+				case "FA_P_DecGainLowFreq":{ // Decrease gain for low frequencies
+					if (isOffsetApplicable ("FA_DecLowFreq", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_DecGainLowFreq Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_DecGainLowFreq Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_DecGainLowFreq	
+				case "FA_P_DecGainLowFreqSoft":{ // Decrease gain for low frequencies
+					if (isOffsetApplicable ("FA_DecLowFreq", ToSubject.LevLow, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_DecGainLowFreqSoft Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_DecGainLowFreqSoft Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_DecGainLowFreqSoft
+				case "FA_P_IncGainHighFreq":{ // Increase gain for high frequencies
+					if (isOffsetApplicable ("FA_IncHighFreq", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncGainHighFreq Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGainHighFreq Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainHighFreq			
+				case "FA_P_IncGainHighFreq3_4kHz":{ // Increase high frequencies at 3-4kHz
+					if (isOffsetApplicable ("FA_IncGainFco", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncGainHighFreq3_4kHz Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGainHighFreq3_4kHz Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainHighFreq3_4kHz
+				case "FA_P_DecGainHighFreq":{ // Decrease gain for high frequencies
+					if (isOffsetApplicable ("FA_DecHighFreq", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_DecGainHighFreq Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_DecGainHighFreq Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_DecGainHighFreq
+				case "FA_P_DecGainSoftSoundHighFreq":{ // Decrease gain for loud sounds for high frequencies
+					if (isOffsetApplicable ("FA_DecSoftSatHighFreq", ToSubject.LevLow, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_DecGainSoftSoundHighFreq Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_DecGainSoftSoundHighFreq Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_DecGainSoftSoundHighFreq
+				case "FA_P_DecGainLoudSoundLowFreq":{ // Decrease gain for loud sounds for low frequencies
+					if (isOffsetApplicable ("FA_DecLoudSatLowFreq", ToSubject.LevHigh, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_DecGainLoudSoundLowFreq Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_DecGainLoudSoundLowFreq Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_DecGainLoudSoundLowFreq
+				case "FA_P_IncGainLoudHighFreq":{ // Increase gain for loud sounds for high frequencies
+					if (isOffsetApplicable ("BT_LoudSoundsUp", ToSubject.LevHigh, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncGainLoudHighFreq Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGainLoudHighFreq Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainLoudHighFreq
+				case "FA_P_IncGainLoudSoundHighFreq":{ // Increase gain for loud sounds for high frequencies
+					if (isOffsetApplicable ("FA_IncLoudSatHighFreq", ToSubject.LevHigh, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncGainLoudSoundHighFreq Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGainLoudSoundHighFreq Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainLoudSoundHighFreq
+				case "FA_P_DecGainLoudSoundHighFreq":{ // Decrease gain for loud sounds for high frequencies
+					if (isOffsetApplicable ("FA_DecLoudSatHighFreq", ToSubject.LevHigh, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_DecGainLoudSoundHighFreq Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_DecGainLoudSoundHighFreq Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_DecGainLoudSoundHighFreq
+				case "FA_P_IncGainOwnVoice":{ // Increase gain for own voice
+					if (BasicLibrary_Curves.VentOutisOpen ())
+					{
+						if (isOffsetApplicable ("BT_OwnVoiceOpen_MedHighLevUp", ToSubject.LevMed, Apply.Partial) ||
+								isOffsetApplicable ("BT_OwnVoiceOpen_MedHighLevUp", ToSubject.LevHigh, Apply.Partial))
+						{
+							println ('[HAL]: FA_P_IncGainOwnVoice - Open Applicable = TRUE');
+							isApplicable = true;
+						}
+						else
+						{
+							println ('[HAL]: FA_P_IncGainOwnVoice - Open Applicable = FALSE');
+							isApplicable = false;
+						}
+					}
+					else
+					{
+						if (isOffsetApplicable ("BT_OwnVoiceClosed_MedHighLevUp", ToSubject.LevALL, Apply.Partial))
+						{
+							println ('[HAL]: FA_P_IncGainOwnVoice - Closed Applicable = TRUE');
+							isApplicable = true;
+						}
+						else
+						{
+							println ('[HAL]: FA_P_IncGainOwnVoice - Closed Applicable = FALSE');
+							isApplicable = false;
+						}
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainOwnVoice
+				case "FA_P_DecGainOwnVoice":{ // Decrease gain for own voice
+					if (BasicLibrary_Curves.VentOutisOpen ())
+					{
+						if (isOffsetApplicable ("BT_OwnVoiceOpen_MedHighLevDown", ToSubject.LevMed, Apply.Partial) ||
+								isOffsetApplicable ("BT_OwnVoiceOpen_MedHighLevDown", ToSubject.LevHigh, Apply.Partial))
+						{
+							println ('[HAL]: FA_P_DecGainOwnVoice - Open Applicable = TRUE');
+							isApplicable = true;
+						}
+						else
+						{
+							println ('[HAL]: FA_P_DecGainOwnVoice - Open Applicable = FALSE');
+							isApplicable = false;
+						}
+					}
+					else
+					{
+						if (isOffsetApplicable ("BT_OwnVoiceClosed_Down", ToSubject.LevALL, Apply.Partial))
+						{
+							println ('[HAL]: FA_P_DecGainOwnVoice - Closed Applicable = TRUE');
+							isApplicable = true;
+						}
+						else
+						{
+							println ('[HAL]: FA_P_DecGainOwnVoice - Closed Applicable = FALSE');
+							isApplicable = false;
+						}
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_DecGainOwnVoice
+				case "FA_P_IncGainSpeech":{ // Increase gain for speech
+					if (isOffsetApplicable ("BT_SpeechLowLevelUp", ToSubject.LevALL, Apply.Complete))
+					{
+						println ('[HAL]: FA_P_IncGainSpeech Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGainSpeech Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainSpeech
+				case "FA_P_DecGainSpeech":{ // Decrease gain for speech
+					if (isOffsetApplicable ("BT_SpeechLowLevelDown", ToSubject.LevALL, Apply.Complete))
+					{
+						println ('[HAL]: FA_P_DecGainSpeech Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_DecGainSpeech Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_DecGainSpeech
+				case "FA_P_IncGainUpperSpeechSpec":{ // Increase gain in upper speech spectrum 
+					if (isOffsetApplicable ("FA_IncUpperSpeechSpec", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncGainUpperSpeechSpec Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGainUpperSpeechSpec Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainUpperSpeechSpec
+				case "FA_P_IncSoftSoundUpperSpeechSpec":{ // Increase gain for soft sounds in upper speech spectrum
+					if (isOffsetApplicable ("FA_IncSoftSUpperSpeechSpec", ToSubject.LevLow, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncSoftSoundUpperSpeechSpec Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncSoftSoundUpperSpeechSpec Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncSoftSoundUpperSpeechSpec
+				case "FA_P_IncGainSoftSoundSpeechSpec":{ // Increase gain for soft sounds in speech spectrum
+					if (isOffsetApplicable ("FA_IncSoftSinSpeechSpec", ToSubject.LevLow, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncGainSoftSoundSpeechSpec Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGainSoftSoundSpeechSpec Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainSoftSoundSpeecSpec
+				case "FA_P_IncGainLoudSoundSpeechSpec":{ // Increase gain for loud sounds in speech spectrum
+					if (isOffsetApplicable ("FA_IncLoudSinSpeechSpec", ToSubject.LevHigh, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncGainLoudSoundSpeechSpec Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGainLoudSoundSpeechSpec Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainLoudSoundSpeechSpec
+				case "FA_P_IncGainLoudSoundsDecGain":{ //Increase gain for loud sounds and decrease master gain 
+					if (isOffsetApplicable ("FA_DecMaster", ToSubject.LevALL, Apply.Partial) &&
+							isOffsetApplicable ("BT_LoudSoundsUp", ToSubject.LevHigh, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_IncGainSpeech Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncGainSpeech Applicable = FALSE');
+						isApplicable = false;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncGainLoudSoundSpeechSpec
+				case "FA_P_ActivateFCO":{ // Frequency compression on
+					println ('[HAL]: FA_P_ActivateFCO');
+					if (High_Level_Library_FCO.FCO_CxxGet () == 1 ||
+							cap:PricePoint == PricePoint.PP75)
+					{
+						println ("[HAL]: FA_P_ActivateFCO Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						println ("[HAL]: FA_P_ActivateFCO Applicable = TRUE");
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_ActivateFCO
+				case "FA_P_FCOIncfmax":{ // Increase fmax slider (=decrease Frequency compression ratio)
+					println ('[HAL]: FA_P_FCOIncfmax');
+					if (High_Level_Library_FCO.FCO_CxxGet () == 0 ||
+							cap:PricePoint == PricePoint.PP75)
+					{
+						println ("[HAL]: FA_P_FCOIncfmax Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						println ("[HAL]: FA_P_FCOIncfmax Applicable = TRUE");
+						isApplicable = High_Level_Library_FCO.FCOFMaxIncApplicable ();
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_FCOIncfmax
+				case "FA_P_FCODecfmaxuntil1_3":{ // Decrease f-max slider step by step until compression ratio 1:3 is reached
+					println ('[HAL]: FA_P_FCODecfmaxuntil1_3');
+					if (High_Level_Library_FCO.FCO_CxxGet () == 0 ||
+							cap:PricePoint == PricePoint.PP75 ||
+							hi:d8SwFcoCompressionRatio >= 3.0)
+					{
+						println ("[HAL]: FA_P_FCODecfmaxuntil1_3 Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						isApplicable = High_Level_Library_FCO.FCOFMaxDecApplicable ();
+						println ("[HAL]: FA_P_FCODecfmaxuntil1_3 Applicable = " + isApplicable);
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_FCOIncfmaxuntil1_3
+				case "FA_P_FCODecfmax":{ // Decrease fmax slider (=increase Frequency compression ratio)
+					println ('[HAL]: FA_P_FCODecfmax');
+					if (High_Level_Library_FCO.FCO_CxxGet () == 0 ||
+							cap:PricePoint == PricePoint.PP75)
+					{
+						println ("[HAL]: FA_P_FCODecfmax Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						isApplicable = High_Level_Library_FCO.FCOFMaxDecApplicable ();
+						println ("[HAL]: FA_P_FCODecfmax Applicable = " + isApplicable);
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_FCODecfmax
+				case "FA_P_FCODecfmin":{ // Decrease fmin slider (always considering the clients' sound impression)
+					println ('[HAL]: FA_P_FCODecfmin');
+					if (High_Level_Library_FCO.FCO_CxxGet () == 0 ||
+							cap:PricePoint == PricePoint.PP75)
+					{
+						println ("[HAL]: FA_P_FCODecfmin Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						isApplicable = High_Level_Library_FCO.FCOFMinDecApplicable ();
+						println ("[HAL]: FA_P_FCODecfmin Applicable = " + isApplicable);
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_FCODecfmin
+				case "FA_P_FCOIncfminfmax":{ // Increase fmin and fmax sliders
+					println ('[HAL]: FA_P_FCOIncfminfmax');
+					if (High_Level_Library_FCO.FCO_CxxGet () == 0 ||
+							cap:PricePoint == PricePoint.PP75)
+					{
+						println ("[HAL]: FA_P_FCOIncfminfmax Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						if (isMax (hi:d8SwFcoFreqDestination) == false &&
+								hi:d8SwFcoFreqCutoff != d8SwFcoFreqCutoff._6000Hz)
+						{
+							println ("[HAL]: FA_P_FCOIncfminfmax Applicable = TRUE");
+							isApplicable = true;
+						}
+						else
+						{
+							println ("[HAL]: FA_P_FCOIncfminfmax Applicable = FALSE");
+							isApplicable = false;
+						}
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_FCOIncfminfmax
+				case "FA_P_FCODecfminfmax":{ // Decrease fmin and fmax sliders
+					println ('[HAL]: FA_P_FCODecfminfmax');
+					if (High_Level_Library_FCO.FCO_CxxGet () == 0 ||
+							cap:PricePoint == PricePoint.PP75)
+					{
+						println ("[HAL]: FA_P_FCODecfminfmax Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						if (isMin (hi:d8SwFcoFreqCutoff) == false &&
+								hi:d8SwFcoFreqDestination != d8SwFcoFreqDestination._2250Hz)
+						{
+							println ("[HAL]: FA_P_FCODecfminfmax Applicable = TRUE");
+							isApplicable = true;
+						}
+						else
+						{
+							println ("[HAL]: FA_P_FCODecfminfmax Applicable = FALSE");
+							isApplicable = false;
+						}
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_FCODecfminfmax
+				case "FA_P_BTMuffled":{ // Use Basic Tuning function "too soft"
+				  	if (cap:GMax >= 80)
+				  {
+				    if (isOffsetApplicable ("BT_SQ_SharpGmaxMore80dB", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_BTMuffled Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_BTMuffled Applicable = FALSE');
+						isApplicable = false;
+					}
+				  }
+				  
+				  else
+				  {
+				    if (isOffsetApplicable ("BT_SoundQualitySharper", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_BTMuffled Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_BTMuffled Applicable = FALSE');
+						isApplicable = false;
+					}
+				  }	
+				} // closing High_Level_Library_FitAssApplicable.FA_P_BTMuffled
+				case "FA_P_BTSharp":{ // Use Basic Tuning function "too sharp"
+				  if (cap:GMax >= 80)
+				  {
+				    if (isOffsetApplicable ("BT_SQ_SofterGmaxMore80dB", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_BTSharp Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_BTSharp Applicable = FALSE');
+						isApplicable = false;
+					}
+				  }
+				  
+				  else
+				  {
+				    if (isOffsetApplicable ("BT_SoundQualitySofter", ToSubject.LevALL, Apply.Partial))
+					{
+						println ('[HAL]: FA_P_BTSharp Applicable = TRUE');
+						isApplicable = true;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_BTSharp Applicable = FALSE');
+						isApplicable = false;
+					}
+				  }		
+				} // closing High_Level_Library_FitAssApplicable.FA_P_BTSharp
+				case "FA_P_CGMFSituation_NoApply":{ // Perform Critical Gain Measurement in feedback prone situation
+					if (env:Prog == 0)
+					{
+						println ('[HAL]: FA_P_CGMFSituation_NoApply Applicable = FALSE');
+						isApplicable = false;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_CGMFSituation_NoApply Applicable = TRUE');
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_CGMFSituation_NoApply	
+				case "FA_P_ActSpass":{
+					if (BasicLibrary_NoiseReduction.NoiseReductionView_Get() ||
+						cap:PricePoint < PricePoint.PP500 ||
+						BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled()== false||
+						Mid_Level_Library_Mic_Mode.MicModeIsOmni() ||
+						cap:DirMicAvailable == DirMicAvailable.omni ||
+						BasicLibrary_Spass.SpassEn_Get()== true)
+					{
+						println ("[HAL]: FA_P_ActSpass Applicable = FALSE");
+						isApplicable = false;	
+					}
+					else
+					{
+						println ("[HAL]: FA_P_ActSpass Applicable = TRUE");
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_ActSpass
+				case "FA_P_IncSpass":{
+					if (BasicLibrary_NoiseReduction.NoiseReductionView_Get() ||
+						cap:PricePoint != PricePoint.PP700 ||
+						BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false ||
+						Mid_Level_Library_Mic_Mode.MicModeIsOmni() ||
+						High_Level_Library_Spass.SpassSL_Get () == 2 ||
+						cap:DirMicAvailable == DirMicAvailable.omni ||
+						BasicLibrary_Spass.SpassEn_Get() == false)
+					{
+						println ("[HAL]: FA_P_IncSpass Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						println ("[HAL]: FA_P_IncSpass Applicable = TRUE");
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncSpass				
+				case "FA_P_MicDir":{
+					if (BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false ||
+						Mid_Level_Library_Mic_Mode.MicModeIsDirectional() ||
+						Mid_Level_Library_Mic_Mode.MicModeIsTwinMicDirAutomatic() ||
+						cap:DirMicAvailable == DirMicAvailable.omni || 
+						hi:d9SwMacroProgramIdHp != d9SwMacroProgramIdHp.ID01)
+					{
+						println ("[HAL]: FA_P_MicDir Appilcable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						println ("[HAL]: FA_P_MicDir Applicable = TRUE");
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_MicDir
+				case "FA_P_MicOmni":{
+					if (BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false ||
+						Mid_Level_Library_Mic_Mode.MicModeIsOmni() || 
+						hi:d9SwMacroProgramIdHp != d9SwMacroProgramIdHp.ID01)
+					{
+						println ("[HAL]: FA_P_MicOmni Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						println ("[HAL]: FA_P_MicOmni Applicable = TRUE");
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_MicOmni
+				case "FA_P_MicNF":{
+					if (cap:PricePoint < PricePoint.PP500 ||
+						BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false ||
+						BasicLibrary_Mic_Mode.GetDirSwEnIsOn() == false ||
+						BasicLibrary_Mic_Mode.MicMode_Get() == "NfcAdap" ||
+						BasicLibrary_Mic_Mode.MicMode_Get() == "NfcStatic" ||
+						BasicLibrary_Mic_Mode.MicMode_Get() == "AutoNfcAdap" ||
+						BasicLibrary_Mic_Mode.MicMode_Get() == "AutoNfcSlkAdap" ||
+						BasicLibrary_Mic_Mode.MicMode_Get() == "AutoNfcSelDirAdap" ||
+						cap:DirMicAvailable == DirMicAvailable.omni || 
+						hi:d9SwMacroProgramIdHp != d9SwMacroProgramIdHp.ID01)
+					{
+						println ("[HAL]: FA_P_MicNF Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						println ("[HAL]: FA_P_MicNF Applicable = TRUE");
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_MicNF
+				case "FA_P_RedSoftLevDir":{
+					if (Mid_Level_Library_ActivationThresholdDD.MicActivationThresholdDD_IsVisible () == false ||
+						High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Is_Enabled () == false ||
+						BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_Get () == 0 ||
+						cap:DirMicAvailable == DirMicAvailable.omni || 
+						hi:d9SwMacroProgramIdHp != d9SwMacroProgramIdHp.ID01)
+					{
+						println ("[HAL]: FA_P_RedSoftLevDir = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						println ("[HAL]: FA_P_RedSoftLevDir = TRUE");
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_RedSoftLevDir			
+				case "FA_P_SpeechFoc":{
+					if (cap:PricePoint < PricePoint.PP500 ||
+						BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false ||
+						BasicLibrary_Mic_Mode.GetDirSwEnIsOn() == false ||
+						BasicLibrary_Mic_Mode.MicMode_Get() == "SelDir" ||
+						BasicLibrary_Mic_Mode.MicMode_Get() == "SlkAdap" ||
+						BasicLibrary_Mic_Mode.MicMode_Get() == "AutoSelDir" ||
+						BasicLibrary_Mic_Mode.MicMode_Get() == "AutoSlkAdap" ||
+						BasicLibrary_Mic_Mode.MicMode_Get() == "AutoNfcSlkAdap" ||
+						BasicLibrary_Mic_Mode.MicMode_Get() == "AutoNfcSelDirAdap" ||
+						cap:DirMicAvailable == DirMicAvailable.omni || 
+						hi:d9SwMacroProgramIdHp != d9SwMacroProgramIdHp.ID01)
+					{
+						println ("[HAL]: FA_P_SpeechFoc Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						println ("[HAL]: FA_P_SpeechFoc Applicable = TRUE");
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_SpeechFoc		
+				case "FA_P_FbcTurbo":{
+					if (BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false || // Tinnitus greyout	
+						BasicLibrary_FeedbackStopper.FeedbackStopperEn_Get () == false ||
+						High_Level_Library_FeedbackStopper.FeedbackStopperRB_Get () == 1 ||
+						Mid_Level_Library_FeedbackStopper.FeedbackStopperRB_IsVisible () == false)
+					{
+						println ("[HAL]: FA_P_FbcTurbo Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						println ("[HAL]: FA_P_FbcTurbo Applicable = TRUE");
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_FbcTurbo		
+				case "FA_P_FbcSlow":{
+					if (BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false || // Tinnitus greyout	
+						BasicLibrary_FeedbackStopper.FeedbackStopperEn_Get () == false ||
+						High_Level_Library_FeedbackStopper.FeedbackStopperRB_Get () == 0 ||
+						Mid_Level_Library_FeedbackStopper.FeedbackStopperRB_IsVisible () == false)
+					{
+						println ("[HAL]: FA_P_FbcSlow Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						println ("[HAL]: FA_P_FbcSlow Applicable = TRUE");
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_FbcSlow	
+					case "FA_P_ActivateFBC":{
+					if (BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false || // Tinnitus greyout	
+						BasicLibrary_FeedbackStopper.FeedbackStopperEn_Get () == true)
+					{
+						println ("[HAL]: FA_P_ActivateFBC Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						println ("[HAL]: FA_P_ActivateFBC Applicable = TRUE");
+						isApplicable = true;
+					}
+				} // closing 	High_Level_Library_FitAssApplicable.FA_P_ActivateFBC
+				case "FA_P_ActSnm":{
+					if (BasicLibrary_NoiseReduction.NoiseReductionView_Get() ||
+						BasicLibrary_Noiser.Noiser_IsOnAndPure () == true ||
+						BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Get ())
+					{
+						println ("[HAL]: FA_P_ActSnm Applicable = FALSE");
+						isApplicable = false;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_ActSnm Applicable = TRUE');
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_ActSnm
+				case "FA_P_IncSnm":{
+					if (BasicLibrary_NoiseReduction.NoiseReductionView_Get() ||
+						cap:PricePoint == PricePoint.PP75 ||
+						BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntBroadbandRB_Get_Entry () == 1 ||
+						BasicLibrary_Noiser.Noiser_IsOnAndPure () == true ||
+						BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Get () == false ||
+						High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Get ()
+						== Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_MaxPos ())
+					{
+						println ('[HAL]: FA_P_IncSnm Applicable = FALSE');
+						isApplicable = false;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncSnm Applicable = TRUE');
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncSnm
+				case "FA_P_DecSnm":{
+					println ('[HAL]: FA_P_DecSnm');
+					if (BasicLibrary_NoiseReduction.NoiseReductionView_Get() ||
+						cap:PricePoint == PricePoint.PP75 ||
+						BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntBroadbandRB_Get_Entry () == 1 ||
+						BasicLibrary_Noiser.Noiser_IsOnAndPure () == true ||
+						BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Get () == false ||
+						High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Get () == 0)
+					{
+						println ('[HAL]: FA_P_DecSnm Applicable = FALSE');
+						isApplicable = false;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_DecSnm Applicable = TRUE');
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_DecSnm
+				case "FA_P_ActSouSm":{
+					println ('[HAL]: FA_P_ActSouSm');
+					if (BasicLibrary_NoiseReduction.NoiseReductionView_Get() ||
+						cap:PricePoint < PricePoint.PP300 ||
+						BasicLibrary_Noiser.Noiser_IsOnAndPure () == true ||
+						High_Level_Library_SoundSmoothing.SoundSmoothingEn_Get () == 1 ||
+						Mid_Level_Library_SoundSmoothing.SoundSmoothingEn_IsVisible () == false)
+					{
+						println ('[HAL]: FA_P_ActSouSm Applicable = FALSE');
+						isApplicable = false;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_ActSouSm Applicable = TRUE');
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_ActSouSm
+				case "FA_P_IncSouSm":{
+					println ('[HAL]: FA_P_IncSouSm');
+					if (BasicLibrary_NoiseReduction.NoiseReductionView_Get() ||
+						cap:PricePoint < PricePoint.PP500 ||
+						BasicLibrary_Noiser.Noiser_IsOnAndPure () == true ||
+						High_Level_Library_SoundSmoothing.SoundSmoothingEn_Get () == 0 ||
+						High_Level_Library_SoundSmoothing.SoundSmoothingSL_Get () == 2 ||
+						Mid_Level_Library_SoundSmoothing.SoundSmoothingSL_IsVisible () == false)
+					{
+						println ('[HAL]: FA_P_IncSouSm Applicable = FALSE');
+						isApplicable = false;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncSouSm Applicable = TRUE');
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncSouSm
+				case "FA_P_EnWnc":{
+					println ('[HAL]: FA_P_EnWnc');
+					if (High_Level_Library_EWindScreen.eWindScreenEn_Get () == 1 ||
+						BasicLibrary_Noiser.Noiser_IsOnAndPure () == true ||
+						cap:PricePoint == PricePoint.PP75 ||
+						Mid_Level_Library_EWindScreen.EWindScreenEn_IsVisible () == false ||
+						BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false)
+					{
+						println ('[HAL]: FA_P_EnWnc Applicable = FALSE');
+						isApplicable = false;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_EnWnc Applicable = TRUE');
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_EnWnc
+				case "FA_P_IncWnc":{
+					println ('[HAL]: FA_P_IncWnc');
+					if (cap:PricePoint < PricePoint.PP500 ||
+						BasicLibrary_Noiser.Noiser_IsOnAndPure () == true ||
+						High_Level_Library_EWindScreen.eWindScreenEn_Get () == 0 ||
+						High_Level_Library_EWindScreen.EWindScreenSL_Get () == 2 ||
+						Mid_Level_Library_EWindScreen.EWindScreenSL_IsVisible () == false ||
+						BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false)
+					{
+						println ('[HAL]: FA_P_IncWnc Applicable = FALSE');
+						isApplicable = false;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_IncWnc Applicable = TRUE');
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_IncWnc
+				case "FA_P_DecWnc":{
+					println ('[HAL]: FA_P_DecWnc');
+					if (cap:PricePoint < PricePoint.PP500 ||
+						BasicLibrary_Noiser.Noiser_IsOnAndPure () == true ||
+						High_Level_Library_EWindScreen.eWindScreenEn_Get () == 0 ||
+						High_Level_Library_EWindScreen.EWindScreenSL_Get () == 0 ||
+						Mid_Level_Library_EWindScreen.EWindScreenEn_IsVisible () == false ||
+						BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false)
+					{
+						println ('[HAL]: FA_P_DecWnc Applicable = FALSE');
+						isApplicable = false;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_DecWnc Applicable = TRUE');
+						isApplicable = true;
+					}
+				} // closing FA_P_DecWnc
+				// To be reimplemented in Sifit 7.5
+//				case "FA_P_ActivatebWNC":{
+//					println ('[HAL]: FA_P_ActivatebWNC');
+//					if (BasicLibrary_BWNC.BWNCEn_Get_Entry () == true ||
+//						BasicLibrary_Noiser.Noiser_IsOnAndPure () == true ||
+//						Mid_Level_Library_Mic_Mode.BinFeaturesForDirectionalDevices_MinPossReqmts() == false ||
+//						cap:PricePoint < PricePoint.PP700 || 
+//						High_Level_Library_BWNC.BWNCEn_IsEnabled () == false || 
+//						BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false)
+//					{
+//						println ('[HAL]: FA_P_ActivatebWNC Applicable = FALSE');
+//						isApplicable = false;
+//					}
+//					else
+//					{
+//						println ('[HAL]: FA_P_ActivatebWNC Applicable = TRUE');
+//						isApplicable = true;
+//					}
+//				} // closing High_Level_Library_FitAssApplicable.FA_P_ActivatebWNC
+				case "FA_P_AddStroll":{
+					println ('[HAL]: FA_P_AddStroll');
+                    if (Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (16) == false)
+					{
+						println ('[HAL]: FA_P_AddStroll Applicable = FALSE');
+						isApplicable = false;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_AddStroll Applicable = TRUE');
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_AddStroll
+				case "FA_P_AddNoisyEnv":{
+					println ('[HAL]: FA_P_AddNoisyEnv');
+					if (Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (2) == false)
+					{
+						println ('[HAL]: FA_P_AddNoisyEnv Applicable = FALSE');
+						isApplicable = false;
+					}
+					else
+					{
+						println ('[HAL]: FA_P_AddNoisyEnv Applicable = TRUE');
+						isApplicable = true;
+					}
+				} // closing High_Level_Library_FitAssApplicable.FA_P_AddNoisyEnv
+				case "FA_P_CurrentSetting":{
+				// don't do anything
+
+				} // closing cannot_apply_proposal
+				default:{
+				//default
+
+				}
+			}
+			return isApplicable;
+		} // closing High_Level_Library_FitAssApply.FitAssIsProposalApplicable
+
+	} //package FitAssIsProposal1Applicable
+
+} //namespace shs.sat
+
+// End Of File

@@ -1,0 +1,389 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY 	:   Program Selection
+// Initial version  	                                       							:  	2011-08-24 Chuah LayYuan
+// Clean up:Removed the capability checks from Blib(not necessary)						:   2012-03-28 Cecil Wilson
+// added IsTelecoilProgramSetInCurrentSide, IsTelecoilProgramSetInOppSide, IsDAIProgramSetInCurrentSide and
+// IsDAIProgramSetInOppSide for Input mode sideselection panel.							: 2014-08-04 Jenny
+// Added IsWirelessProgramSetInCurrentSide()											: 2014-08-25 MieMie
+// Added Is<program> and Set<program> functions											: 2014-09-16 Sonia
+// FR68862 : added IsOppPhoneAcoustically, IsOppPhonemT, IsOppPhoneMT, IsOppPhoneT, IsPhoneTelecoilProgramSetInCurrentSide,
+// IsPhoneTelecoilProgramSetInOppSide, IsInductionLoopProgramSetInCurrentSide, IsInductionLoopProgramSetInOppSide,
+// IsOppInductionLoopmT, IsOppAudioInput, IsOppInductionLoopT
+// Rewrite to call the IsXX or IsOppXX in IsTelecoilProgramSetInCurrentSide, IsTelecoilProgramSetInOppSide and
+// IsWirelessProgramSetInCurrentSide.
+// Removed (obsolete) isTekConnected_Get, isMiniTekConnected_Get, IsDAIProgramSetInCurrentSide 
+// and IsDAIProgramSetInOppSide.														: 2014-09-16 Jenny
+// Added IsOppPrivacy.																	: 2014-10-23 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat 
+{
+	using shs_sat.*;
+
+	package  Lib BasicLibrary_ProgramSelection
+	{
+
+		/*$----------------------------------------------------------------------------------------------------------------
+		  Description: Returns true when Telecoil programs are set in Current HI.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool IsTelecoilProgramSetInCurrentSide () 
+		{
+			println('[HAL]BlibProgramSelection.IsTelecoilProgramSetInCurrentSide');
+				
+			return (IsPhoneTelecoilProgramSetInCurrentSide() ||
+					IsInductionLoopProgramSetInCurrentSide() );
+		}
+
+		/*$----------------------------------------------------------------------------------------------------------------
+		 Description: Returns true when Telecoil programs are set in Opposite HI.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool IsTelecoilProgramSetInOppSide () 
+		{
+			println('[HAL]BlibProgramSelection.IsTelecoilProgramSetInOppSide');
+						
+			return (IsPhoneTelecoilProgramSetInOppSide() ||
+				IsInductionLoopProgramSetInOppSide() );
+		}
+
+
+	/*---------------------------------------------------------------------------------------------------------*
+	  Description : This function indicates Phone Telecoil programs.
+			  hi:d9SwMacroProgramIdHp: ID04 = Phone mT, ID19 = Phone MT, ID20 = Phone T
+	/*---------------------------------------------------------------------------------------------------------*/	
+	public function bool IsPhoneTelecoilProgramSetInCurrentSide() 
+	{
+		println('[HAL]BlibProgramSelection.IsPhoneTelecoilProgramSetInCurrentSide');
+		
+		return (IsPhonemT() ||
+				IsPhoneMT() ||
+				IsPhoneT() );
+	}
+
+	/*---------------------------------------------------------------------------------------------------------*
+	  Description : This function indicates Phone Telecoil programs.
+			  hi:d9SwMacroProgramIdHp: ID04 = Phone mT, ID19 = Phone MT, ID20 = Phone T
+	/*---------------------------------------------------------------------------------------------------------*/	
+	public function bool IsPhoneTelecoilProgramSetInOppSide() 
+	{
+		println('[HAL]BlibProgramSelection.IsPhoneTelecoilProgramSetInOppSide');
+		
+		return (IsOppPhonemT() ||
+				IsOppPhoneMT() ||
+				IsOppPhoneT() );
+	}
+
+	/*---------------------------------------------------------------------------------------------------------*
+	  Description : This function indicates Induction Loop programs.
+			  hi:d9SwMacroProgramIdHp: ID11 = Induction Loop (mT), 21 = Induction Loop (T)
+	/*---------------------------------------------------------------------------------------------------------*/	
+	public function bool IsInductionLoopProgramSetInCurrentSide() 
+	{
+		println('[HAL]BlibProgramSelection.IsInductionLoopProgramSetInCurrentSide');
+		
+		return (IsInductionLoopT() || 
+				IsInductionLoopmT() );
+	}	
+	/*---------------------------------------------------------------------------------------------------------*
+	  Description : This function indicates Induction Loop programs.
+			  hi:d9SwMacroProgramIdHp: ID11 = Induction Loop (mT), 21 = Induction Loop (T)
+	/*---------------------------------------------------------------------------------------------------------*/	
+	public function bool IsInductionLoopProgramSetInOppSide() 
+	{
+		println('[HAL]BlibProgramSelection.IsInductionLoopProgramSetInOppSide');
+		
+		return (IsOppInductionLoopT() || 
+				IsOppInductionLoopmT() );
+	}
+		
+	/*---------------------------------------------------------------------------------------------------------*
+	  Description : Returns true when Wireless programs are This function indicates wireless programs which have direct sound modification.
+			  hi:d9SwMacroProgramIdHp: ID05 = Bluetooth Phone, ID17 = Streaming Audio, ID18 = easyTek FM
+	/*---------------------------------------------------------------------------------------------------------*/	
+	public function bool IsWirelessProgramSetInCurrentSide() 
+	{
+		println('[HAL]BlibProgramSelection.IsWirelessProgramSetInCurrentSide');
+
+		return (IsBluetoothPhone() ||
+			IsStreamingAudio() ||
+			IsEasyTekFM ());
+	}		
+/*---------------------------------------------------------------------------------------------------------*	
+//	hi:d9SwMacroProgramIdHp	:    
+//				:	ID02 = Noisy Environment	ID09 = Privacy				ID16 = Stroll					
+//				:	ID03 = Phone (Acoustically)	ID10 = Tinnitus				ID17 = Streaming Audio			
+//				:	ID04 = Phone mT				ID11 = Induction Loop (mT)	ID18 = easyTek FM				
+//				:	ID05 = Bluetooth Phone		ID12 = Tek/miniTek			ID19 = Phone MT
+//				:	ID06 = Music				ID13 = miniTek FM			ID20 = Phone T
+//				:	ID07 = TV					ID14 = miniTek Telecoil		ID21 = Induction Loop (T)	
+//				:	ID08 = Outdoor/Sport		ID15 = Audio Input
+//	Comments	:	From Cxx 7.3 onwards programs ID12, ID13, ID14 are no longer supported. Code removed.
+// Description	:	Functions bellow indicates program assignment to particular ID 				
+/*---------------------------------------------------------------------------------------------------------*/	
+		public function bool IsUniversal()
+		{							 
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID01;
+			return retVal;			   	
+		}
+			
+		public function bool IsNoisyEnv()
+		{							 
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID02;
+			return retVal;			   	
+		}
+		
+		public function bool IsPhoneAcoustically()
+		{							 
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID03;
+			return retVal;			   	
+		}
+			
+		public function bool IsPhonemT()
+		{
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID04;
+			return retVal;			   	
+		}
+		
+		public function bool IsBluetoothPhone()
+		{
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID05;
+			return retVal;			   	
+		}
+		
+		public function bool IsMusic()
+		{
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID06;
+			return retVal;			   	
+		}
+											
+		public function bool IsTV()
+		{
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID07;
+			return retVal;			   	
+		}
+		
+		public function bool IsOutdoorSport()
+		{
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID08;
+			return retVal;			   	
+		}
+		
+		public function bool IsPrivacy()
+		{
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID09;
+			return retVal;			   	
+		}
+		
+		public function bool IsTinnitus()
+		{
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID10;
+			return retVal;			   	
+		}
+		
+		public function bool IsInductionLoopmT()
+		{
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID11;
+			return retVal;			   	
+		}
+		
+		public function bool IsAudioInput()
+		{
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID15;
+			return retVal;			   	
+		}
+		
+		public function bool IsStroll()
+		{							 
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID16;
+			return retVal;			   	
+		}
+		
+		public function bool IsStreamingAudio()
+		{							 
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID17;
+			return retVal;			   	
+		}
+		
+		public function bool IsEasyTekFM()
+		{							 
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID18;
+			return retVal;			   	
+		}
+		
+		public function bool IsPhoneMT()
+		{
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID19;
+			return retVal;			   	
+		}
+		
+		public function bool IsPhoneT()
+		{
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID20;
+			return retVal;			   	
+		}
+		
+		public function bool IsInductionLoopT()
+		{
+			bool retVal = hi:d9SwMacroProgramIdHp == d9SwMacroProgramIdHp.ID21;
+			return retVal;			   	
+		}		
+
+/*---------------------------------------------------------------------------------------------------------*	
+//	hi:d9SwMacroProgramIdHp	:    <OPPOSITE SIDE>
+//				:	ID02 = Noisy Environment	ID09 = Privacy				ID16 = Stroll					
+//				:	ID03 = Phone (Acoustically)	ID10 = Tinnitus				ID17 = Streaming Audio			
+//				:	ID04 = Phone mT				ID11 = Induction Loop (mT)	ID18 = easyTek FM				
+//				:	ID05 = Bluetooth Phone		ID12 = Tek/miniTek			ID19 = Phone MT
+//				:	ID06 = Music				ID13 = miniTek FM			ID20 = Phone T
+//				:	ID07 = TV					ID14 = miniTek Telecoil		ID21 = Induction Loop (T)	
+//				:	ID08 = Outdoor/Sport		ID15 = Audio Input
+//	Comments	:	From Cxx 7.3 onwards programs ID12, ID13, ID14 are no longer supported. Code removed.
+// Description	:	Functions bellow sets particular hi:d9SwMacroProgramIdHp ID for programs
+//				:	Shall only be called by Apply function in Package ProgramSelection!			
+/*---------------------------------------------------------------------------------------------------------*/	
+		public function bool IsOppPhoneAcoustically()
+		{							 
+			return opp(hi:d9SwMacroProgramIdHp) == d9SwMacroProgramIdHp.ID03;
+		}
+	
+		public function bool IsOppPhonemT()
+		{
+			return opp(hi:d9SwMacroProgramIdHp) == d9SwMacroProgramIdHp.ID04;
+		}
+		
+		public function bool IsOppPrivacy()
+		{
+			return opp(hi:d9SwMacroProgramIdHp) == d9SwMacroProgramIdHp.ID09;	   	
+		}
+
+		public function bool IsOppInductionLoopmT()
+		{
+			return opp(hi:d9SwMacroProgramIdHp) == d9SwMacroProgramIdHp.ID11;
+		}
+
+		public function bool IsOppAudioInput()
+		{
+			return opp(hi:d9SwMacroProgramIdHp) == d9SwMacroProgramIdHp.ID15;
+		}
+		
+		public function bool IsOppPhoneMT()
+		{
+			return opp(hi:d9SwMacroProgramIdHp) == d9SwMacroProgramIdHp.ID19;
+		}
+		
+		public function bool IsOppPhoneT()
+		{
+			return opp(hi:d9SwMacroProgramIdHp) == d9SwMacroProgramIdHp.ID20;
+		}
+
+		public function bool IsOppInductionLoopT()
+		{
+			return opp(hi:d9SwMacroProgramIdHp) == d9SwMacroProgramIdHp.ID21;
+		}					
+
+/*---------------------------------------------------------------------------------------------------------*	
+//	hi:d9SwMacroProgramIdHp	:    
+//				:	ID02 = Noisy Environment	ID09 = Privacy				ID16 = Stroll					
+//				:	ID03 = Phone (Acoustically)	ID10 = Tinnitus				ID17 = Streaming Audio			
+//				:	ID04 = Phone mT				ID11 = Induction Loop (mT)	ID18 = easyTek FM				
+//				:	ID05 = Bluetooth Phone		ID12 = Tek/miniTek			ID19 = Phone MT
+//				:	ID06 = Music				ID13 = miniTek FM			ID20 = Phone T
+//				:	ID07 = TV					ID14 = miniTek Telecoil		ID21 = Induction Loop (T)	
+//				:	ID08 = Outdoor/Sport		ID15 = Audio Input
+//	Comments	:	From Cxx 7.3 onwards programs ID12, ID13, ID14 are no longer supported. Code removed.
+// Description	:	Functions bellow sets particular hi:d9SwMacroProgramIdHp ID for programs
+//				:	Shall only be called by Apply function in Package ProgramSelection!			
+/*---------------------------------------------------------------------------------------------------------*/	
+		public function void SetUniversal()
+		{							 
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID01;			   	
+		}
+			
+		public function void SetNoisyEnv()
+		{							 
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID02;			   	
+		}
+		
+		public function void SetPhoneAcoustically()
+		{							 
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID03;			   	
+		}
+			
+		public function void SetPhonemT()
+		{
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID04;			   	
+		}
+		
+		public function void SetBluetoothPhone()
+		{
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID05;			   	
+		}
+		
+		public function void SetMusic()
+		{
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID06;			   	
+		}
+											
+		public function void SetTV()
+		{
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID07;			   	
+		}
+		
+		public function void SetOutdoorSport()
+		{
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID08;			   	
+		}
+		
+		public function void SetPrivacy()
+		{
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID09;			   	
+		}
+		
+		public function void SetTinnitus()
+		{
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID10;			   	
+		}
+		
+		public function void SetInductionLoopmT()
+		{
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID11;			   	
+		}
+		
+		public function void SetAudioInput()
+		{
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID15;			   	
+		}
+		
+		public function void SetStroll()
+		{							 
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID16;			   	
+		}
+		
+		public function void SetStreamingAudio()
+		{							 
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID17;			   	
+		}
+		
+		public function void SetEasyTekFM()
+		{							 
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID18;			   	
+		}
+		
+		public function void SetPhoneMT()
+		{
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID19;			   	
+		}
+		
+		public function void SetPhoneT()
+		{
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID20;		   	
+		}
+		
+		public function void SetInductionLoopT()
+		{
+			hi:d9SwMacroProgramIdHp = d9SwMacroProgramIdHp.ID21;			   	
+		}
+		
+/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY  Program Selection 
+-----------------------------------------------------------------------------------------------------------------*/			
+	}	//package BasicLibrary_ProgramSelection
+}	//namespace shs.sat

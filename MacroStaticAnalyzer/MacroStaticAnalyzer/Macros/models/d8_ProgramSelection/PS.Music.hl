@@ -1,0 +1,84 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+// 									PROGRAM SELECTION - Music
+
+// Initial Version		         															: 2011-08-22 Chuah LayYuan
+// Call ApplyOffset for testing purpose														: 2011-11-10 Chuah LayYuan
+// Added THI Weight setting in Apply Function                           					: 2011-11-22 Chuah LayYuan
+// Updated Apply function																	: 2012-02-07 Frauke Schall
+// Updated Apply-> gain modification with new curve											: 2012-02-23 Frauke Schall
+// Calling the HLIB MicMode_Set_ProgramSelection and updated comments.						: 2012-03-06 Frauke Schall
+// Added GetOrderNumber() and IsSingleUse() function.										: 2012-03-19 Jenny Lin
+// Updated GetID from 5 to 6 due to Universal = 1.											: 2012-03-22 Jenny Lin
+// Replaced InputMode SetPos to non-adaptive (no update of WNC/SoundBrilliance)				: 2012-03-27 Cecil Wilson	
+// Updated IsVisible function 																: 2012-04-04 Cecil Wilson
+// Updated SoundBrilliande to be off														: 2012-06-01 Frauke Schall
+// Update insertion gain modification from ApplyOffsets_ProgramSelection() to 
+// ApplyInsertionGainOffsets_ProgramSelection												: 2012-07-09 Jenny Lin
+// Call the HLIB for Program Selection for all programs.									: 2012-07-20 Cecil, Jenny
+// *********************************************CODE FREEZE********************************************************
+// CR57156 - Set CBFS to off for HP2-HP6													: 2012-08-22 Nadia Neugeborn
+// CR59134 - Set sound smoothing to Min, FBC to slow.                           			: 2012-12-05 Al
+// Peer Review Changes 7.2.                                                     			: 2013-08-15 Raymond, MangYew, Judith
+// D8 Program Selection code cleaning, apply function to call H_Lib							: 2013-10-24 Sonia Stasiak
+// Updated IsEnabled to call Mid_Level_Library												: 2013-11-01 Sonia Stasiak
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Updated Apply function with d9SwMacroProgramIdHp, code tuning							: 2013-12-17 Sonia Stasiak
+// PEER REVIEW CXX 7.3																		: 2014-05-06 Sonia, Mie Mie, Jenny
+/*--------------------------------------------- Cxx 7.4 -----------------------------------------------------------*
+// Change Apply function to call BLib.Set<program> to set d9SwmacroProgramIdHp				: 2014-09-16 Sonia
+// Code clean up																			: 2014-09-17 Sonia 
+/*-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package ProgramSelection Music
+	{
+		application function int GetID ()
+		{
+			int retVal = 6;
+			println ('[HAL]PS - Music.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "Music";
+			println ('[HAL]PS - Music.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 6; // Music
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - Music.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 6; // Music
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - Music.IsEnabled = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			return retVal;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetMusic();
+			
+			println ('[HAL]PS - Music.Apply started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - Music.Apply done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function int GetOrderNumber ()
+		{
+			int retVal = 8;
+			println ('[HAL]PS - Music.GetOrderNumber = ' + retVal);
+			return retVal;
+		}
+	}
+}
+//--------------------------------------- END of PROGRAM SELECTION - Music  ---------------------------------------*/

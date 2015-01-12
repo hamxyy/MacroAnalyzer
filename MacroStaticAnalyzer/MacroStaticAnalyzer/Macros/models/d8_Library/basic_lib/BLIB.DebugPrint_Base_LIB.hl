@@ -1,0 +1,137 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// 									BasicLibrary_DebugPrint
+// Initial version																			: 2014-08-25 Jenny
+// Added PrintEnvOneSides and removed closing remarks.										: 2014-10-01 Jenny
+// PrintEnvSettings: removed PrintEnvOneSides call.											: 2014-10-23 Jenny
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using builtins.*;
+	using shs_sat.*;
+	
+	package Lib BasicLibrary_DebugPrint
+	{
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Print current Fitting (CXX), Service (Hicoss) or Not Fitting (in Hicoss, not CXX).  
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string PrintEnvHiDriverWorkMode ()
+		{
+			string retVal = "";
+			if(env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+			{
+ 				retVal = " env:HiDriverWorkMode = Fitting";
+ 			}
+ 			else if(env:HiDriverWorkMode == HiDriverWorkMode.Service)
+ 			{
+	 			retVal = " env:HiDriverWorkMode = Service";
+ 			}
+ 			else
+ 			{
+	 			retVal = " env:HiDriverWorkMode = Not Fitting";
+ 			}
+ 			return retVal;			
+		}
+			
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Print the side where the macro is called from Fitting. It prints BothSides, LeftSide, RightSide or NoSide.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string PrintEnvOneSides ()
+		{
+			string retVal = "";
+ 			if(env:OneSide == OneSide.Left)
+ 			{
+	 			retVal = " env:OneSide = Left";
+ 			}
+ 			else if(env:OneSide == OneSide.Right)
+ 			{
+	 			retVal = " env:OneSide = Right";
+ 			}
+ 			else
+ 			{
+	 			retVal = " env:OneSide = NoSide";
+ 			}
+ 			
+ 			return retVal;
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Print the side where the macro is called from Fitting. It prints BothSides, LeftSide, RightSide or NoSide.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string PrintEnvCurrentSides ()
+		{
+			string retVal = "";
+			if(env:Sides == Sides.BothSides)
+			{
+ 				retVal = " env:Sides = BothSides";
+ 			}
+ 			else if(env:Sides == Sides.LeftSide)
+ 			{
+	 			retVal = " env:Sides = LeftSide";
+ 			}
+ 			else if(env:Sides == Sides.RightSide)
+ 			{
+	 			retVal = " env:Sides = RightSide";
+ 			}
+ 			else
+ 			{
+	 			retVal = " env:Sides = NoSide";
+ 			}
+ 			
+ 			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Print the HI detection/simulation where the macro is called from Fitting. 
+		   				 It prints BothSides (Two HI detected/simulated), LeftSide (only Left side HI detected/simulated), 
+		   				 RightSide (only Right side HI detected/simulated or NoSide (no HI detected/simulated).
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string PrintEnvDetectedSide ()
+		{
+			string retVal = "";
+			if(env:DetHi == DetHi.BothSides)
+			{
+ 				retVal = " env:DetHi = BothSides";
+ 			}
+ 			else if(env:DetHi == DetHi.LeftSide)
+ 			{
+	 			retVal = " env:DetHi = LeftSide";
+ 			}
+ 			else if(env:DetHi == DetHi.RightSide)
+ 			{
+	 			retVal = " env:DetHi = RightSide";
+ 			}
+ 			else
+ 			{
+	 			retVal = " env:DetHi = NoSide";
+ 			}
+ 			return retVal;
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Print the current program the Fitting is simulated/detected in.
+		   				 env:Prog = 0 >> Universal FIRST program, env:Prog=1-5 (the second to sixth program).
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string PrintCurrentProg ()
+		{
+			int retval = env:Prog;
+			return " env:Prog = " + retval;
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  To print out the Prog, HiWorkMode, DetectHI, Current Side for HI
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string PrintEnvSettings ()
+		{
+ 			string retVal = (	
+ 								PrintCurrentProg() +
+				 				PrintEnvHiDriverWorkMode() +
+				 				PrintEnvDetectedSide() +
+				 				PrintEnvCurrentSides()
+				 			);
+ 			
+ 			return retVal;
+		}
+		
+	}
+}

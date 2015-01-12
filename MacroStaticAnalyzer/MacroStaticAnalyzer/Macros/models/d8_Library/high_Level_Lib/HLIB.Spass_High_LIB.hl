@@ -1,0 +1,249 @@
+/*---------------------------------------------------------------------------------------------------------------*/
+//                           HIGH LEVEL PRICEPOINT LIBRARY : Spass
+// Initial Version            						        		: 2011-03-17 Frauke Schall
+// Update IsVisible and IsEnabled dependecies						: 2011-03-22 Frauke Schall
+// rework m-Fynset to high levellib                         		: 2011-04-28 Frauke Schall & Nadine Seubert		
+// Modified SpassEnSet to ensure m_vad_start set correctly  		: 2011-05-25 LayYuan
+// implement new Fancy nf Settings                          		: 2011-06-03 Nadine Seubert
+// update for multichannel adjustments                      		: 2011-06-08 Frauke Schall & Nadine Seubert
+// Updated Spass_Set_Default 										: 2011-07-07 Nadia Neugeborn
+// Added Spass_Set_ProgramSelection									: 2012-02-07 Frauke Schall
+// Spass_Set_ProgramSelection only for DirMic and 700PP				: 2012-03-06 Frauke Schall
+// Updated SpassEnSet to call Set_PhlNruSpassMode to set the controls affected by SNM & SPASS : 2012-04-09 Jenny
+// Updated macros to the state on 2012-02-08   						: 2012-04-13 Jenny Lin
+// Updated Spass_Set_Default() for PostFit							: 2012-04-19 Nadia
+// Updated Spass_Set_ProgramSelection based on changes in IsVisible function : 2012-04-20 Frauke
+// Peer review changes												: 2012-06-14 Nadine and Frauke
+// Updated based on peer review (ProgramSelection)					: 2012-06-27 Frauke, Jenny and co
+// Added SpassEn_ForOmni											: 2012-07-09 Frauke
+// Updated SpassEn_ForOmni to only set Spass to on, if it is visible	: 2012-07-12 Frauke
+// FirstFit peer review updates											: 2012-07-17 Nadia & Judith
+// *********************************************CODE FREEZE*******************************************************
+// ER55700: wrong Speech and Noise Multi slider setting						: 2012-08-29 Frauke
+// Updated the omnidirectional to (remapped_pos >= 90)				: 2012-11-19 Jenny
+// Update ID number in Set_ProgramSelection function									:	2013-10-29 Sonia Stasiak
+// Updated comments	for Set_ProgramSelection D9											:	2013-11-01 Sonia Stasiak
+//------------------------------------------------------- 7.3 ---------------------------------------------------
+// Refractor for 7.3																	: 2013-11-11 Raymond
+// Sifit 7.3 Updates												: 2013-11-29 Mang Yew
+// Added annotation to SpassEn_ForOmni()                            : 2013-12-17 Al
+// Added new function to check Hw controls and Set Sw controls		: 2014-01-14	Mang Yew
+// Added PP500 set up for Program Selection in SPASS				: 2014-01-21	Mang Yew
+// Update Structure for NR and SPASS interaction					: 2014-02-26 Mang Yew
+// update on setpos to remove unused return argument							: 2014-03-04 Mang Yew	
+// Reworked SpassEn_ForOmni() to use a string input                 : 2014-03-11 Al
+// Comment update for Program Selection								: 2014-03-19 Sonia
+// Update SPASS default FF to call set SW Macro Control 			: 2014-03-24 Mang Yew
+// Update for Sifit7.3 Peer Review									: 2014-04-22 Mang Yew
+// PEER REVIEW CXX 7.3	for Program Selection						:	2014-05-06 Sonia, Mie Mie, Jenny
+// FR66756 - Default after First fit for Noise Reduction is 
+// changed to Expanded view.
+// Therefore need update default function for SPASS					: 2014-05-06 Mang Yew	
+// FR67691: To strong default directional speech enhancement for noisy environment and nfc  : 2014-06-04 Judith
+// FR67691: Updated comments and added implementation for SPASS
+//			ProgramSelection set for SW Macro Control only Function : 2014-06-06 Mang Yew
+// Sifit 7.4 Update SPASS for program selection to adjust SPASS 
+// slider only if SPASS slider is available for single dir mic		: 2014-07-25	Mang Yew
+// Update comment on Set_Program Selection (added new Induction Loop (T) program)		: 2014-07-30 Sonia Stasiak
+// Re-write Set_ProgramSelection to call BLib.Is<program>								: 2014-09-16 Sonia
+// FR69523: Update changes to adapt for 3bx NFC SPASS							: 2014-10-28 Mang Yew
+// SpassEn_ForOmni()- Directly calling the BLIB.SPASS_En(0)						: 2014-11-04 Sultan
+// Sifit 7.4 Peer Review code cleanup											: 2014-11-14 Mang Yew
+// Cxx 7.4 Peer Review for Program Selection (only)								: 2014-11-18 Sonia, Jenny, Niklas
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+    using shs_sat.*;
+    
+	package  Lib High_Level_Library_Spass
+	{
+		
+/*---------------------------------------------------------------------------------------------------------------*/
+//   Description:  Sets the slider position based on selection
+/*---------------------------------------------------------------------------------------------------------------*/
+		public function void SpassSL_Set(int pos)
+		{			
+			BasicLibrary_Spass.SpassSL_Set(pos);
+			BasicLibrary_Spass.SpassSL_Set_Sw (pos);		
+		}
+						
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Gets slider position based on instrument setting   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpassSL_Get()
+		{
+			return BasicLibrary_Spass.SpassSL_Get_Sw ();
+			
+		}
+				
+	
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Sets the slider position and CheckBox to the default after FF position for Sw Macro Control only
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void Spass_Set_Default()
+		{		  
+			int posBox = Mid_Level_Library_Spass.SpassEn_DefaultPos();
+			int posSL = Mid_Level_Library_Spass.SpassSL_DefaultPos();
+			
+			if(Mid_Level_Library_Mic_Mode.IsNarrowFocusSPASSAvailable() == true)
+			{
+				High_Level_Library_Spass.SpassEnSet(1);
+				High_Level_Library_Spass.SpassSL_Set(posSL);
+			}
+			else
+			{
+				High_Level_Library_Spass.SpassEnSet(posBox);
+				High_Level_Library_Spass.SpassSL_Set(posSL);
+			}
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description: Set Spass according to selection. In case Spass is disabled (pos =0) and Speech and Noisemanager
+//				  is enabled adjust Fancy postion to VAD position
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SpassEnSet(int pos)
+		{
+			BasicLibrary_Spass.SpassEn_Set(pos);
+			BasicLibrary_Spass.SpassEn_Set_Sw(pos);
+		}
+
+/*---------------------------------------------------------------------------------------------------------*
+//	HIGH LEVEL LIBRARY - Spass_Set_ProgramSelection
+//	Description	:	Function is setting SPASS (Directional Speech Enhancement) for all listening situation. 
+/*---------------------------------------------------------------------------------------------------------*/
+		public function void Spass_Set_ProgramSelection()
+		{
+			println ('[HAL]HLIB.Spass_Set_ProgramSelection ID = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			
+			//If PricePoint 300 and DirMic available, ensure SPASS is untouched.
+			//To prevent SPASS being forced to off in PP300 for 3bx narrow directivity 
+			if (Mid_Level_Library_Mic_Mode.IsNarrowFocusSPASSAvailable () == false)
+			{
+				if (BasicLibrary_ProgramSelection.IsNoisyEnv() == true)
+				//SPASS (if visible) set to ON, slider (if visible) set to MED
+				{
+					if(Mid_Level_Library_Spass.SpassEn_IsVisible()==true) 
+					{
+						High_Level_Library_Spass.SpassEnSet (1);
+						
+						if (Mid_Level_Library_Spass.SpassSL_IsVisible () == true)
+						{
+							High_Level_Library_Spass.SpassSL_Set(1); // FR67691			
+						}
+					}
+					else
+					{
+						High_Level_Library_Spass.SpassEnSet (0); // do we need to ensure off state for non-visible pricepoints? --> for Cxx 7.5
+					}
+				}
+				
+				else if (BasicLibrary_ProgramSelection.IsTinnitus() == true)
+				// SPASS same as Universal (do nothing)
+				{
+	
+				}
+				
+				else // (all other programs)
+				{
+					High_Level_Library_Spass.SpassEnSet (0);
+				
+				// Additional comments:
+				// For Afternoon Stroll when SideLook microphone mode is selected SPASS is automatically 
+				// deactivated   by f_mic_spass_off_by_slk_en   control 
+				}	
+			}
+			
+		}
+
+/*---------------------------------------------------------------------------------------------------------*
+//	HIGH LEVEL LIBRARY - Spass_Set_ProgramSelection_Sw_Controls
+//	Description	:	Function is setting SPASS (Directional Speech Enhancement) for all listening situation. 
+/*---------------------------------------------------------------------------------------------------------*/
+		public function void Spass_Set_ProgramSelection_Sw_Controls()
+		{
+			println ('[HAL]HLIB.Spass_Set_ProgramSelection ID = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			
+			//If PricePoint 300 and DirMic available, ensure SPASS is untouched.
+			//To prevent SPASS being forced to off in PP300 for 3bx narrow directivity 
+			if (Mid_Level_Library_Mic_Mode.IsNarrowFocusSPASSAvailable () == false)
+			{
+				if (BasicLibrary_ProgramSelection.IsNoisyEnv() == true)
+				//SPASS (if visible) set to ON, slider (if visible) set to MED
+				{
+					if(Mid_Level_Library_Spass.SpassEn_IsVisible()==true) 
+					{
+						BasicLibrary_Spass.SpassEn_Set_Sw(1);
+						
+						if (Mid_Level_Library_Spass.SpassSL_IsVisible () == true)
+						{
+				    		BasicLibrary_Spass.SpassSL_Set_Sw(1); //FR67691
+						}
+					}
+					else 
+					{
+						BasicLibrary_Spass.SpassEn_Set_Sw(0);	 // do we need to ensure off state for non-visible pricepoints? --> for Cxx 7.5
+					}
+				}
+				
+				else if (BasicLibrary_ProgramSelection.IsTinnitus() == true)
+				// SPASS same as Universal (do nothing)
+				{
+	
+				}
+				
+				else // (all other programs)
+				// SPASS set to off 
+				{
+					BasicLibrary_Spass.SpassEn_Set_Sw(0);	
+				
+				// Additional comments:
+				// For Afternoon Stroll when SideLook microphone mode is selected SPASS is automatically 
+				// deactivated   by f_mic_spass_off_by_slk_en   control 
+				}
+			}
+		}
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  Sets the Spass setting dependend on MicMode   
+-----------------------------------------------------------------------------------------------------------------$*/	
+		public function void  SpassEn_ForOmni(string micmode){
+			//Sifit 7.3
+			if((micmode == "Omnidirectional") && 
+				 (BasicLibrary_Spass.SpassEn_Get_Sw () == 1 ||
+				  BasicLibrary_Spass.SpassEn_Get_Hw () == true))
+			{
+				BasicLibrary_Spass.SpassEn_Set(0);				
+			}
+				// If something other than omni is chosen AND Spass was previously enabled :
+			else if (BasicLibrary_NoiseReduction.NoiseReductionView_Get () == false) // advanced view
+			{
+				if (Mid_Level_Library_Spass.SpassEn_IsVisible() &&
+					BasicLibrary_Spass.SpassEn_Get() &&
+					micmode == "Directional")
+				{
+					High_Level_Library_Spass.SpassEnSet (1);
+				}
+			}
+			else if (BasicLibrary_NoiseReduction.NoiseReductionView_Get () == true) // basic view
+			{
+				if (Mid_Level_Library_Spass.SpassEn_IsVisible() &&
+					micmode == "Directional" && 
+					BasicLibrary_NoiseReduction.NoiseReductionEn_Get ())
+				{
+					int NrSl = BasicLibrary_NoiseReduction.NoiseReductionSL_Get_Strength_Sw ();
+						
+					if (Mid_Level_Library_NoiseReduction.NoiseReductionSL_Check_Spass(NrSl) == true)
+					{
+						BasicLibrary_Spass.SpassEn_Set(1);
+					}
+					BasicLibrary_Spass.SpassSL_Set (Mid_Level_Library_NoiseReduction.NoiseReductionSL_Spass_Remapping (NrSl));
+				}
+			}
+		}
+				
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Higher Level PP LIBRARY    Spass
+-----------------------------------------------------------------------------------------------------------------*/	
+	}
+}
+

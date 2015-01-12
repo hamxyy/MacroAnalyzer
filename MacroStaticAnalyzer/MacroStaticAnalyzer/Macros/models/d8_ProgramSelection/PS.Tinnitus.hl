@@ -1,0 +1,81 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									PROGRAM SELECTION - Tinnitus
+
+// Initial Version		         															: 2011-08-22 Chuah LayYuan
+// Updated the Program ID																	: 2011-11-08 Chuah LayYuan
+// Added THI Weight setting in Apply Function                          						: 2011-11-22 Chuah LayYuan
+// Added GetOrderNumber() and IsSingleUse() function.										: 2012-03-19 Jenny Lin
+// Updated GetID from 9 to 10 due to Universal = 1.											: 2012-03-22 Jenny Lin
+// Updated IsVisible function 																: 2012-04-04 Cecil Wilson
+// Updated Apply function																	: 2012-05-14 Nadia Neugeborn	
+// MacroPeerReview: Clean up comments.														: 2012-07-20 Cecil/Jenny
+// *********************************************CODE FREEZE********************************************************
+// ER56958 - mic mode same as universal														: 2012-08-22 Nadia Neugeborn
+// CR57156 - Set CBFS to off for HP2-HP6													: 2012-08-22 Nadia Neugeborn
+// Peer Review Changes 7.2.                                                     			: 2013-08-15 Raymond, MangYew, Judith
+// D8 Program Selection code cleaning, apply function to call H_Lib							: 2013-10-28 Sonia Stasiak
+// Updated IsEnabled to call Mid_Level_Library												: 2013-11-01 Sonia Stasiak
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Updated Apply function with d9SwMacroProgramIdHp, code tuning							: 2013-12-17 Sonia Stasiak
+// PEER REVIEW CXX 7.3																		: 2014-05-06 Sonia, Mie Mie, Jenny
+/*--------------------------------------------- Cxx 7.4 -----------------------------------------------------------*
+// Changed package to MonAppProgramSelection, added ApplyComplementary function				: 2014-08-01 Sonia Stasiak
+// Change Apply function to call BLib.Set<program> to set d9SwmacroProgramIdHp				: 2014-09-16 Sonia
+// Code clean up																			: 2014-09-17 Sonia 
+// FR68897 - package name changed from MonAppProgramSelection to ProgramSelection, 
+// and removed ApplyComplementary function.													: 2014-09-22 Jenny
+//-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package ProgramSelection Tinnitus
+	{
+		application function int GetID ()
+		{
+			int retVal = 10;
+			println ('[HAL]PS - Tinnitus.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "Tinnitus";
+			println ('[HAL]PS - Tinnitus.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 10; // Tinnitus
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - Tinnitus.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 10; // Tinnitus
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - Tinnitus.IsEnabled = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			return retVal;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetTinnitus();
+			
+			println ('[HAL]PS - Tinnitus.Apply started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - Tinnitus.Apply done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function int GetOrderNumber ()
+		{
+			int retVal = 12;
+			println ('[HAL]PS - Tinnitus.GetOrderNumber = ' + retVal);
+			return retVal;
+		}	
+	}
+}
+//--------------------------------------- END of PROGRAM SELECTION - Tinnitus -------------------------------------*/

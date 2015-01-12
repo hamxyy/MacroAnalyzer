@@ -1,0 +1,56 @@
+//----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY  IntelliZoom
+// Initial Version                                         : 2013-12-17		Al
+// In IntelizoomEn_Set_Entry, replaced MicMode_DetermineAndSet() with calls to OmniMicModeProc()...
+// and ResetOmniForIzWncOo().                              : 2013-03-18     Al 
+// FR66291 rename InteliZoom to IntelliZoom and move the resetting of micmode omni to hlib.			: 2014-04-16 Jenny
+// Code cleanup: Updated printlines.												: 2014-10-20 Jenny
+// Sifit 7.4 PEER REVIEW														: 2014-11-18 Jenny, Niklas 
+//---------------------------------------------------------------------------------------------------------------
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_IntelliZoom
+	{
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Description:  Obtains the IntelliZoom checkbox tick status    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int IntelliZoomEn_Get_Entry()
+		{ 
+			println ('[HAL]BLIB.BasicLibrary_IntelliZoom.IntelliZoomEn_Get_Entry');
+			
+			if (hi:d9FIzmEn == d9FIzmEn.enabled)
+			{
+				return 1;
+			}
+			else 
+			{
+				return 0;
+			}
+		}
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Description:  Sets the IntelliZoom HW controls based on the SetPos index, 0 or 1.    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void IntelliZoomEn_Set_Entry(int pos)
+		{ 	
+			println ('[HAL]BLIB.BasicLibrary_IntelliZoom.IntelliZoomEn_Set_Entry');
+
+			// IntelliZoom shall only be available in HP1 but this is done via FW. 
+			// The control d9FIzmEn is a simple control and cannot be set differently for different program slots. 
+			// Therefore: the macro shall not deactivate IntelliZoom in dedicated programs.			
+			if (pos == 1)
+			{
+				// switch on Izoom
+				hi:d9FIzmEn = d9FIzmEn.enabled;
+			}
+			else
+			{
+				// switch off Izoom
+				hi:d9FIzmEn = d9FIzmEn.disabled;
+			}
+		}
+	}
+}

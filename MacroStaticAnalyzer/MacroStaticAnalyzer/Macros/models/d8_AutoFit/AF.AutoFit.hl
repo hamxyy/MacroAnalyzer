@@ -1,0 +1,71 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Set Measurement Condititons Wizard
+// first draft - Measurement Conditions for AutoFit                           	: 2012-10-26  Judith Koeppe
+// initial version                                                              : 2012-10-31  Judith Koeppe
+// Auto fit is ready and passes Fitnesse L1                                     : 2012-11-07  Judith Koeppe
+ // peer review									                                : 2012-01-03  MieMie and Judith	
+*****************************************CODE FREEZE***************************************************
+// ER63521: AUFI - 50dB not matching in Verification tab => follow up in >= 7.3 : 2014-02-26  Judith Koeppe
+// Peer review 7.3																: 2014-05-06  Frauke, Judith
+// ER67640 AuFit - switch off aMNR                                               : 2014-06-03  Jenny, Judith
+*
+-----------------------------------------------------------------------------------------------------------------*/ 
+
+namespace shs_sat {
+	using builtins.*;
+	using shs_sat.*;
+
+	package AutoFit AF{
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   AutoFit	:  SetMeasurementConditions
+//   Input		:  none
+//   Ouput      :  none
+//   Description:  Measurement settings for AutoFit; MicMode to omni, Adaptive Parameters off, Fbc still on (OpenOptimizer is off)
+-----------------------------------------------------------------------------------------------------------------*/ 			
+		application function void SetMeasurementCondition(){
+					
+			// To deactivate all adaptive parameters including OpenOptimizer, only Fbc is not touched	
+			// To Set MicMode to Omni depending on the etemplate entry
+		    High_Level_Library_TestSettings.TestSettingsOmniBu_Set(1);
+		    BasicLibrary_MicrophoneMix.Set_aMNR_Controls(0);	// OFF for MeasurementCondition ER67640
+		    BasicLibrary_MicrophoneMix.Set_MNR_Controls(0);     // OFF for MeasurementCondition ER67640
+			println('[HAL]: Measurement Conditions: Mic Mode = Omnidirectional and Set Adaptive Parameters OFF (except from Fbc) done');				
+
+		} // Closes SetMeasurementConditions()
+		/*---------------------------------------------------------------------------------------------------------------*
+//   FirstFit	:  PostFit
+//   Input		:  none
+//   Ouput      :  Default settings are set (for program 1)
+//   Description:  All of the needed features are set after AutoFit (based on the MRS)
+-----------------------------------------------------------------------------------------------------------------*/
+		application function void PostFit ()
+		{
+			println ("[HAL]FIRSTFIT - Running PostFit() macro");
+			
+			println ("[HAL]FIRSTFIT - PostFit_RemOn_CommonConfig");
+			High_Level_Library_FirstFit_Config.PostFit_RemOn_CommonConfig ();
+			
+			// ****** Settings specific to PostFit Only ********* //
+			// Call default function for Feedback Stopper (will also set sub features related to FBC)
+			println ("[HAL]FIRSTFIT - FeedbackStopper_Set_Default");
+			High_Level_Library_FeedbackStopper.FeedbackStopper_Set_Default ();
+			// Call SwMacroFCO_Set to store last FCO setting
+ 			println ("[HAL]FIRSTFIT - SwMacroFCO_Set");
+			High_Level_Library_FCO.SwMacroFCO_Set ();
+			println ("[HAL]FIRSTFIT - Running PostFit() macro Done!");
+
+			//ER63521: AUFI - 50dB not matching in Verification tab => Optimization Curve, combined wit TD8ParMaxCompressionRatio
+			//be set to -0.75 Max CR for Disable, and -0.875 Max CR for Enable divAutoFitOptimization in eTemplates	
+			if (cap:AutoFitOptimizationAvailable == AutoFitOptimizationAvailable.enable)
+			{
+				if (isOffsetApplicable ("AutoFitOptimization", ToSubject.LevLow, Apply.Partial))
+				{
+					CL_CurveLibrary.ApplyOffset_LevLow_Partial ("AutoFitOptimization"); // +3db
+
+				}
+			}
+		} // Closes AF.PostFit()		
+
+		}
+		} // namespace shs.sat

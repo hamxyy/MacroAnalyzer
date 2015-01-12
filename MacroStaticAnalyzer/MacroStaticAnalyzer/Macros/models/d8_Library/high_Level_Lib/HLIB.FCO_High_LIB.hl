@@ -1,0 +1,1066 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                           HIGH LEVEL PRICEPOINT LIBRARY   : FCO
+// Initial Version                						                     : 2011-11-28 Nadia Neugeborn
+// Added FCO_CxxSet and FCO_CxxGet function									 : 2011-11-29 Jenny Lin
+// No default: enable/disable of FCO is implemented by Cxx now				 : 2011-12-15 Nadia Neugeborn
+// Added SoundBrilliance visibility checks before setting SB parameters.	 : 2012-05-23 Jenny Lin
+// Implement FR54134 - disable FCO for open fittings in	FCO_Set_Default()	 : 2012-06-05 Nadia Neugeborn 
+// Peer review changes														 : 2012-06-20 Nadine and Frauke
+// Renamed function SoundBrilianceEn_For_FCO_And_InputMode Inputmode Peerreview : 2012-06-21 Cecil/Jenny 
+// *********************************************CODE FREEZE*******************************************************
+// Update macro based on CR55955
+// rename HLIB.SoundBrilianceEn_For_FCO_And_InputMode to 
+// HLIB.SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks				:  2012-07-17 Jenny Lin
+//  ER57403: FIFI - FCO shall be always similar in both hearing aids after First Fit : 2012-09-14 Nadine Seubert
+// Added FCO_Default disable for Nitro devices    					 : 2013-03-01 Sonia Stasiak
+// Update set_default with SuperPower HI capability						 : 2013-04-08 Sonia Stasiak	 	
+// Undo FCO_default disable for Nitro as requested for study			 : 2013-04-08 Sonia
+// Added FCOFMinSL_Get, FCOFMinIncApplicable, FCOFMinDecApplicable		:2013-05-31 Raymond
+// Added draft code for FCOFMaxIncApplicable, FCOFMaxDecApplicable,
+// FCOFMaxSL_Get													:2013-05-31 Raymond 
+// Uncommented FMax proposals										:2013-06-10 Raymond
+// CR61177: Added SwMacroFCO setter and getter functions				:2013-07-08 Raymond
+// CR61177: Rename SwMacroFCOHpEn to SwMacroFCOEn					:2013-07-16 Raymond
+// ER62632: Rewrote FCO_Set_Default to check for PP75					:2013-07-22 Raymond
+// Revert prefix from D9 to D8 for SwFcoFreqCutoff, SwFcoFreqDestination.	: 2013-10-24 Jenny
+// optimize code.															: 2014-02-28 Jenny
+// Sifit7.3 Peer review																: 2014-04-21 Jenny, Jeline
+// FR68941 to disable FCO when tinnitus is ON and Pure				:2014-09-02 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_FCO
+	{
+
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   High Level PP LIBRARY Function:    FCOIsEnabled()
+//   Input		:  void
+//   Output     :  <bool>
+//   Description:  Checks if FCO checkbox should be enabled or greyed-out
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool FCOIsEnabled ()
+		{
+			if(BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		} // Closing High_Level_Library_FCO.FCOIsEnabled
+		
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   High Level PP LIBRARY Function:    FCO_CxxSet()
+//   Input		:  int pos w.r.t. connexx
+//   Output      :  void
+//   Description:  Set FCO (on/off) 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FCO_CxxSet (int pos) //SIFIT7.3PEERREVIEWED
+		{
+			// set the controls for FCO
+			BasicLibrary_FCO.FCOEn_Set (pos);
+			
+			// Set SoundBrilliance based on FCO state.			
+			if (Mid_Level_Library_SoundBriliance.SoundBriliance_IsVisible () == true)
+			{
+				if (pos == 0)
+				{
+				// FCO set to OFF, Set related SoundBrilliance controls ON if it was previously ON
+					if (BasicLibrary_SoundBriliance.SoundBrilianceEn_GetSwOnly () == true)
+					{
+						High_Level_Library_SoundBriliance.SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks (1);
+					}
+				}
+				else
+				{
+				// FCO set to ON, Reset related SoundBrilliance HW controls OFF, keeping the check mark
+					High_Level_Library_SoundBriliance.SoundBrilianceEn_Setpos_with_FCO_And_InputMode_checks (0);
+				}
+			}
+		} // Closing High_Level_Library_FCO.FCO_CxxSet()
+
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   High Level PP LIBRARY Function:    FCO_CxxGet()
+//   Input		:  n.a.
+//   Output      :  int pos w.r.t. connexx
+//   Description:  Get FCO (on/off) 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int FCO_CxxGet () //SIFIT7.3PEERREVIEWED
+		{
+			// The Fco Cxx position is based on the Hw controls for Fco
+			if (BasicLibrary_FCO.FCOEn_Get ())
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // Closing High_Level_Library_FCO.FCO_CxxGet()
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level LIBRARY Function:    FCO_Set_Default()
+//   Input      :  none
+//   Output      :  none
+//   Description:  Disable FCO for Pricepoint 75
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FCO_Set_Default () //SIFIT7.3PEERREVIEWED
+		{
+			// FCO set by CXX in PostFit (CR61993), Macros just need OFF FCO if PP75.
+			if (Mid_Level_Library_FCO.Fco_IsAvailable() == false)
+			{
+				println ("[HAL]: FCO not available: PP75");
+				High_Level_Library_FCO.FCO_CxxSet (0); // Disable FCo (call set function in this HLIB)
+			}
+		} //Closing High_Level_Library_FCO.FCO_Set_Default()
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level LIBRARY Function:    FCOFMinSL_Get
+//   Input      :  none
+//   Output      :  <int> Actual slider position with respect to Current Device
+//   Description:  Slider positions
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int FCOFMinSL_Get ()
+		{
+			return BasicLibrary_FCO.FCOFMinSL_Get_Strength ();
+		} // Closing High_Level_Library_FCO.FCOFMinSL_Get
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level LIBRARY Function:    FCOFMaxSL_Get
+//   Input      :  none
+//   Output      :  <int> Actual slider position with respect to Current Device
+//   Description:  Slider positions
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int FCOFMaxSL_Get ()
+		{
+			return BasicLibrary_FCO.FCOFMaxSL_Get_Strength ();
+		} // Closing High_Level_Library_FCO.FCOFMaxSL_Get
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level LIBRARY Function:    FCOFMinIncApplicable
+//   Input      :  none
+//   Output      :  <bool> 
+//   Description:  Boolean to determine if FMin is applicable to increase slider to next position
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool FCOFMinIncApplicable ()
+		{
+			bool incApplicable = false;
+			switch (High_Level_Library_FCO.FCOFMinSL_Get ())
+			{
+				case 10:{
+					if (isValid (d8SwFcoFreqCutoff._1750Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 20:{
+					if (isValid (d8SwFcoFreqCutoff._2000Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 30:{
+					if (isValid (d8SwFcoFreqCutoff._2250Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 40:{
+					if (isValid (d8SwFcoFreqCutoff._2500Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 50:{
+					if (isValid (d8SwFcoFreqCutoff._2750Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 60:{
+					if (isValid (d8SwFcoFreqCutoff._3000Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 70:{
+					if (isValid (d8SwFcoFreqCutoff._3250Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 80:{
+					if (isValid (d8SwFcoFreqCutoff._3500Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 90:{
+					if (isValid (d8SwFcoFreqCutoff._3750Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 100:{
+					if (isValid (d8SwFcoFreqCutoff._4000Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 110:{
+					if (isValid (d8SwFcoFreqCutoff._4250Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 120:{
+					if (isValid (d8SwFcoFreqCutoff._4500Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 130:{
+					if (isValid (d8SwFcoFreqCutoff._4750Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 140:{
+					if (isValid (d8SwFcoFreqCutoff._5000Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 150:{
+					if (isValid (d8SwFcoFreqCutoff._5250Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 160:{
+					if (isValid (d8SwFcoFreqCutoff._5500Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 170:{
+					if (isValid (d8SwFcoFreqCutoff._5750Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 180:{
+					if (isValid (d8SwFcoFreqCutoff._6000Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 190:{
+					incApplicable = false;
+				}
+			}
+			return incApplicable;
+		} // Close High_Library_FCO.FCOFMinIncApplicable
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level LIBRARY Function:    FCOFMinDecApplicable
+//   Input      :  none
+//   Output      :  <bool> 
+//   Description:  Boolean to determine if FMin is applicable to decrease slider to next position
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool FCOFMinDecApplicable ()
+		{
+			bool decApplicable = false;
+			switch (High_Level_Library_FCO.FCOFMinSL_Get ())
+			{
+				case 10:{
+					decApplicable = false;
+				}
+				case 20:{
+					if (isValid (d8SwFcoFreqCutoff._1500Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 30:{
+					if (isValid (d8SwFcoFreqCutoff._1750Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 40:{
+					if (isValid (d8SwFcoFreqCutoff._2000Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 50:{
+					if (isValid (d8SwFcoFreqCutoff._2250Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 60:{
+					if (isValid (d8SwFcoFreqCutoff._2500Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 70:{
+					if (isValid (d8SwFcoFreqCutoff._2750Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 80:{
+					if (isValid (d8SwFcoFreqCutoff._3000Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 90:{
+					if (isValid (d8SwFcoFreqCutoff._3250Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 100:{
+					if (isValid (d8SwFcoFreqCutoff._3500Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 110:{
+					if (isValid (d8SwFcoFreqCutoff._3750Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 120:{
+					if (isValid (d8SwFcoFreqCutoff._4000Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 130:{
+					if (isValid (d8SwFcoFreqCutoff._4250Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 140:{
+					if (isValid (d8SwFcoFreqCutoff._4500Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 150:{
+					if (isValid (d8SwFcoFreqCutoff._4750Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 160:{
+					if (isValid (d8SwFcoFreqCutoff._5000Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 170:{
+					if (isValid (d8SwFcoFreqCutoff._5250Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 180:{
+					if (isValid (d8SwFcoFreqCutoff._5500Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 190:{
+					if (isValid (d8SwFcoFreqCutoff._5750Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+			}
+			return decApplicable;
+		} // Close High_Level_Library_FCO.FCOFminDecApplicable
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level LIBRARY Function:    FCOFMaxIncApplicable
+//   Input      :  none
+//   Output      :  <bool> 
+//   Description:  Boolean to determine if FMax is applicable to increase slider to next position
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool FCOFMaxIncApplicable ()
+		{
+			bool incApplicable = false;
+			switch (High_Level_Library_FCO.FCOFMaxSL_Get ())
+			{
+				case 10:{
+					if (isValid (d8SwFcoFreqDestination._2500Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 20:{
+					if (isValid (d8SwFcoFreqDestination._2750Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 30:{
+					if (isValid (d8SwFcoFreqDestination._3000Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 40:{
+					if (isValid (d8SwFcoFreqDestination._3250Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 50:{
+					if (isValid (d8SwFcoFreqDestination._3500Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 60:{
+					if (isValid (d8SwFcoFreqDestination._3750Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 70:{
+					if (isValid (d8SwFcoFreqDestination._4000Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 80:{
+					if (isValid (d8SwFcoFreqDestination._4250Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 90:{
+					if (isValid (d8SwFcoFreqDestination._4500Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 100:{
+					if (isValid (d8SwFcoFreqDestination._4750Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 110:{
+					if (isValid (d8SwFcoFreqDestination._5000Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 120:{
+					if (isValid (d8SwFcoFreqDestination._5250Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 130:{
+					if (isValid (d8SwFcoFreqDestination._5500Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 140:{
+					if (isValid (d8SwFcoFreqDestination._5750Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 150:{
+					if (isValid (d8SwFcoFreqDestination._6000Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 160:{
+					if (isValid (d8SwFcoFreqDestination._6250Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 170:{
+					if (isValid (d8SwFcoFreqDestination._6500Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 180:{
+					if (isValid (d8SwFcoFreqDestination._6750Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 190:{
+					if (isValid (d8SwFcoFreqDestination._7000Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 200:{
+					if (isValid (d8SwFcoFreqDestination._7250Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 210:{
+					if (isValid (d8SwFcoFreqDestination._7500Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 220:{
+					if (isValid (d8SwFcoFreqDestination._7750Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 230:{
+					if (isValid (d8SwFcoFreqDestination._8000Hz))
+					{
+						incApplicable = true;
+					}
+					else
+					{
+						incApplicable = false;
+					}
+				}
+				case 240:{
+					incApplicable = false;
+				}
+			}
+			return incApplicable;
+		} // Close High_Level_Library_FCO.FCOFMaxIncApplicable
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level LIBRARY Function:    FCOFMaxDecApplicable
+//   Input      :  none
+//   Output      :  <bool> 
+//   Description:  Boolean to determine if FMax is applicable to decrease slider to next position
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool FCOFMaxDecApplicable ()
+		{
+			bool decApplicable = false;
+			switch (High_Level_Library_FCO.FCOFMaxSL_Get ())
+			{
+				case 10:{
+					decApplicable = false;
+				}
+				case 20:{
+					if (isValid (d8SwFcoFreqDestination._2250Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 30:{
+					if (isValid (d8SwFcoFreqDestination._2500Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 40:{
+					if (isValid (d8SwFcoFreqDestination._2750Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 50:{
+					if (isValid (d8SwFcoFreqDestination._3000Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 60:{
+					if (isValid (d8SwFcoFreqDestination._3250Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 70:{
+					if (isValid (d8SwFcoFreqDestination._3500Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 80:{
+					if (isValid (d8SwFcoFreqDestination._3750Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 90:{
+					if (isValid (d8SwFcoFreqDestination._4000Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 100:{
+					if (isValid (d8SwFcoFreqDestination._4250Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 110:{
+					if (isValid (d8SwFcoFreqDestination._4500Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 120:{
+					if (isValid (d8SwFcoFreqDestination._4750Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 130:{
+					if (isValid (d8SwFcoFreqDestination._5000Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 140:{
+					if (isValid (d8SwFcoFreqDestination._5250Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 150:{
+					if (isValid (d8SwFcoFreqDestination._5500Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 160:{
+					if (isValid (d8SwFcoFreqDestination._5750Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 170:{
+					if (isValid (d8SwFcoFreqDestination._6000Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 180:{
+					if (isValid (d8SwFcoFreqDestination._6250Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 190:{
+					if (isValid (d8SwFcoFreqDestination._6500Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 200:{
+					if (isValid (d8SwFcoFreqDestination._6750Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 210:{
+					if (isValid (d8SwFcoFreqDestination._7000Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 220:{
+					if (isValid (d8SwFcoFreqDestination._7250Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 230:{
+					if (isValid (d8SwFcoFreqDestination._7500Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+				case 240:{
+					if (isValid (d8SwFcoFreqDestination._7750Hz))
+					{
+						decApplicable = true;
+					}
+					else
+					{
+						decApplicable = false;
+					}
+				}
+			}
+			return decApplicable;
+		} // Close High_Level_Library_FCO.FCOFMaxDecApplicable
+		
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level LIBRARY Function:    SwMacroFCO_Set
+//   Input      :  none
+//   Output      : none 
+//   Description:  Set FCO Setting after PostFit()
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SwMacroFCO_Set() //SIFIT7.3PEERREVIEWED
+		{
+			// Set FCO setting after PostFit() to temp control SwMacroFCOHpEn
+			int fcoSetting = High_Level_Library_FCO.FCO_CxxGet();
+			BasicLibrary_FCO.SwMacroFCOEn_Set(fcoSetting);
+		} // Close High_Level_Library_FCO.SwMacroFCO_Set
+		
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level LIBRARY Function:    SwMacroFCO_Get
+//   Input      :  none
+//   Output      : none 
+//   Description:  Get FCO Setting after PostFit()
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int SwMacroFCO_Get() //SIFIT7.3PEERREVIEWED
+		{
+			// Get FCO setting after PostFit()
+			int pos = BasicLibrary_FCO.SwMacroFCOEn_Get(); 
+			return pos;
+		} // Close High_Level_Library_FCO.SwMacroFCO_Get
+		/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Higher Level LIBRARY   FCO
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package  High_Level_Library_FCO
+
+} //namespace shs.sat	
+		
+

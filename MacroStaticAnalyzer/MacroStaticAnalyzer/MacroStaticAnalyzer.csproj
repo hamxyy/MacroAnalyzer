@@ -1,0 +1,406 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{020770D5-FAF5-426F-BEF2-BF19F2FB79D7}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MacroStaticAnalyzer</RootNamespace>
+    <AssemblyName>MacroStaticAnalyzer</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Business\LexicalAnalyzer.cs" />
+    <Compile Include="Business\MacroAnalyzer.cs" />
+    <Compile Include="Business\Parser.cs" />
+    <Compile Include="MainWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MainWindow.Designer.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <None Include="Macros\models\curve_Lib\CL.CurveLibrary.hl" />
+    <None Include="Macros\models\curve_Lib\CL.Curve_Base_LIB.hl" />
+    <None Include="Macros\models\d8macLIB.myLib.hl" />
+    <None Include="Macros\models\d8macTS.hl" />
+    <None Include="Macros\models\d8_AutoFit\AF.AutoFit.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.LoundSoundDown.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.LoundSoundUp.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.MedSoundDown.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.MedSoundUp.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.MoreCompressive.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.MoreLinear.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.OwnVoiceDown.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.OwnVoiceUp.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.SoftSoundDown.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.SoftSoundUp.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.SoundQualitySharper.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.SoundQualitySofter.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.SpeechDown.hl" />
+    <None Include="Macros\models\d8_BasicTuning\BT.SpeechUp.hl" />
+    <None Include="Macros\models\d8_FirstFit\FF.FirstFit.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.AATemplateFitAss.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESBackBabbleInterferingAudibility.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESBackNoiseTooLoud.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESDistantSoundMoreAudible.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESHighFreqTooLoud.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESInGeneralTooLoud.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESInGeneralTooSoft.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESLoudEnvPercUncomf.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESLoudEnvTooLoud.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESLowFreqbackTooLoud.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESLowFreqTooLoud.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESSoftFreqTooLoud.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESSoftSoundsTooLoud.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESSoftSoundsTooSoft.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESSuddenSoundTooHarsh.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.ESWindNoiseTooLoud.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FCDeadCochleaIntelFricatives.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FCIntelFcactiveSeverehl.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FCIntelFcactiveSevereProfoundhl.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FCIntelSeverehlFirstTime.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FCIntelSeverehlForFricatives.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FCIntelSeverehlGainUnaccepted.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FCSoundQualityFirstTime.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FCSoundQualitySeverehl.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FCSSoundQualitySevereProfoundhl.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEChirpWhistleInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEChirpWhistleInQuiet.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEChirpWhistleSomeTimes.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEFeedBackInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEFeedBackInQuiet.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEFeedBackInQuietsofts.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEFeedBackLikeBeep.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEFeedBackNearEar.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEFeedBackSuperPower.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEFeedBackWhileChew.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEFluctSoundNoisySituation.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEHearingInstrumentHighInput.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEHearingInstrumentListenMusic.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEHearingInstrumentLoudSitu.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEHearingInstrumentQuietSitu.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEMusicArtefactFbcActive.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEPumpingCutsAfterWhile.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEPumpingCutsLoudSituations.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEPumpingCutsNoisySituations.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEPumpingCutsQuietSituations.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.FEWindUnnaturalNoisySituation.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVBoomingDullHighFreqhl.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVBoomingDullInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVBoomingDullSmallVent.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVHarshShrillHighFreqhl.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVHarshShrillInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVHarshShrillSmallVent.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVHollowBucketHighFreqhl.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVHollowBucketInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVHollowBucketSmallVent.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVIsUnnaturalHighFreqhl.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVIsUnnaturalInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVIsUnnaturalSmallVent.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVNasalColdHighFreqhl.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVNasalColdInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVNasalColdSmallVent.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVOccludedTunnelHighFreqhl.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVOccludedTunnelInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.OVOccludedTunnelSmallVent.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOBoomingDullForVoices.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOBoomingDullHighInput.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOBoomingDullInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOBoomingDullLowFreq.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOFlucSoundInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOHarshShrillInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOHarshShrillSoftSounds.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOHollowBucketHighFreq.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOHollowBucketInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOIsUnnaturalMuchBass.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOIsUnnaturalSharpHarsh.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOMusicUnnatualInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SONotClearInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOOccludedTunnelHighFreq.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOOccludedTunnelInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SOSoundUnnaturalBackSoft.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPHardlyUnderstBackBabble.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPHardlyUnderstBackCar.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPHardlyUnderstBackNoise.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPHardlyUnderstFemaleVoices.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPHardlyUnderstFromBack.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPHardlyUnderstFromSide.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPHardlyUnderstInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPHardlyUnderstLoudConvers.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPHardlyUnderstWhenWhisper.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPTooLoudDistantSpeakers.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPTooLoudInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPTooLoudLoudSpeech.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPTooSoftDistantSpeaker.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPTooSoftInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPTooSoftSpeakerNearby.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPVoicesEchoFemaleSpeakers.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPVoicesEchoInGeneral.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPVoicesEchoLoudSpeech.hl" />
+    <None Include="Macros\models\d8_FittingAssistant\FA.SPVoicesEchoMaleSpeakers.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.AccessibleManually_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.AutoPhone_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.Beep_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.BWNC_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.CBFS_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.CommonUtil_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.Compression_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.DAI_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.DebugPrint_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.EWindScreen_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.FCO_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.FeedbackStopper_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.InputMode_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.Intelizoom_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.MicActivationThresholdDD_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.MicModeSpeechInNoiseEn_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.MicMode_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.MicrophoneMix_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.MicSpeechFocusEn_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.MPO_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.Nele_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.NoiseReduction_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.Noiser_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.PostFit_Adjustments_general_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.PowerOnDelay_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.ProgramSelection_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.SoundBalance_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.SoundBriliance_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.SoundSmoothing_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.Spass_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.SpeechNoiseMgmnt_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.THI_Base_LIB.hl" />
+    <None Include="Macros\models\d8_Library\basic_lib\BLIB.UserControl.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.AccessibleManually_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.AutoPhone_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.BasicTuning_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.Beep_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.BWNC_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.CBFS_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.Compression_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.DAI_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLib.EWindScreen_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.FCO_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.FeedbackStopper_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.FirstFit_Config_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.FitAssApplicable_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.FitAssApply_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.InputMode_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.Intellizoom_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.MicActivationThresholdDD.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.MicModeSpeechInNoiseEn_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.MicMode_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.MicrophoneMix_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.MPO_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.NoiseReduction_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.Noiser_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.PowerOnDelay_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.ProgramSelection_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLib.SoundBriliance_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.SoundSmoothing_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.Spass_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.SpeechNoiseMgmnt_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.TestSettings_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\high_Level_Lib\HLIB.THI_High_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.AutoPhone_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.Beep_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.BWNC_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.CBFS_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.Compression_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.EWindScreen_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.FCO_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.FeedbackStopper_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.HiCategory.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.InputMode_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.Intelizoom_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.MicActivationThresholdDD_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.MicModeSpeechInNoiseEn_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.MicMode_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.MicMode_Stars_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.MicrophoneMix_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.Nele_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.NoiseReduction_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.Noiser_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.ProgramSelection_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.SoundBriliance_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.SoundSmoothing_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.Spass_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.SpeechNoiseMgmnt_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.TestSettings_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.THI_Mid_LIB.hl" />
+    <None Include="Macros\models\d8_Library\mid_Level_Lib\MLIB.UserControl.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.AutoAudioShoeDetectEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.AutoPhoneEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.AutoPhoneSelection.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Beep_AlertProfileDD.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Beep_FrequencyDD.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Beep_IntellizoomEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Beep_LoudnessDD.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Beep_LowBatteryEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Beep_ProgramChangeEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Beep_VCChangeEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Beep_VCLimitEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Beep_VCPowerOnPosEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.BWNCEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.CBFS_En.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.CompressionMethodRB.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.DAI_LevelSL.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.DAI_MixMicLevelSL.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.DAI_MixMicrophoneEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.DAI_SideSelection.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.DAI_ToggleEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.EWindScreenEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.EWindScreenSL.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.FCO_En.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.FeedbackStopperEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.FeedbackStopperRB.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.InputModeDD.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicActivationThresholdDD.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicModeSpeechInNoiseEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_AllOthers.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_Dir.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_Hicoss.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_NF.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_NoisyEnv.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_Omni.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_Selection.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_SF.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_SingleDirMicEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_SL.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_StarsDir.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_StarsNF.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_StarsOmni.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_StarsSF.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_StarsSingleDirMic.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.MicMode_TV.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NeleEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NoiseReductionEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NoiseReductionSL.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NoiseReductionView.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NoiserEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NoiserMixMicrophoneEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NoiserPresetBrownianNoiseBu.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NoiserPresetHighToneBu.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NoiserPresetModulatedNoiseBu.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NoiserPresetModulatedNoiseRB.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NoiserPresetPinkNoiseBu.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NoiserPresetSpeechNoiseBu.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.NoiserPresetWhiteNoiseBu.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.OpenOptimizerEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.PowerOnDelayDD.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.PowerOnDelayEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.REMParamOff.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.REMParamOn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SoundBrilianceEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SoundBrilianceSL.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SoundSmoothingEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SoundSmoothingSL.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SpassEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SpassSL.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SpeechActivatedFM_En.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SpeechNoiseMgmnt1DD.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SpeechNoiseMgmnt2DD.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SpeechNoiseMgmnt3DD.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SpeechNoiseMgmnt4DD.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SpeechNoiseMgmntEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SpeechNoiseMgmntSL.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SpeechNoiseMgmnt_BroadbandRB.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.SpeechNoiseMgmnt_SpeechInNoiseEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Telecoil_AccessibleManuallyEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Telecoil_MixMicrophoneEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Telecoil_Mix_MicLevelSL.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Telecoil_SideSelection.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.Tinnitus_Selection.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.WLS_AccessibleManuallyEn.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.WLS_LevelSL.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.WLS_MixMicLevelSL.hl" />
+    <None Include="Macros\models\d8_MixedMode\MM.WLS_MixMicrophoneEn.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.AfternoonStroll.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.AudioInput.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.BluetoothPhone.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.EasyTekFM.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.InductionLoop.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.InductionLoop_T.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.Music.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.NoiseEnv.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.OutdoorSport.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.PhoneAcoustically.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.Privacy.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.StreamingAudio.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.Telecoil_MT.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.Telecoil_T.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.Telecoil_T_Pure.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.Tinnitus.hl" />
+    <None Include="Macros\models\d8_ProgramSelection\PS.TV.hl" />
+    <None Include="Macros\models\d8_TargetSelection\TGS.TargetSelection.hl" />
+    <None Include="Macros\models\d8_TargetSelection\TGSy.TargetSync.hl" />
+    <None Include="Macros\models\d8_TestSettings\MM.TestSettings_DirBu.hl" />
+    <None Include="Macros\models\d8_TestSettings\MM.TestSettings_Omni.hl" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

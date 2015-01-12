@@ -1,0 +1,49 @@
+/*----------------------------------------------------------------------------------------------------------------
+// CXX UI:                        MicMode Speech Focus panel
+//----------------------------------------------------------------------------------------------------------------
+// Initial Version                						     							:  2013-11-01 Raymond
+// Removed IsEnabledPos, as not used                                                    :  2014-02-26 Al
+//---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_SF 
+	{
+		application function bool IsVisible()
+		{
+			bool retVal = Mid_Level_Library_Mic_Mode.SFIsVisible();
+			println('[HAL]MM - Mic_Mode_SF.IsVisible = ' + retVal);
+		    return retVal;
+		}
+		
+		application function bool IsEnabled()
+		{
+			bool retVal = High_Level_Library_Mic_Mode.SFIsEnabled();
+			println('[HAL]MM - Mic_Mode_SF.IsEnabled = ' + retVal);
+			return retVal;
+		}
+		
+		application function int MaxPos()
+		{
+	    	// Checkbox with 2 states
+			int retVal = 1;
+			println('[HAL]MM - Mic_Mode_SF.MaxPos = '+ retVal);
+			return retVal;
+		}
+				
+		application function int GetPos()
+		{
+			int retVal = High_Level_Library_Mic_Mode.SFGetPos();
+			println('[HAL]MM - Mic_Mode_SF.GetPos = ' + retVal);
+			return retVal;
+		}
+		
+		application function void SetPos(int pos)
+		{			
+			println('[HAL]MM - Mic_Mode_SF.SetPos = ' + pos);
+			High_Level_Library_Mic_Mode.Mic_Mode_Set_SF(pos);
+		}
+	}
+}

@@ -1,0 +1,58 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            BASIC LEVEL LIBRARY : CBFS
+// Initial version																	: 2012-08-13 Nadia Neugeborn
+// *********************************************CODE FREEZE*******************************************************
+// ER57873 - SwCbfs is no longer set to Class_1 for case 1 because it freezes CBFS in Connexx
+// for the whole fitting process
+// Sifit 7.2 Peer Review																:2013-07-31 Jenny, Judith, Raymond
+// Sifit 7.3 PEER REVIEW														: 2014-04-14 MieMie, Mang Yew 
+// Sifit 7.4 PEER REVIEW														: 2014-11-12 Jenny, Niklas 
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_CBFS
+	{
+
+		/*---------------------------------------------------------------------------------------------------------------*/
+		//   Description:  To sets the CBFS feature state dependent on user selection.
+		/*-----------------------------------------------------------------------------------------------------------------*/
+		public function void CBFS_Set (int pos)
+		{
+			println ('[HAL]BLIB.BasicLibrary_CBFS.CBFS_Set (pos=' +  pos + ')');
+			if(pos == 1)
+			{
+				hi:d8FCbfsEn = d8FCbfsEn.on;
+			}
+			else
+			{
+				hi:d8FCbfsEn = d8FCbfsEn.off;
+			}			
+		}
+
+		/*$----------------------------------------------------------------------------------------------------------------
+		//   Description:  Checks if the CBFS is activated or not activated, ie the checkbox is ticked or not    
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int CBFS_Get ()
+		{ 
+			int retVal = -1;
+			
+			if (hi:d8FCbfsEn == d8FCbfsEn.off)
+			{
+				retVal = 0;
+			}
+			else
+			{
+				retVal = 1;
+			}
+			println ('[HAL]BLIB.BasicLibrary_CBFS.CBFS_Get = ' +  retVal);
+			return retVal;
+		}
+
+	}
+
+}
+/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION LIBRARY CBFS
+-----------------------------------------------------------------------------------------------------------------*/

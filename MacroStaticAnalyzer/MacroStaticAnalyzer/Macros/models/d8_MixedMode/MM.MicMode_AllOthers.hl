@@ -1,0 +1,53 @@
+/*----------------------------------------------------------------------------------------------------------------
+// CXX UI:                        MicMode panel for all other programs
+//-----------------------------------------------------------------------------------------------------------------
+// Initial Version                						     							:  2013-11-12 Raymond
+// Removed unused SetPos code lines                                                     :  2014-02-26 Al
+// Added annotation to SetPos                                                           : 2014-03-11 Al
+// Removed commented out code lines                                                     : 2014-04-16 Al
+/*----------------------------------------------------------v7.4-------------------------------------------------
+// Chores																				: 2014-06-30 Sultan 
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_AllOthers
+	{
+		application function bool IsVisible()
+		{
+			bool retVal = true;
+			println('[HAL]MM - Mic_Mode_AllOthers.IsVisible = ' + retVal);
+    		return retVal;
+		}
+		
+		application function bool IsEnabled()
+		{
+			bool retVal = High_Level_Library_Mic_Mode.MicMode_AllOthersIsEnabled();
+			println('[HAL]MM - Mic_Mode_AllOthers.IsEnabled = ' + retVal);
+            return retVal;
+		}
+		
+		application function int MaxPos()
+		{
+			int retVal = 0;
+			println('[HAL]MM - Mic_Mode_AllOthers.MaxPos = ' + retVal );
+			return retVal; //Single radio button
+		}
+		
+		application function int GetPos()
+		{
+			int retVal = 0;
+			println('[HAL]MM - Mic_Mode_AllOthers.GetPos = ' + retVal );
+			return retVal; // Only 1 radio button available
+		}
+		
+		application function void SetPos(int pos)
+		{
+			// Note: Default Settings for the 'All Others' program mic-mode UI are set 
+			// in the Program Selection macros. There are no user-selectable components in this 
+			// mic mode UI, so SetPos is empty.
+		}
+	}
+}

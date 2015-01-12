@@ -1,0 +1,46 @@
+/*---------------------------------------------------------------------------------------------------------------*							
+// CXX UI:                        Tinnitus Brownian Noise preset button
+// Initial draft                					    						:  2014-06-03 Meike Steinbuss
+// Always visible and always enabled --> dependencies to other tin features will be done by Cxx   : 2014-06-05 Meike Steinbuss
+// include HighLevelLib for Setter because of Modulated Noise to  be turned off						: 2014-07-28 Meike
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode NoiserPresetBrownianNoiseBu
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MM - NoiserPresetBrownianNoiseBu - IsVisible = TRUE');
+			return true;
+		} // Closes NoiserPresetBrownianNoiseBu.IsVisible
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MM - NoiserPresetBrownianNoiseBu - IsEnabled = TRUE');
+			return true;
+		}// Closes NoiserPresetBrownianNoiseBu.IsEnabled
+		application function int MaxPos ()
+		{
+			println ('[HAL]MM - NoiserPresetBrownianNoiseBu - MaxPos = 1');
+			return 1;
+		}// Closes NoiserPresetBrownianNoiseBu.MaxPos
+		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MM - NoiserPresetBrownianNoiseBu - IsEnabledPos = TRUE for pos=' + pos);
+			return true;
+		}// Closes NoiserPresetBrownianNoiseBu.IsEnabledPos
+		application function int GetPos ()
+		{
+		// as preset buttons are stateless button, it will have only 1 state, which is 0.			
+			println ('[HAL]MM - NoiserPresetBrownianNoiseBu - GetPos = 0 (stateless button)');
+			return 0;
+		}// Closes NoiserPresetBrownianNoiseBu.GetPos
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MM - NoiserPresetBrownianNoiseBu - SetPos = ' + pos);
+			High_Level_Library_Noiser.NoiserPreset_BrownianNoise ();
+		}// Closes NoiserPresetBrownianNoiseBu.SetPos
+	} //package MixedMode.NoiserPresetBrownianNoiseBu
+
+} //namespace shs.sat

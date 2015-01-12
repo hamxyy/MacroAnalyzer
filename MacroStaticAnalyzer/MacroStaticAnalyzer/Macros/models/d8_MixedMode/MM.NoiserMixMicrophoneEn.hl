@@ -1,0 +1,59 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Noiser Mixed with Microphone Checkbox
+// Initial Version																	:  2014-05-28  Meike Steinbuss
+// Mid_Level_Library_Noiser.Noiser_PSEnability () included into IsEnable			: 2014-07-25 Meike Steinbuss
+// Peer review update: Replace Noiser_ChildEnability function with 
+// NoiserEn_Get_Entry function and delete functions closing remark					: 2014-11-14 Mie Mie
+/*-------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*; // this is necessary to call library function	
+	package MixedMode Noiser_MixMicrophoneEn
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MM - Noiser_MixMicrophoneEn - IsVisible = ' + Mid_Level_Library_Noiser.Noiser_Visibility ());
+			return Mid_Level_Library_Noiser.Noiser_Visibility ();
+		}  
+		
+		application function bool IsEnabled ()
+		{			
+			if(BasicLibrary_Noiser.NoiserEn_Get_Entry() == 1 && Mid_Level_Library_Noiser.Noiser_PSEnability () == true)
+			{
+				println ('[HAL]MM - Noiser_MixMicrophoneEn - IsEnabled = TRUE' );
+				return true;
+			}
+			else 
+			{
+				println ('[HAL]MM - Noiser_MixMicrophoneEn - IsEnabled = FALSE ' );
+				return false;
+			}	
+		} 	 		
+		application function int MaxPos ()
+		{
+			println ('[HAL]MM - Noiser_MixMicrophoneEn - MaxPos = 1');
+			return 1;
+		} 
+		
+		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MM - Noiser_MixMicrophoneEn - IsEnabledPos = TRUE for pos=' + pos);
+			return true;
+		} 
+		
+		application function int GetPos ()
+		{
+			println ('[HAL]MM - Noiser_MixMicrophoneEn - GetPos');
+			return (BasicLibrary_Noiser.Noiser_MixMicrophoneEn_Get_Entry());
+		} 
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MM - Noiser_MixMicrophoneEn - SetPos = ' + pos);
+			High_Level_Library_Noiser.Noiser_MixMicrophoneEn_Set(pos);
+		} 
+		
+	} //package MixedMode.Noiser_MixMicrophoneEn
+
+} //namespace shs.sat
+

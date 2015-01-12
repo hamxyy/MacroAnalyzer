@@ -1,0 +1,61 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Beep VCPowerOnPos CheckBox
+// Initial Version      without isEnabled --> still missing          		: 2011-04-19  Meike Doose
+// include isEnable for greying out when VC=off 							: 2011-08-01	Meike Doose
+// Add println for MPV testing												: 2011-09-22  Jenny Lin
+// Updated to call HLIB instead of BLIB										: 2012-04-20  Jenny Lin
+// Delete int hp=env:Prog and removed unecessary println					: 2012-06-07	Mang Yew
+// *********************************************CODE FREEZE*******************************************************
+// Beeps always return true.												: 2014-02-25 Mang Yew
+// Rework IsEnabled to return false or true based on PhlVcRange				: 2014-02-27 Mang Yew
+// Sifit7.4 Peer review: update printline in IsEnabled() & code cleanup		: 2014-11-18 MieMie/Sultan/Jeline
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{	
+	using shs_sat.*;
+
+	package MixedMode BeepVCPowerOnPosEn
+	{
+		
+		application function bool IsVisible()
+		{
+	 		println('[HAL]MM - BeepVCPowerOnPosEn - IsVisible = TRUE');			
+			// Visibility for BeepVCPowerOnPos --> is always visible
+			return true;
+		}
+			
+		application function bool IsEnabled()
+		{
+			bool retval = Mid_Level_Library_Beep.VCBeeps_IsEnabled();			
+			println('[HAL]MM - BeepVCPowerOnPosEn - IsEnabled = ' + retval);	
+			return retval;	
+		}
+	
+		application function int MaxPos()
+		{
+	 		println('[HAL]MM - BeepVCPowerOnPosEn - MaxPos = 1');			
+			return 1;     // This is a Check Box with 2 states. 0 and 1
+		}
+				
+		application function bool IsEnabledPos(int pos)
+		{
+	 		println('[HAL]MM - BeepVCPowerOnPosEn - IsEnabledPos = TRUE');			
+			return true;
+		}
+				
+		application function int GetPos()
+		{
+	 		println('[HAL]MM - BeepVCPowerOnPosEn - GetPos');
+			return High_Level_Library_Beep.BeepVCPowerOnPosEn_Get();			 	
+		}
+			
+		application function void SetPos(int pos)
+		{
+	 		println('[HAL]MM - BeepVCPowerOnPosEn - SetPos = ' + pos);			
+			High_Level_Library_Beep.BeepVCPowerOnPosEn_Set(pos);	
+		}
+		
+	}
+	
+}

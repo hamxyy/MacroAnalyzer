@@ -1,0 +1,212 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                           HIGH LEVEL PRICEPOINT LIBRARY 		 : ActivationThresholdDD
+// Initial Version                						  		 	: 2011-03-25   Nadine Seubert
+// update calling get function from MicMode                      	: 2011-05-12   Nadine Seubert
+// Disable ActivationThresholdDD-meun when microphone modes are grey out:  2011-08-05   Ma Mie Mie Thein
+// Add public function void ActivationThresholdDD_Set(int pos)	 	: 2011-10-10	Ma Mie Mie Thein
+// changed switch case to if (cap:HiIdentifier == 1)			 	: 2011-10-11	THuber
+// Expanded activationThresholdDD_DefaultPos()						: 2012-04-16 	Nadia
+// Peer review changes									   	 		: 2012-06-20 	Nadine and Frauke
+// Macro Peer Review Updates (FirstFit)								: 2012-07-10	Nadia	
+// *********************************************CODE FREEZE*******************************************************
+// ER56075 AutoFix added for PP100 Automatic Micmode 			    : 2012-08-15    Cecil Wilson
+// ER56788: Macros: Microphone Mode needs control update 
+// for non automatic modes: added new function _UpdateForMicMode()  : 2012-09-04 Cecil Wilson
+// ER56788: Fixed Omni modes and SpeechFocus.						: 2012-09-06 Cecil Wilson
+// Updated the automatic mic mode to (remapped_pos <= 20)			: 2012-11-19 Jenny
+// Added Nitro default after FF to be set to high					: 2013-04-24 Sonia
+// Reworked ActivationThresholdDD_UpdateForMicMode to use a string input  : 2013-03-11 Al
+// -------------------------------------------------------- 7.3 --------------------------------------------------
+// Refractor for 7.3												: 2013-11-11 Raymond			
+// Corrected IsEnabled function                                     : 2014-02-06 Al
+// -------------------------------------------------------- 7.4 --------------------------------------------------
+// Replaced calls to MicModeIsAutomatic() with MicModeIsTwinMicDirAutomatic(). This new function..
+// ..is the same but has just been renamed.                         : 2014-07-02 Al
+// Replaced calls to DirOmniIsEnabled with DirIsEnabled				: 2014-07-02 Sultan
+*/
+/*----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_ActivationThresholdDD
+	{
+
+	/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    ActivationThresholdDD_isEnabled
+//   Input      :  none 
+//   Ouput      :  <bool> 
+//   Description:  Checks if the Automatic Mic is enabled or not   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool ActivationThresholdDD_Is_Enabled ()
+		{						
+			// If Automatic directional and the noiser is off
+			if (Mid_Level_Library_Mic_Mode.MicModeIsTwinMicDirAutomatic() == true &&
+				High_Level_Library_Mic_Mode.DirIsEnabled() == true)
+			{
+			    return true;
+			}
+			else // otherwise false
+			{
+			    return false;
+			}
+		} // Closing High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Is_Enabled()
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   HIGH LIBRARY Function:    ActivationThresholdDD_Set
+//   Input      :  none
+//   Ouput      :  none 
+//   Description:  call remap function giving called pos and the 3 thresholds of the detected HI)   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void ActivationThresholdDD_Set (int pos)
+		{
+		/* To set SwThreshold variable according to set pos and this SwThreshold variable is needed for Getpos */
+			BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_SetSwMacroMicActThr (pos);
+
+			int remappedpos;
+						
+			/* In function ActivationThresholdDD_Remapping, passing argument 0 means set the threshold to 0dB.
+		 arguments and their equavilent dB: 0=0dB, 1=3dB, 2=6dB, 3=9dB, 4=12dB, 5=-9dB, 6=-6dB, 7=-3dB 
+		 	refer to the function ActivationThresholdDD_Remapping(pos, pos1, pos2, pos3)*/
+		 
+		 //if (cap:HiIdentifier == 1) //if different setting is needed in future, can make use of Hiidentifier
+			remappedpos = Mid_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Remapping (pos, 0,
+					2, 4);
+
+
+			/* Set pos according to remappedpos */
+			BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_Set (remappedpos);
+		} // closes High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Set
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    ActivationThresholdDD_DefaultPos
+//   Input		:  none
+//   Ouput      :  none 
+//   Description:  Sets default position of the drop down menu for activation threshold. Default is 54dB (med). 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void ActivationThresholdDD_DefaultPos ()
+		{
+			int ActThreshold = -1;
+			if (cap:GMax >= 80) // HIGH for Nitro devices
+			{
+				ActThreshold = 2;
+			}
+			else
+			{
+				ActThreshold = 1; // MED for all other devices
+			}
+			High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Set (ActThreshold);
+		} //Closes High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_DefaultPos()	
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   HIGH LIBRARY Function:    ActivationThresholdDD_UpdateForMicMode
+//   Input      :  remapped position from Current Microphone mode 
+//   Ouput      :  none 
+//   Description:  Updates the ActivationThreshold controls based on the current microphone modes 
+				   (Non Automatic modes will have the Hardware controls set to 0dB)   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void ActivationThresholdDD_UpdateForMicMode (string input)
+		{
+				
+			if (input == "Set_to_0dB")
+			{
+			// Reset activation threshold to 0dB (for non-automatic directional modes)			
+				BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_Set (0); // Sets the Hardware control to 0dB
+
+			}
+			else if(input == "Set_to_SWvar")
+			{
+			// 	For Omnidirectional and automatic directional mic modes. 
+			//  Current HW settings for activation threshold is read from software variable and set back to both HW and SW variables
+				int pos = BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_Get ();
+				High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Set (pos); // Updates both Hw and Sw controls with proper remapping 
+			}
+			else
+			{
+			    assertion (false, "[MacroError] Input to ActivationThresholdDD_UpdateForMicMode not correctly defined!");
+			}
+		} // closes High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_UpdateForMicMode
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Higher Level PP LIBRARY    ActivationThresholdDD
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package High_Level_Library_ActivationThresholdDD
+
+} //namespace shs.sat
+
+//namespace shs_sat
+//{
+//	using shs_sat.*;
+//	package Lib High_Level_Library_ActivationThresholdDD
+//	{
+///*----------------------------------------------------------------------------------------------------------------
+////   BASIC LIBRARY Function:    ActivationThresholdDD_isEnabled
+////   Input      :  none 
+////   Ouput      :  <bool> 
+////   Description:  Checks if the Automatic Mic is enabled or not   
+//-----------------------------------------------------------------------------------------------------------------*/
+//		public function bool ActivationThresholdDD_Is_Enabled ()
+//		{
+//			return (Mid_Level_Library_Mic_Mode.MicModeIsTwinMicDirAutomatic() &&
+//					High_Level_Library_Mic_Mode.Mic_Mode_Is_Enabled());
+//		} // Closing High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Is_Enabled()
+//
+///*----------------------------------------------------------------------------------------------------------------
+////   HIGH LIBRARY Function:    ActivationThresholdDD_Set
+////   Input      :  none
+////   Ouput      :  none 
+////   Description:  call remap function giving called pos and the 3 thresholds of the detected HI)   
+//-----------------------------------------------------------------------------------------------------------------*/
+//		public function void ActivationThresholdDD_Set (int pos)
+//		{
+//			/* To set SwThreshold variable according to set pos and this SwThreshold variable is needed for Getpos */
+//			BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_SetSwMacroMicActThr (pos);
+//			BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_Set (Mid_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Remapping (pos));
+//		} // closes High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Set
+//
+///*---------------------------------------------------------------------------------------------------------------*
+////   Mid Level PP LIBRARY Function:    ActivationThresholdDD_DefaultPos
+////   Input		:  none
+////   Ouput      :  none 
+////   Description:  Sets default position of the drop down menu for activation threshold. Default is 54dB (med). 
+//-----------------------------------------------------------------------------------------------------------------*/
+//		public function void ActivationThresholdDD_DefaultPos ()
+//		{
+//			if (cap:GMax >= 80) // HIGH for Nitro devices
+//			{
+//				High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Set (2);
+//			}
+//			else // MED for all other devices
+//			{
+//				High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Set (1);
+//			}
+//		} //Closes High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_DefaultPos
+//
+///*----------------------------------------------------------------------------------------------------------------
+////   HIGH LIBRARY Function:    ActivationThresholdDD_UpdateForMicMode
+////   Input      :  remapped position from Current Microphone mode 
+////   Ouput      :  none 
+////   Description:  Updates the ActivationThreshold controls based on the current microphone modes 
+//				   (Non Automatic modes will have the Hardware controls set to 0dB)   
+//-----------------------------------------------------------------------------------------------------------------*/
+//		public function void ActivationThresholdDD_UpdateForMicMode ()
+//		{
+//			if (Mid_Level_Library_Mic_Mode.MicModeIsDirectional())
+//			{
+//			// Activation threshold will be reset to 0dB			
+//				BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_Set (0); // Sets the Hardware control to 0dB
+//			}
+//			else
+//			{
+//			//  Current HW settings for activation threshold is read from software variable and set back to both HW and SW variables
+//				ActivationThresholdDD_Set (BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_Get ());
+//			}
+//		} // closes High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_UpdateForMicMode
+//
+///*---------------------------------------------------------------------------------------------------------------*
+//// 								  END Of Higher Level PP LIBRARY    ActivationThresholdDD
+//-----------------------------------------------------------------------------------------------------------------*/
+//	} //package High_Level_Library_ActivationThresholdDD
+//
+//} //namespace shs.sat

@@ -1,0 +1,65 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        PowerOnDelay DropDown Menue
+// Initial Version          without isEnabled      						     	:  	2011-04-20 Meike Doose
+// isEnabled added															 	:  	2011-04-20 Meike Doose
+// Add println for MPV testing													:  	2011-09-22 Jenny Lin
+// Macro code Cleanup															:  	2012-02-14 Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Macro peer review															:	2012-06-21 Nadia/Frauke/MangYew
+********************************************CODE FREEZE*********************************************************
+// Sifit 7.2 Peer Review															: 2013-07-31 Jenny, Judith, Raymond
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode PowerOnDelayDD
+	{
+		application function bool IsVisible ()
+		{
+		// Visibility of PowerOnDelayDD --> always visible
+			println ('[HAL]MM - PowerOnDelayDD - IsVisible = TRUE');
+			return true;
+		} // Closes PowerOnDelayDD.IsVisible
+		application function bool IsEnabled ()
+		{
+			bool retval = true;
+			// Greyed out only if the PowerOnDelay Checkbox is disabled
+			if (BasicLibrary_PowerOnDelay.PowerOnDelayEn_Get_Entry () == false)
+			{
+				retval = false;
+				println ('[HAL]MM - PowerOnDelayDD - IsEnabled = FALSE');
+			}
+			else
+			{
+				retval = true;
+				println ('[HAL]MM - PowerOnDelayDD - IsEnabled =  TRUE');
+			}
+			return retval;
+		} // Closes PowerOnDelayDD.IsEnabled
+		application function int MaxPos ()
+		{
+			println ('[HAL]MM - PowerOnDelayDD - MaxPos = 2');
+			return 2;
+			//
+
+		} // Closes PowerOnDelayDD.MaxPos
+		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MM - PowerOnDelayDD - IsEnabledPos = TRUE');
+			return true;
+		} // Closes PowerOnDelayDD.IsEnabledPos
+		application function int GetPos ()
+		{
+			int retval = BasicLibrary_PowerOnDelay.PowerOnDelayDD_Get_Entry ();
+			println ('[HAL]MM - PowerOnDelayDD - GetPos = ' + retval);
+			return retval;
+		} // Closes PowerOnDelayDD.GetPos
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MM - PowerOnDelayDD - SetPos = ' + pos);
+			BasicLibrary_PowerOnDelay.PowerOnDelayDD_Set_Entry (pos);
+		} // Closes PowerOnDelayDD.SetPos
+
+	} //package MixedMode.PowerOnDelayDD
+
+} //namespace shs.sat

@@ -1,0 +1,82 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Speech and Noise Management Multichannel 3 DropDown Menue
+// Initial Version         without isVisible       						   				: 2011-05-12 Meike Doose
+// Change of GetPos	and include isVisible								  				: 2011-05-13 Meike Doose
+// Add println for MPV testing											   				: 2011-09-22 Jenny Lin
+// Call HLIB for SetPos function.						   				   				: 2012-03-06 Jenny Lin
+// Deleted comments above application functions that descibe what the functions do  	: 2012-06-05 Alastair Manders  
+// Removed int hp line from IsEnabledPos                                     			: 2012-06-13 Alastair Manders 
+// In IsEnabled, chnaged the if clause to include the HLIB function Noiser_IsOnAndPure(): 2012-06-13 Alastair Manders
+// From MaxPos, removed hp and int line. Set return = 3.                                : 2012-06-13 Alastair Manders
+// Removed retval from setpos.                                             				: 2012-06-13 Alastair Manders 
+// In is enabled, shifted the line location of print lines for better readability.  	: 2012-06-13 Alastair Manders
+// Corrected print line typo in get pos.                                    			: 2012-06-13 Alastair Manders
+// *********************************************CODE FREEZE*******************************************************
+// FR59582: The 'min' and 'max' DD menu options are no longer visible for PP300/100, therefore: 
+//          1. An IsVisiblePhysicalPos() application function has been added. 
+//          2. A new function, Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDD_MaxPos(), returns the maximum
+//              position to MaxPos().                                       			: 2013-01-11 Alastair Manders  
+//
+// IsVisible() now calls SpeechNoiseMgmntDD_IsVisible()                     			: 2013-03-04 Alastair Manders
+// Sifit 7.3 Updates																	: 2013-11-20 Mang Yew
+// Clean up																				: 2014-10-10 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{	
+    using shs_sat.*;
+    
+	package MixedMode SpeechNoiseMgmnt3DD
+	{	
+		application function bool IsVisible()
+		{
+			bool retVal = High_Level_Library_SpeechNoiseMgmnt.IsSpeechNoiseMgmntDdVisible ();
+			println('[HAL]MixedMode.SpeechNoiseMgmnt3DD.IsVisible = '+ retVal + BasicLibrary_DebugPrint.PrintCurrentProg ());
+			
+			return retVal;			
+		}
+				
+		application function bool IsEnabled()
+		{
+			bool retVal = High_Level_Library_SpeechNoiseMgmnt.IsSnmSliderDdRbEnabled ();			
+			println('[HAL]MixedMode.SpeechNoiseMgmnt3DD.IsEnabled = '+retVal + BasicLibrary_DebugPrint.PrintCurrentProg ());
+			
+			return retVal;
+		}
+				
+		application function int MaxPos()
+		{
+			int retVal = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDD_MaxPos();	
+			println('[HAL]MixedMode.SpeechNoiseMgmnt3DD.MaxPos ='+retVal);
+		
+			return retVal;
+		}
+						
+		application function bool IsEnabledPos(int pos)
+		{
+	 		println('[HAL]MixedMode.SpeechNoiseMgmnt3DD.IsEnabledPos = TRUE');
+	 					
+			return true;
+		}
+				
+		application function int GetPos()
+		{
+			int retVal =  High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDD3_Get ();
+			println('[HAL]MixedMode.SpeechNoiseMgmnt3DD.GetPos = '+ retVal + BasicLibrary_DebugPrint.PrintCurrentProg ());
+			
+			return retVal;	 
+		}
+				
+		application function void SetPos(int pos)
+		{
+			println('[HAL]MixedMode.SpeechNoiseMgmnt3DD.SetPos = ' + pos + BasicLibrary_DebugPrint.PrintCurrentProg ());
+			High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDd3_Set(pos);
+		}
+		
+		application function bool IsVisiblePhysicalPos(int physicalPos)
+		{		
+		    bool retVal = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNsMgmntDD_IsVisblePhysPos(physicalPos);		
+					
+		    return retVal;
+	    }
+	}
+}

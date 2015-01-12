@@ -1,0 +1,93 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									PROGRAM SELECTION - Phone mT
+
+// Initial Version		         															: 2011-08-22 Chuah LayYuan
+// Change the return of GetName										    					: 2011-10-11 Chuah LayYuan
+// Added THI Weight setting in Apply Function                           					: 2011-11-22 Chuah LayYuan
+// Added GetOrderNumber() and IsSingleUse() function.										: 2012-03-19 Jenny Lin
+// Updated GetID from 3 to 4 due to Universal = 1.											: 2012-03-22 Jenny Lin
+// Replaced InputMode SetPos to non-adaptive(no update of WNC/SoundBrilliance)				: 2012-03-27 Cecil Wilson	
+// Updated IsVisible function 																: 2012-04-04 Cecil Wilson
+// Updated the Microphone mode function call												: 2012-05-02 Cecil Wilson
+// Peer review Phone Telecoil																: 2012-07-17 Al, Frauke
+// Removed print lines from Apply app. function to make code neater             			: 2012-07-18 Al
+// *********************************************CODE FREEZE********************************************************
+// CR57156 - Set CBFS to off for HP2-HP6													: 2012-08-22 Nadia Neugeborn
+// FR57242 - New gain offset added for Phone Telecoil program.                  			: 2012-11-29 Al
+// Update WncEn and FBCEn and Mix with Mic to due FR59453. 7.0/7.1 -> WNC FBC Off, 
+// 7.2 -> WNC FBC Universal, MixMicEn ON, MicSlider -6dB					    			: 2013-05-14 Mang Yew
+// Peer Review Changes 7.2.                                                     			: 2013-08-15 Raymond, MangYew, Judith
+// D8 Program Selection code cleaning, apply function to call H_Lib							: 2013-10-28 Sonia Stasiak
+// Updated IsEnabled to call Mid_Level_Library												: 2013-11-01 Sonia Stasiak
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Updated Apply function with d9SwMacroProgramIdHp, code tuning							: 2013-12-17 Sonia Stasiak 
+// Changed GetName to Telecoil (mT) due to FR64541											: 2014-02-24 Sonia
+// PEER REVIEW CXX 7.3																		: 2014-05-06 Sonia, Mie Mie, Jenny
+/*--------------------------------------------- Cxx 7.4 -----------------------------------------------------------*
+// Changed package to MonAppProgramSelection, added ApplyComplementary function				: 2014-07-10 Sonia
+// Change Apply function to call BLib.Set<program> to set d9SwmacroProgramIdHp				: 2014-09-16 Sonia
+// Code clean up																			: 2014-09-17 Sonia
+/*-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package MonAppProgramSelection Telecoil_T
+	{
+		application function int GetID ()
+		{
+			int retVal = 4;
+			println ('[HAL]PS - Telecoil_T.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "Phone mT";
+			println ('[HAL]PS - Telecoil_T.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 4; // Phone mT
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - Telecoil_T.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 4; // Phone mT
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - Telecoil_T.IsEnabled = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetPhonemT();
+			
+			println ('[HAL]PS - Telecoil_T.Apply started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - Telecoil_T.Apply done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function void ApplyComplementary ()
+		{
+			BasicLibrary_ProgramSelection.SetPrivacy();
+			
+			println ('[HAL]PS - Telecoil_T.ApplyComplementary started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - Telecoil_T.ApplyComplementary done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function int GetOrderNumber ()
+		{
+			int retVal = 4;
+			println ('[HAL]PS - Telecoil_T.GetOrderNumber = ' + retVal);
+			return retVal;
+		}
+	}
+}
+//--------------------------------------- END of PROGRAM SELECTION - Phone mT -------------------------------------*/

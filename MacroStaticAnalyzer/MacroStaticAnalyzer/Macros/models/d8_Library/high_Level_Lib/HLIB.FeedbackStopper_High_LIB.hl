@@ -1,0 +1,339 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                                 HIGH LEVEL LIBRARY Feedback Stopper 
+// Initial Version                						     							: 2011-03-10 Cecil Wilson
+// Updated FBC_Set functions & added OpenOptimizer functions							: 2011-03-14 Cecil Wilson
+// Updated for AdaptiveDirMicEn_Is_Enabled()                                            : 2011-05-05 Nadine Seubert
+// Updated OpenOptimizer Set function and added FeedbackStopperEn_set function,formating: 2011-05-06 Cecil Wilson
+// shifted is enabeled adaptive dir mic to mid lib                                      : 2011-05-12 Nadine Seubert
+// Updated call to isenabled for OpenOptimizer to Mid lib								: 2011-05-27 Cecil Wilson
+// rework for current FBC and Open Optimizer settings (delete int FeedbackStopperRb_pos): 2011-06-20 Meike Doose
+// Updated functions for FBC															: 2011-06-22 Nadia Neugeborn 
+// Updated FeedbackStopper_Set_Default with //println									: 2011-07-07 Nadia Neugeborn 
+// Turbo & WhistleScreen not in use, removed the lib() 				 	 				: 2011-07-28 Jenny Lin
+// Move AdapDirMic(Turbo) settings from FBC_RB to OO_En and updated default settings.	: 2011-08-01 Jenny Lin
+// Updated the FeedbackStoppenEn_Set to include Setting AdaptiveDirMic to OFF			
+// Add in else statement OpenOptimizerEn_Set_Default 									: 2011-08-11 Jenny Lin
+// Updated the Openoptimizer dependencies to the FBC RB and FBC En						: 2011-08-19 Cecil / Jenny
+// Add FeedbackStopper_Set_ProgramSelection function			 					    : 2011-09-13 Chuah LayYuan
+// Updated Program selection ID													        : 2011-11-09 Chuah LayYuan
+// Updated Setting for miniTekTelecoil Program								            : 2011-11-14 Chuah LayYuan
+// Updated settings for PS:Phone Acoustically											: 2011-11-14 Cecil Wilson
+// Added AdaptiveDirMicEn_for_FBC() for setting the d8FFbcDmaEn, updated the FBC checkbox and radio
+// button and OpenOptimizer checkbox on dependency of d8FFbcDmaEn						: 2012-02-03 Jenny Lin
+// Updated AdaptiveDirMicEn_for_FBC() to enable Adaptive Dir Mic for PP700/PP500/PP300	: 2012-04-10 Leong Mang Yew
+// Updated settings for PS: InductionLoop												: 2012-04-25 Frauke Schall
+// Updated OpenOptimizerEn_Set_Default() - visibility check removed						: 2012-04-26 Nadia Neugeborn
+// Modified POS values in functions that sets FBCRB settings   
+//as SLOW setting is to be removed														: 2012-04-30 Leong Mang Yew
+// Removed AdaptiveDirMicEn_for_FBC and calling to BLIB to set DMA to on.				: 2012-05-25 Leong Mang Yew
+// Not needed anymore.
+// OpenOptimizerEn_Set() chanced because of the microphone mode dual/single omni        : 2012-06-14 Judith Koeppe
+// Updated based on peer review (ProgramSelection)										: 2012-06-27  Frauke, Jenny and co
+// FirstFit peer review updates: default functions should be void						: 2012-07-20 Nadia & Judith
+// FeedbackStopper_Set_ProgramSelection: FBC now set to universal, so changed code here accordingly. : 2012-07-25 Al
+// *********************************************CODE FREEZE*******************************************************
+// FR57646 MACRO - Change default FBC setting from turbo to med for streaming programs 
+// (Bluetooth Phone, Induction Loop, Tek/miniTek, miniTek FM and miniTek Telecoil).		: 2012-09-13 Jenny Lin
+// Updated the omnidirectional to (remapped_pos >= 90)									: 2012-11-19 Jenny
+// CR59134 - Music program now has FBC set to on and slow.                 				: 2012-12-05 Al
+//Updated OpenOptimizer Set to reset MicMode while FBCEn set to off 					: 2012-12-27 Sonia Stasiak
+//Updated OO_Set_Default since BLIB for OoEn is splitted            					: 2013-01-02 Sonia Stasiak
+// Peer review (Changed comments for FBC from 'slow' to 'standard' as it state in MRS)  : 2013-01-04 Sonia Stasiak
+// Peer review (updated comments and removed duplicated code.)							: 2013-01-11 Jenny
+// FR59240: OpenOptimizer to be disabled for devices >=Gmax 75							: 2013-01-25 Frauke
+// FR59453 Update High_Level_Library_FeedbackStopper.FeedbackStopper_Set_ProgramSelection. 
+// FBC will be set to universal when Telecoil and Induction Loop Program is selected    :  2013-05-14 Mang Yew
+// Partial implementation for CR61635 by adding new function call to Set SW variable
+// for FBC. Commented out.																:  2013-05-16 Mang Yew
+// Implementation for CR61635 (Disable FBC and WNC if input mode is non-mic input),
+// ER61121 (To deactivate FBC in pure Tinnitus mode)							        : 2012-05-31 Mang Yew  
+// Updated comments for FeedbackStopper_Set_ProgramSelection							:2013-07-30 Raymond
+// Update ID number in Set_ProgramSelection function									:	2013-10-29 Sonia Stasiak
+// Updated comments	for Set_ProgramSelection D9, added new Programs in set_PS			:	2013-11-01 Sonia Stasiak
+/*-------------------------------------In 7.3-----------------------------------------------------------------------------*/ 
+// In OpenOptimizerEn_Set, replaced D8 function call 'High_Level_Library_Mic_Mode.MicMode_Set_MPVPos_from_String ('Omni')'...
+// ... with D9 function call 'Mid_Level_Library_Mic_Mode.MicMode_Set("Omni_mode")'       : 2013-12-04 Al
+// Updated Set_Program Selection with d9SwMacroProgramIdHp control instead of ID		:	2013-12-17 Sonia Stasiak
+// In OpenOptimizerEn_Set, changed omni function call to Mid_Level_Library_Mic_Mode.MicMode_DetermineAndSet   : 2014-02-05 Al
+// Comment update for Program Selection											: 2014-03-19 Sonia
+// In OpenOptimizerEn_Set (int pos), replaced MicMode_DetermineAndSet() with calls to OmniMicModeProc()...
+// and ResetOmniForIzWncOo().                              : 2013-03-18     Al 
+// 7.3 Peer Review: Replace Mic_Mode_Is_Enabled with IsTinnitusNotPureandMicModeEnabled		: 2014-04-14 Raymond
+// Updated FeedbackStopperEN_GetPos to removed the variable and return true/false direct.  : 2014-04-14 Jenny, Sonia
+// Sifit 7.3 Peer Review Update. Rework setpos function and update description			: 2014-05-05 Mang Yew
+// PEER REVIEW CXX 7.3																		:	2014-05-06 Sonia, Mie Mie, Jenny
+// ****************************************************** 7.4 ******************************************************
+// In OpenOptimizerEn_Set(), added call to SetFBCforOmni() directly underneath call to ResetOmniForIzWncOo()  :2014-07-02 Al            
+// In OpenOptimizerEn_Set, updated call to OmniMicModeProc with string input.           : 2014-07-24 Al
+// Added new Induction Loop (T) program into Set_ProgramSelection function					: 2014-07-30 Sonia
+// Re-write Set_ProgramSelection to call BLib.Is<program>									: 2014-09-16 Sonia
+/*------------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_FeedbackStopper
+	{
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    FeedbackStopperEN_GetPos
+//   Input      :  <void>
+//   Output      :  <bool> checkbox status of the FBC checkbox 
+//   Description:  Checks the HW and SW controls of FBC to return the state of the checkbox.   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool FeedbackStopperEN_GetPos ()
+		{
+			// Set the actual FBC Rb settings when is visible.
+			if (BasicLibrary_FeedbackStopper.FeedbackStopperEn_GetSw () == true) // check FBC Sw due to introduction of this control in Sifit7.2
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		} // Closing High_Level_Library_FeedbackStopper.FeedbackStopperEN_GetPos
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    FeedbackStopperRB_SetForProgramSelection
+//   Input      :  <int> RadioButton number from Cxx
+//   Output      :  none
+//   Description:  Checks IsVisible of FBCRb. If FBCRb is present, expected strength will be set. 
+// 				   Else, strength should not be modified.   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FeedbackStopperRB_SetForProgramSelection (int pos)
+		{
+			// Set the actual FBC Rb settings when is visible.
+			if (Mid_Level_Library_FeedbackStopper.FeedbackStopperRB_IsVisible () == true)
+			{
+				High_Level_Library_FeedbackStopper.FeedbackStopperRB_Set (pos);
+			}
+		} // Closing High_Level_Library_FeedbackStopper.FeedbackStopperRB_SetForProgramSelection
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    FeedbackStopperRB_Set
+//   Input      :  <int> RadioButton number from Cxx
+//   Output      :  void
+//   Description:  Sets the FBC Rb strength  
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FeedbackStopperRB_Set (int pos)
+		{
+		// Set the actual HI settings using basic library functions	
+			BasicLibrary_FeedbackStopper.FeedbackStopperRB_Set_Strength (pos);
+		} // Closing High_Level_Library_FeedbackStopper.FeedbackStopperRB_Set
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    FeedbackStopperRB_Get
+//   Input      :  None
+//   Output      :  <int> Actual Radiobutton number with respect to Cxx
+//   Description:  Gets the FBC strength  
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int FeedbackStopperRB_Get ()
+		{
+			return BasicLibrary_FeedbackStopper.FeedbackStopperRB_Get_Strength ();
+		} //Closing High_Level_Library_FeedbackStopper.FeedbackStopperRB_Get
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    FeedbackStopper_Set_Default
+//   Input      :  none
+//   Output     :  none
+//   Description:  Sets the default FBC and OO settings
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FeedbackStopper_Set_Default ()
+		{
+			int pos = -1;
+
+			// Get the default position from Mid Level Library
+			pos = Mid_Level_Library_FeedbackStopper.FeedbackStopperRB_DefaultPos ();
+
+			// Interdependance of FBC and MicMode is already taken care by OpenOptimizerEn_Set_Default().
+			// Default after FirstFit for all instrument is ON.
+			High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set (1);
+			println ('[HAL]HLIB-FeedbackStopper_Set_Default   FBC En set to ON');
+
+			// Set the Default position of radio button
+			High_Level_Library_FeedbackStopper.FeedbackStopperRB_Set (pos);
+			println ('[HAL]HLIB-FeedbackStopper_Set_Default   FBC RB set to ' + pos);
+
+			// Set Open Optimizer to default position
+			High_Level_Library_FeedbackStopper.OpenOptimizerEn_Set_Default ();
+			println ('[HAL]HLIB-FeedbackStopper_Set_Default   OpenOpt set accordingly');
+		} // Closing High_Level_Library_FeedbackStopper.FeedbackStopper_Set_Default
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    OpenOptimizerEn_Set_Default
+//   Input      :  none
+//   Output     :  none
+//   Description:  Sets the position CheckBox to the default after FF position     
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void OpenOptimizerEn_Set_Default ()
+		{
+			int pos = -1;
+
+			// Get the default position from Mid Level Library
+			pos = Mid_Level_Library_FeedbackStopper.OpenOptimizerEn_DefaultPos ();
+			BasicLibrary_FeedbackStopper.OpenOptimizerEn_Set_Sw (pos);
+
+			// Set the Default position if valid -1 means disable this feature
+			High_Level_Library_FeedbackStopper.OpenOptimizerEn_Set (pos);
+		} // Closing High_Level_Library_FeedbackStopper.OpenOptimizerEn_Set_Default			
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    OpenOptimizerEn_Set
+//   Input      :  <int> Checkbox status number from Cxx
+//   Output      :  none
+//   Description:  Sets the Hi Controls for OpenOptimizer based on Current FBC strength    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void OpenOptimizerEn_Set (int pos)
+		{
+		// Set the Hi Controls common for FBC and OpenOptimizer
+			BasicLibrary_FeedbackStopper.OpenOptimizerEn_Set_Hw (pos);
+
+			// Find out the Microphone mode for current device
+			if (Mid_Level_Library_Mic_Mode.MicModeIsOmni() == true)
+			{
+			// Yes this is a OmniDirection Radiobutton selection in the MPV/Cxx
+			// Reset the Microphone Mode based on the lastest BEST Omnidirectional setting			
+			    Mid_Level_Library_Mic_Mode.OmniMicModeProc("Omni_mode"); 
+				string ctrlvalue_set = Mid_Level_Library_Mic_Mode.ResetOmniForIzWncOo();
+				Mid_Level_Library_Mic_Mode.SetFBCforOmni(ctrlvalue_set);
+			}
+		} // Closing High_Level_Library_FeedbackStopper.OpenOptimizerEn_Set
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    OpenOptimizerEn_SetHWSW
+//   Input      :  <int> Checkbox status number from Cxx
+//   Output      :  none
+//   Description:  Set the SW and HW variable for Open Optimizer
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void OpenOptimizerEn_SetHWSW (int pos)
+		{
+			BasicLibrary_FeedbackStopper.OpenOptimizerEn_Set_Sw (pos);
+			High_Level_Library_FeedbackStopper.OpenOptimizerEn_Set (pos);
+		} // Closing High_Level_Library_FeedbackStopper.OpenOptimizerEn_SetHWSW
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    FeedbackStopperEn_Set
+//   Input      :  <int> RadioButton number from Cxx
+//   Output      : none 
+//   Description:  Sets the FBC checkbox Sw and Hw controls   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FeedbackStopperEn_Set (int pos)
+		{
+			High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set_Hw (pos);
+			BasicLibrary_FeedbackStopper.FeedbackStopperEn_SetSw (pos);
+		} // Closing High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set	
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    FeedbackStopperEn_Set_Hw
+//   Input      :  <int> RadioButton number from Cxx
+//   Output      : none
+//   Description:  Set HW control for FBC checkbox and checks Oo Sw controls to set the appropriate Oo settings.    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FeedbackStopperEn_Set_Hw (int pos)
+		{
+		// FeedbackStopper Checkbox (parent) and OpenOptimizer(Child)
+		// if FBC set to OFF, OO(child)will be set to OFF.
+		// if FBC set to on, OO(child) will be set to On if SwMacro variable for OO indicates On. 
+
+		// Set FBC En On/Off indicated by the pos
+			BasicLibrary_FeedbackStopper.FeedbackStopperEn_Set (pos);
+
+			// Open Optimizer will set to off when FBC En is deactivated,
+			// and set to the previous state indicated by the HIVARS when FBC En is activated.
+			if (BasicLibrary_FeedbackStopper.OpenOptimizerEn_Get_Sw () == true)
+			{
+			// Set the OpenOptimizer to the previous positions indicated by HIVARS
+				println ('[HAL]HLIB-FeedbackStopperEn_Set   Open Optimizer set to previous state ON');
+				High_Level_Library_FeedbackStopper.OpenOptimizerEn_Set (pos);
+			}
+			else
+			{
+				println ('[HAL]HLIB-FeedbackStopperEn_Set   Open Optimizer set to OFF');
+				BasicLibrary_FeedbackStopper.OpenOptimizerEn_Set_Hw (0);
+			}
+		} // Closing High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set_Hw
+
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   High Level PP LIBRARY Function:    FeedbackStopperRB_IsEnabled
+//   Input		:  none
+//   Ouput      :  <bool> Returns True if visible; False if Not Visible 
+//   Description:  decides the Greyout Status of the FBC Radiobutton
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool FeedbackStopperRB_IsEnabled ()
+		{
+			bool retval = true;
+			
+			if (BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false || // Tinnitus on or no Microphone input		
+					High_Level_Library_FeedbackStopper.FeedbackStopperEN_GetPos () == false)
+			{ // Grey out if FBC checkbox unticked
+				retval = false;
+			}
+			
+			return retval;
+		} //Closes High_Level_Library_FeedbackStopper.FeedbackStopperRB_IsEnabled
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    FeedbackStopperEn_Set_For_Microphone_Tinnitus
+//   Input      :  <int> FBC CxxPos based on GetPos.
+//   Output      :  <void> 
+//   Description:  Set FBC for Input Mode Mixed with Microphone and Tinnitus.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FeedbackStopperEn_Set_For_Microphone_Tinnitus (int FbcPos) //SIFIT7.3PEERREVIEWED
+		{
+			if (FbcPos == 1 &&
+					BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false)
+			{
+				High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set_Hw (0);
+				BasicLibrary_FeedbackStopper.FeedbackStopperEn_SetSw (1);
+			}
+			else
+			{
+				High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set (FbcPos);
+			}
+		} // High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set_For_Microphone_Tinnitus
+
+	/*---------------------------------------------------------------------------------------------------------*
+	//	HIGH LEVEL LIBRARY - FeedbackStopper_Set_ProgramSelection
+	//	Description	:	Function is setting Feedback Stopper for all listening situation. 
+	/*---------------------------------------------------------------------------------------------------------*/
+		public function void FeedbackStopper_Set_ProgramSelection ()
+		{
+			println ('[HAL]HLIB.FeedbackStopper_Set_ProgramSelection ID = ' + BasicLibrary_CommUtil.CurrentProg ());
+			
+			//int FbcEn_OFF = 0; //FBC checkbox = OFF
+			int FbcEn_ON = 1; //FBC checkbox = ON
+			int FbcRb_Standard = 0; //radiobutton position 0 = Standard
+		  	//int FbcRb_Turbo = 1; //radiobutton position 1 = Turbo
+			
+			if (BasicLibrary_ProgramSelection.IsBluetoothPhone() == true ||
+				BasicLibrary_ProgramSelection.IsInductionLoopmT() == true || // [FR59453]
+				BasicLibrary_ProgramSelection.IsStreamingAudio() == true ||
+				BasicLibrary_ProgramSelection.IsEasyTekFM() == true ||
+				BasicLibrary_ProgramSelection.IsInductionLoopT() == true)
+			// FeedbackStopper set to same as Universal, radiobutton set to Standard
+			{ 
+				High_Level_Library_FeedbackStopper.FeedbackStopperRB_SetForProgramSelection (FbcRb_Standard);
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsMusic() == true)
+			// FeedbackStopper set to ON, radiobutton set to Standard
+			{	
+				High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set_For_Microphone_Tinnitus (FbcEn_ON);
+				High_Level_Library_FeedbackStopper.FeedbackStopperRB_SetForProgramSelection (FbcRb_Standard);
+			}
+
+			else // (all other programs)
+			// Feedback Stopper same as Universal (do nothing)
+			{ 	
+				
+			}
+			// For ID10 (Tinnitus) settings changed to OFF in SiFit 7.2 due to ER61121, this is already
+			// taken care under HLIB Noiser_Set_ProgramSelection therefore no implementation here		
+		} // closes High_Level_Library_FeedbackStopper.FeedbackStopper_Set_ProgramSelection
+
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of High Level LIBRARY FeedbackStopper    
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package High_Level_Library_FeedbackStopper
+
+} //namespace shs.sat

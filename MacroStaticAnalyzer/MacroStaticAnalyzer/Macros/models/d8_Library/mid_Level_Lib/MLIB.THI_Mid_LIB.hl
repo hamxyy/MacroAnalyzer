@@ -1,0 +1,114 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            MID LEVEL PRICEPOINT LIBRARY : THI
+// Initial Version                                                             	: 2011-12-07 CLY
+// Updated PP500 (same as PP700)												: 2012-04-02 Nadia
+// THI weight for PP700 is different - remap									: 2012-04-05 Nadia
+// Updated THI_Learning_Remapping												: 2012-05-09 Nadia
+// Added THI_Logging_Default for logging										: 2012-05-28 Nadia
+// Updated THI_Learning_Default - no learning for PP100							: 2012-05-30 Nadia
+// Updated THI_Weight_Default() with PP75 to match Fitnesse TC					: 2012-06-05 Nadia
+// Updated THI_Learning_Default() - learning off by default						: 2012-06-06 Nadia
+// Added assertion message									: 2012-12-18 Jenny Lin
+// According to Sifit MRS 3.2 logging is now available for PP75, so changed THI_Logging_Default()...
+// ... to return '1' for PP75.                                                  : 2013-03-19 Al
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat {
+	
+	package Lib Mid_Level_Library_THI{
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    THI_Weight_Default
+//   Input      :  void
+//   Ouput      :  <int> Training step
+//   Description:  THI Weight Remapping for different Price Point.  
+-----------------------------------------------------------------------------------------------------------------$*/
+    public function int THI_Weight_Default(){
+    	
+    	int retval = -1;    
+    	                         
+		switch (cap:PricePoint){   
+								
+			// PP700 and PP500 have the same weights and training steps (in eTemplates)
+			case PricePoint.PP700:{		// PP700 THI weight is 1/8 (step 4)
+				retval = 4;
+			}
+			case PricePoint.PP500:{    	// PP500 THI weight is 1/16 + 1/32 (step 5)
+				retval = 5;
+			}
+			case PricePoint.PP300:{    	// PP300 THI weight is 1/1024 (step 14)
+				retval = 14;
+			}
+			case PricePoint.PP100:{    	// PP100 THI weight is 1/1024 (step 14)
+				retval = 14;
+			}	
+			case PricePoint.PP75:{    	// PP75 THI weight is 1/1024 (step 14)
+				retval = 14;
+			}														
+			default:{					// If invalid PP
+				retval = -1;
+			}
+		} //end switch
+		assertion(retval >= 0, "[MacroError] Undefined state of THI_Weight!");
+    	return retval;	
+	} // Closes Mid_Level_Library_THI.THI_Weight_Default()
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    THI_Learning_Default
+//   Input      :  void
+//   Ouput      :  <int> Default learning position (1 = on learning, 0 = off learning)
+//   Description:  Enable/disable Learning  
+-----------------------------------------------------------------------------------------------------------------$*/
+    public function int THI_Learning_Default(){
+    	
+    	int retval = -1;  
+    	
+			switch (cap:PricePoint){				
+				default :{
+				     retval = 0; 	  	  // Off for all PPs
+				} 
+			}			
+		return retval;
+	} // Closes Mid_Level_Library_THI.THI_Learning_Default	
+
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    THI_Logging_Default
+//   Input      :  void
+//   Ouput      :  <int> Default logging position (1 = on logging, 0 = off logging)
+//   Description:  Enable/disable Logging for different Price Points  
+-----------------------------------------------------------------------------------------------------------------$*/
+    public function int THI_Logging_Default(){
+    	
+    	int retval = -1;   
+    	
+			switch (cap:PricePoint){
+				
+				case PricePoint.PP700:{   // PP700: Logging available 
+				     retval = 1;
+				}
+				case PricePoint.PP500:{   // PP500: Logging available 
+				     retval = 1; 
+				}
+				case PricePoint.PP300:{   // PP300: Logging available 
+				     retval = 1;				     
+				}
+				case PricePoint.PP100:{   // PP100: Logging available 
+				     retval = 1;		  
+				}
+				case PricePoint.PP75:{	  // PP75: Logging is now available (from Sifit MRS 3.2 and onwards)
+					 retval = 1;
+				}
+				default :{
+				     retval = -1; 	  	  // If invalid PP
+				} 
+			}			
+			assertion(retval >= 0, "[MacroError] Undefined state of THI_Logging!");
+		return retval;
+	} // Closes Mid_Level_Library_THI.THI_Logging_Default		
+		
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Middle Level PP LIBRARY    THI
+-----------------------------------------------------------------------------------------------------------------*/		   	
+	}	//package Mid_Level_Library_THI
+}	//namespace shs.sat

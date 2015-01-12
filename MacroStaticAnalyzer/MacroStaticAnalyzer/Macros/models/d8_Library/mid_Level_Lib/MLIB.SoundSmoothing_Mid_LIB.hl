@@ -1,0 +1,160 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            MID LEVEL PRICEPOINT LIBRARY : Sound Smoothing
+// Initial Version                                         					: 2011-02-17   Cecil Wilson
+// Renamed Library                                         					: 2011-02-21   Cecil Wilson
+// Renamed package to follow naming convention	   	  	   					: 2011-02-24   Cecil Wilson
+// Made Slider position zero based like in CXX  	       					: 2011-02-24   Cecil Wilson
+// Updated Function structure with single Remapping Funct  					: 2011-03-01   Cecil Wilson
+// Removed Package LIB workaround						   					: 2011-03-03   Cecil Wilson
+// delete SL from Default fuction for First Fit            					: 2011-04-15   Nadine Seubert
+// added Country dependency for Default after FF : Japan   					: 2011-05-06   Cecil Wilson
+// Removed Cap workaround								   					: 2011-05-16   Cecil Wilson
+// Japan and 502 devices also use Min step for default	   					: 2011-07-20   Nadia Neugeborn 
+// added remapping, maxpos and default function for checkbox due to PP100.	   
+// rename "SoundSmoothing_MaxPos" to "SoundSmoothingSL_MaxPos" and 
+// "SoundSmoothing_DefaultPos" to "SoundSmoothingSL_DefaultPos" to differentiate 
+// the checkbox/slider maxpos function					   					: 2011-12-09   Jenny Lin
+// Updated SoundSmoothingEn_Remapping, SoundSmoothingEn_MaxPos, SoundSmoothingSL_Remapping and
+// SoundSmoothingSL_MaxPos as there are no dependencies on PricePoint. Updated
+// "SoundSmoothingEn_DefaultPos" to "SoundSmoothingEn_DefaultPostFit_Pos" and
+// "SoundSmoothingSL_DefaultPos" to "SoundSmoothingSL_DefaultPostFit_Pos"	: 2012-03-12   Jenny Lin
+// Updated env:Country and cleaned up code									: 2012-04-16 Nadia
+// Peer review changes															: 2012-06-13 Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Added assertion message									: 2012-12-18 Jenny Lin
+// FR59582 - For PP300, the default 'background' SoundSmoothing slider setting for PP300 is 2 (i.e. MAX). : 2013-01-08 Al.
+// FR59582 - SoundSmoothingSL_DefaultPostFit_Pos() altered. Only PP700/500 now set to MIN for Japan.  : 2013-01-17 Al.
+// Changed SoundSmoothingEn_IsVisible() so that 'false' is also returned for pp75.                    : 2013-02-28 Al.
+// Changed SoundSmoothingSL_IsVisible() so that 'false' is also returned for pp75.                    : 2013-02-28 Al. 
+// Added PP75 code to SoundSmoothingEn_DefaultPostFit_Pos()                                           : 2013-03-06 Al.
+// Sifit 7.2 Peer Review															: 2013-07-31 Jenny, Judith, Raymond
+// Sidit 7.3 Updates														: 2013-11-29	Mang Yew
+// FR66019 Remove Japan specific default setting for SoundSmoothing			: 2014-03-26	Mang Yew
+// Sifit 7.3 Peer Review Update												:2014-04-23 Mang Yew
+// Sifit 7.4 Peer Review code Clean up										:2014-11-14 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	package Lib Mid_Level_Library_SoundSmoothing
+	{
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  decides the visibility of the SoundSmoothingEn 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SoundSmoothingEn_IsVisible ()
+		{
+			bool retval = false;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{
+					retval = true;
+				}
+				case PricePoint.PP500:{
+					retval = true;
+				}
+				case PricePoint.PP300:{
+					retval = true;
+				}
+				default:{
+					retval = false;
+				}
+			}
+			return retval;
+		} 
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  decides the visibility of the SoundSmoothing 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SoundSmoothingSL_IsVisible ()
+		{
+			bool retval = false;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{
+					retval = true;
+				}
+				case PricePoint.PP500:{
+					retval = true;
+				}
+				default:{
+					retval = false;
+				}
+			}
+			return retval;
+		}
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  Default Position of the checkbox for SoundSmoothing when the user enables it for the first time
+//              :  This position should be used in case there is invalid checkbox position found in macro   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int SoundSmoothingEn_DefaultPostFit_Pos ()
+		{
+			int retval = -1;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{ // For 700 price point default checkbox step is on
+					retval = 1;
+				}
+				case PricePoint.PP500:{ // For 500 price point default checkbox step is on
+					retval = 1;
+				}
+				case PricePoint.PP300:{ // For 300 price point default checkbox step is on
+					retval = 1;
+				}
+				case PricePoint.PP100:{ // For 100 price point default checkbox step is off ie no checkbox
+					retval = 0;
+				}
+				case PricePoint.PP75:{ // For 75 price point default checkbox step is off ie no checkbox
+					retval = 0;
+				}
+				default:{
+				//Default is set to -1 to indicate invalid Pricepoint
+					retval = -1;
+					println ('[HAL]MLIB-SoundSmoothingEn_DefaultPostFit_Pos = ' + retval +
+						' >>> ERROR! (No valid PricePoint)');
+				}
+			}
+			assertion (retval >= 0, "[MacroError] Undefined state of SoundSmoothing checkbox! 
+						Mid_Level_Library_SoundSmoothing.SoundSmoothingEn_DefaultPostFit_Pos");
+			return retval;
+		}
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  DefaultPosition of the Slider for SoundSmoothing when the user enables it for the first time.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int SoundSmoothingSL_DefaultPostFit_Pos ()
+		{
+			int retval = -1;
+			
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{ // PP700 
+					retval = 1;
+				}
+				case PricePoint.PP500:{ // PP500
+					retval = 1;
+				}	
+				case PricePoint.PP300:{ // PP300 - 'background' slider setting is set to 2, i.e. MAX. See FR58582.
+					retval = 2;
+				}
+				case PricePoint.PP100:{ //sifit 7.3 - slider not visible. Do nothing
+					retval = 11;
+				}
+				case PricePoint.PP75:{ //sifit 7.3 - slider not visible. Do nothing
+					retval = 11;
+				}
+				default:{ 
+					retval = -1; // invalid pricepoint
+					println ('[HAL]MLIB-SoundSmoothingSL_DefaultPostFit_Pos INVALID PricePoint');
+				}
+			}
+			println ('[HAL]MLIB-SoundSmoothingSL_DefaultPostFit_Pos = ' + retval);
+			return retval;
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Middle Level PP LIBRARY    Sound Smoothing 
+-----------------------------------------------------------------------------------------------------------------*/
+	}
+
+}

@@ -1,0 +1,247 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY  BasicLibrary_ActivationThresholdDD
+// Initial Version                                          :  2011-03-25   Nadine Seubert
+// update for missing control                               :  2011-05-05   Nadine Seubert
+// please update the hole basic lib when micnoisfloorfact is working : 2011-06-08 Nadine Seubert
+// Macro11 replaced with hi:d8SwMacroMicActThrHp		    :  2011-08-01   Meike Doose
+// update d8FMicNoisefloorFact in ActivationThresholdDD_Set : 2011-08-10 Ma Mie Mie Thein
+// Add public function void ActivationThresholdDD_SetSwMacroMicActThr(int pos): 2011-10-10 Ma Mie Mie Thein
+// Update the whole list of d8FMicNoisefloorFact 		    : 2011-10-10 Ma Mie Mie Thein
+// Peer review changes									   	:  2012-06-20 Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Added assertion message									: 2012-12-14 Jenny Lin
+// -------------------------------------------------- 7.3 --------------------------------------------------------
+// Refractor for 7.3										: 2013-11-11 Raymond
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat {
+	using shs_sat.*;
+
+	package  Lib BasicLibrary_ActivationThresholdDD{
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Basic LIBRARY Function:    SoundBriliance_Get_Slider_Strength
+//   Input      :  None
+//   Ouput      :  <int> Actual slider position with respect to 70x Price point 
+//   Description:  Compares the HI settings and returns the Slider positions wrt 70x PP    
+-----------------------------------------------------------------------------------------------------------------*/  	 
+	public function int ActivationThresholdDD_Get(){
+		// POS -->  should specify the absolute slider step (with respect to the HI asic controls) 
+		int pos = -1;
+		println('Get POS Function  execution from Basic Lib started');
+		if(hi:d8SwMacroMicActThrHp == d8SwMacroMicActThrHp.low){		
+	  		pos= 0;
+		}		
+		else if(hi:d8SwMacroMicActThrHp == d8SwMacroMicActThrHp.med){ 	
+			pos = 1;
+		}
+		else if(hi:d8SwMacroMicActThrHp == d8SwMacroMicActThrHp.high){ 
+			pos = 2;
+		}	
+		else{
+			println('ERROR: Slider position out of SPEC/Range');
+		}
+			
+		return pos;		
+	} // Closes	BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_Get()	
+		
+/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_SetSwMacroMicActThr
+//   Input      :  <int>
+//   Ouput      :  none 
+//   Description:  Sets the BasicLibrary_ActivationThresholdDD SwMacroMicActThr for Getpos   
+-----------------------------------------------------------------------------------------------------------------*/      
+    public function void ActivationThresholdDD_SetSwMacroMicActThr(int pos){ 	
+        int retval = pos;
+        switch (pos){
+			case 0:{ 
+				hi:d8SwMacroMicActThrHp = d8SwMacroMicActThrHp.low;
+				println('[HAL]BLIB - ActivationThresholdDD - d8SwMacroMicActThrHp.low '); 								
+			}	
+			case 1:{					
+			    hi:d8SwMacroMicActThrHp = d8SwMacroMicActThrHp.med;		
+				println('[HAL]BLIB - ActivationThresholdDD - d8SwMacroMicActThrHp.med '); 							    						
+			}
+			case 2:{ 
+				hi:d8SwMacroMicActThrHp = d8SwMacroMicActThrHp.high;	
+				println('[HAL]BLIB - ActivationThresholdDD - d8SwMacroMicActThrHp.high '); 									
+		   }
+		   default:{
+				retval = -1;
+		   }
+        }
+        assertion(retval >= 0, "[MacroError] Undefined state of Soft-Level directivity Dropdown menu!");
+        
+    }// closes BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_SetSwMacroMicActThr
+		
+/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    BasicLibrary_ActivationThresholdDD_Set
+//   Input      :  <int> Desired State of DrobDown Menue 
+//   Ouput      :  none 
+//   Description:  Sets the BasicLibrary_ActivationThresholdDD feature based on DropDown selection   
+-----------------------------------------------------------------------------------------------------------------*/    
+	public function void ActivationThresholdDD_Set(int pos){         	
+        int retval = pos;
+        // REMOVE Comments to this code if  ._enable works fine.
+        println('Set POS Function  execution from Basic Lib started');           
+       	       
+        switch (pos)   
+       	{
+			case 0:{ 	
+				hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact._0_dB;
+				println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact._0_dB '); 							
+			}	
+			case 1:{ 
+			    hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact._3_dB;
+			    println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact._3_dB '); 
+			}					
+			case 2:{ 		
+				hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact._6_dB;
+				println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact._6_dB '); 
+		   	}				   
+			case 3:{ 
+				hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact._9_dB;
+				println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact._9_dB '); 
+			}	
+			case 4:{
+			    hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact._12_dB;
+			    println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact._12_dB '); 					
+			}					
+			case 5:{
+				hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact.M9_dB;
+				println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact.M9_dB '); 
+		   	}				   
+			case 6:{ 
+			    hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact.M6_dB;
+			    println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact.M6_dB '); 
+			}
+			case 7:{
+				hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact.M3_dB;
+				println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact.M3_dB '); 
+		  	}					   
+			default:{  // Does not make sense to CXX but for implementation CHECK
+				retval = -1;
+				println('ERROR: Slider position out of SPEC/Range');
+			}// default closes 
+		} // switch pos closes	
+		assertion(retval >= 0, "[MacroError] Undefined state of Soft-Level directivity Dropdown menu!");
+	} // Closes	BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_Set
+		
+			
+/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY     
+-----------------------------------------------------------------------------------------------------------------*/			
+	}	//package BasicLibrary_ActivationThresholdDD
+}	//namespace shs.sat
+
+//namespace shs_sat 
+//{
+//	using shs_sat.*;
+//	package  Lib BasicLibrary_ActivationThresholdDD
+//	{
+///*----------------------------------------------------------------------------------------------------------------
+////   Basic LIBRARY Function:    SoundBriliance_Get_Slider_Strength
+////   Input      :  None
+////   Ouput      :  <int> Actual slider position with respect to 70x Price point 
+////   Description:  Compares the HI settings and returns the Slider positions wrt 70x PP    
+//-----------------------------------------------------------------------------------------------------------------*/  	 
+//	public function int ActivationThresholdDD_Get()
+//	{
+//		// POS -->  should specify the absolute slider step (with respect to the HI asic controls) 
+//		println('Get POS Function  execution from Basic Lib started');
+//		if(hi:d8SwMacroMicActThrHp == d8SwMacroMicActThrHp.low){		
+//	  		return 0;
+//		}		
+//		else if(hi:d8SwMacroMicActThrHp == d8SwMacroMicActThrHp.med){ 	
+//			return 1;
+//		}
+//		else if(hi:d8SwMacroMicActThrHp == d8SwMacroMicActThrHp.high){ 
+//			return 2;
+//		}	
+//		else{
+//			println('ERROR: Slider position out of SPEC/Range');
+//		}		
+//	} // Closes	BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_Get()	
+//		
+///*----------------------------------------------------------------------------------------------------------------
+////   BASIC LIBRARY Function:    BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_SetSwMacroMicActThr
+////   Input      :  <int>
+////   Ouput      :  none 
+////   Description:  Sets the BasicLibrary_ActivationThresholdDD SwMacroMicActThr for Getpos   
+//-----------------------------------------------------------------------------------------------------------------*/      
+//    public function void ActivationThresholdDD_SetSwMacroMicActThr(int pos)
+//    { 	
+//        switch (pos){
+//			case 0:{ 
+//				hi:d8SwMacroMicActThrHp = d8SwMacroMicActThrHp.low;
+//				println('[HAL]BLIB - ActivationThresholdDD - d8SwMacroMicActThrHp.low '); 								
+//			}	
+//			case 1:{					
+//			    hi:d8SwMacroMicActThrHp = d8SwMacroMicActThrHp.med;		
+//				println('[HAL]BLIB - ActivationThresholdDD - d8SwMacroMicActThrHp.med '); 							    						
+//			}
+//			case 2:{ 
+//				hi:d8SwMacroMicActThrHp = d8SwMacroMicActThrHp.high;	
+//				println('[HAL]BLIB - ActivationThresholdDD - d8SwMacroMicActThrHp.high '); 									
+//		   }
+//		   default:{
+//				assertion(true, "[MacroError] Undefined state of Soft-Level directivity Dropdown menu!");
+//		   }
+//        }
+//    }// closes BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_SetSwMacroMicActThr
+//		
+///*----------------------------------------------------------------------------------------------------------------
+////   BASIC LIBRARY Function:    BasicLibrary_ActivationThresholdDD_Set
+////   Input      :  <int> Desired State of DrobDown Menue 
+////   Ouput      :  none 
+////   Description:  Sets the BasicLibrary_ActivationThresholdDD feature based on DropDown selection   
+//-----------------------------------------------------------------------------------------------------------------*/    
+//	public function void ActivationThresholdDD_Set(int pos)
+//	{         	
+//        // REMOVE Comments to this code if  ._enable works fine.
+//        println('Set POS Function  execution from Basic Lib started');           
+//        switch (pos)   
+//       	{
+//			case 0:{ 	
+//				hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact._0_dB;
+//				println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact._0_dB '); 							
+//			}	
+//			case 1:{ 
+//			    hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact._3_dB;
+//			    println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact._3_dB '); 
+//			}					
+//			case 2:{ 		
+//				hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact._6_dB;
+//				println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact._6_dB '); 
+//		   	}				   
+//			case 3:{ 
+//				hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact._9_dB;
+//				println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact._9_dB '); 
+//			}	
+//			case 4:{
+//			    hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact._12_dB;
+//			    println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact._12_dB '); 					
+//			}					
+//			case 5:{
+//				hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact.M9_dB;
+//				println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact.M9_dB '); 
+//		   	}				   
+//			case 6:{ 
+//			    hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact.M6_dB;
+//			    println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact.M6_dB '); 
+//			}
+//			case 7:{
+//				hi:d8FMicNoisefloorFact = d8FMicNoisefloorFact.M3_dB;
+//				println('[HAL]BLIB - ActivationThresholdDD - d8FMicNoisefloorFact.M3_dB '); 
+//		  	}					   
+//			default:{  // Does not make sense to CXX but for implementation CHECK
+//				assertion(true, "[MacroError] Undefined state of Soft-Level directivity Dropdown menu!");
+//			}// default closes 
+//		} // switch pos closes	
+//	} // Closes	BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_Set
+//			
+///*----------------------------------------------------------------------------------------------------------------
+//// 								  END Of BASIC FUNCTION  LIBRARY     
+//-----------------------------------------------------------------------------------------------------------------*/			
+//	}	//package BasicLibrary_ActivationThresholdDD
+//}	//namespace shs.sat

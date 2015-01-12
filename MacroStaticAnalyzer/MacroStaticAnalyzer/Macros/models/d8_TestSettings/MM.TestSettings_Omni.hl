@@ -1,0 +1,73 @@
+
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                          OmniButton for TestSettings
+// Initial Version		         									    		: 2012-01-13 Nadine Seubert
+// change package to MixedMode for test proposal                        		: 2012-01-23 Nadine Seubert
+// change the packaget from MixedMode to TestSettings and comment out GetPos call since Cxx 
+// does not read the GetPos for TestSettings									: 2012-04-04 Jenny Lin
+// Updated the comments and println												: 2012-04-18 Jenny Lin
+// Peer review changes															: 2012-07-17 MieMie, Jenny
+// 7.3 peer review done															: 2014-05-02 MieMie, Jenny
+// *********************************************CODE FREEZE*******************************************************
+/*$$---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat {
+	
+	using shs_sat.*;
+	            
+		package TestSettings OmniBu{
+
+		application function bool IsVisible() {
+			// Visibility is always true			
+
+			int hp=env:Prog;
+			
+			println('[HAL]TestSettings - OmniButton - IsVisible = TRUE in HP='+hp);
+
+
+			return true;
+		}
+		
+		application function bool IsEnabled() {
+			// Always enabled	
+		
+	     	int hp=env:Prog;
+
+		 	println('[HAL]TestSettings - OmniButton - IsEnabled = TRUE in HP='+hp);	
+		
+
+			return true;	
+
+		}
+
+		application function int MaxPos() {
+			
+	 		int hp=env:Prog;
+	 		println('[HAL]TestSettings - OmniButton - MaxPos = 1 in HP='+hp);
+			return 1;     // This is a Check Box with 2 states. 0 and 1
+		}		
+		
+
+	 	application function int GetPos() {	
+	 		
+ 		    int retval = -1;	
+			// Comment out since Cxx does not read the GetPos for TestSettings
+			//retval = High_Level_Library_TestSettings.TestSettingsOmniBu_Get();
+
+	 		int hp=env:Prog;
+	 		println('[HAL]TestSettings - OmniButton - GetPos = '+ retval + ' in HP='+hp);
+	 		
+			return retval;
+	 	}
+	 	
+
+		application function void SetPos(int pos) {
+			// Set the Button to pos;			
+			int hp=env:Prog;
+	 		println('[HAL]TestSettings - OmniButton - SetPos = ' + pos + ' in HP='+hp);
+			
+			High_Level_Library_TestSettings.TestSettingsOmniBu_Set(pos);
+		}
+		
+	}	//package TestSettings.OmniBu
+}

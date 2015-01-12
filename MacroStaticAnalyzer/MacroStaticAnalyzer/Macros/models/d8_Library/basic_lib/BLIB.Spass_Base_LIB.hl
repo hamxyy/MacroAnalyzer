@@ -1,0 +1,300 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                            BASIC LEVEL LIBRARY  :  Spass
+// Initial Version                                          					:  2011-03-17   Frauke Schall
+// Update IsVisible and IsEnabled dependecies									:  2011-03-22	Frauke Schall
+// Modifications in SpassEn_Set (m_fny_start, FnyVadPos)						:  2011-04-18   Frauke Schall
+// rework m-Fynset to high levellib                         					:  2011-04-28   Frauke Schall & Nadine Seubert
+// new Set Function for OmniMicMode                         					:  2011-05-05   Nadine Seubert
+// update for new Spass setting                             					:  2011-06-03   Nadine Seubert
+// adjust hi:d8PMicSpassUlimAutoNf[0] starting from zero not 1 					:  2011-06-22 	Meike Doose
+// update to new hi:d8SwMacroSpassEnHP variable									:  2011-07_04   Meike Doose
+// rechanged update  to new hi:d8SwMacroSpassEnHP again, because of error when gernerating  : 2011-07-04 Meike Doose
+// add MacroHiVar7Hp for SpassMode SpassEn_Set									:  2011-07-21 	Meike Doose
+// update to new hi:d8SwMacroSpassEnHP variable									:  2011-07-27   Meike Doose
+// updated SpassEn_Set to take out the common settings between SNM & SPASS (set in HLIB)		: 2012-04-09 Jenny
+// Updated macros to the state on 2011-10-04   									:  2012-04-13 	Jenny Lin
+// Updated SpassEn_Set to now set d8SwMacroNoiseFlorEnHp based on d8MVadStart	:  2012-04-24 	Frauke Schall
+// Peer review changes															: 2012-06-14 Nadine and Frauke
+// SpassEn_Get to return TRUE
+// 		if (hi:d8SwMacroSpassEnHP == d8SwMacroSpassEnHP.on || hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+//																				: 2012-07-12 Al and Frauke
+// added d8PMicSpassUlimAutoNf in SpassEn_Set_for_omni							: 2012-07-13 Frauke
+// *********************************************CODE FREEZE*******************************************************
+// ER55700: wrong Speech and Noise Multi slider setting						: 2012-08-29 Frauke
+// Added assertion message									: 2012-12-18 Jenny Lin
+// Revert back to d8MSpaStart, d8MVadStart, d8MFnyStart (int).					: 2013-10-24 Jenny
+// Sifit 7.3 Update																: 2013-11-29	Mang Yew
+// update on setpos to remove unused return argument							: 2014-03-04 Mang Yew
+// Sifit 7.3 Peer Review Updates												: 2014-04-17 Mang Yew
+// Removed the wrapper function for SpassEn_Set_for_omni						: 2014-11-04 Sultan
+// Sifit 7.4 Peer Review Code Cleanup											: 2014-11-14 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+
+	package Lib BasicLibrary_Spass
+	{
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the slider position  
+-----------------------------------------------------------------------------------------------------------------*/    
+		public function void SpassSL_Set(int remapped_pos)
+		{
+			println('[HAL]BLIB-SpassSL_Set  remapped_pos='+remapped_pos);
+			
+			switch (remapped_pos){
+				case 0:{
+					hi:d8MSpaStart = 4;
+				}				
+				case 1:{
+					hi:d8MSpaStart = 8;
+				}
+				case 2:{ 
+					hi:d8MSpaStart = 12;   
+				}
+				case 11:{
+					 // set Nothing
+					println('[HAL]BLIB-SpassSL_Set >> pos' + remapped_pos + '. m_spa_start values not changed!');
+				}
+				default:{
+					println('ERROR: Slider position out of SPEC/Range');
+					assertion(false, "[MacroError] Undefined state of SPASS Slider! BasicLibrary_Spass.SpassSL_Set");	
+				}
+			}
+			
+		}
+		
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the Slider positions 
+-----------------------------------------------------------------------------------------------------------------*/  
+		public function int SpassSL_Get()
+		{
+			if (hi:d8MSpaStart == 4)
+			{		
+	  			println('[HAL]BLIB-SpassSL_Get pos= 0');
+	  			return 0;
+			}		
+			else if(hi:d8MSpaStart == 8)
+			{ 
+				println('[HAL]BLIB-SpassSL_Get pos= 1');
+	  			return 1;
+			}
+			else if(hi:d8MSpaStart == 12)
+			{ 
+				println('[HAL]BLIB-SpassSL_Get pos= 2');
+	  			return 2;
+			}	
+			else
+			{
+				println('ERROR: Slider position out of SPEC/Range');
+				assertion(false, "[MacroError] Undefined state of SPASS Slider! BasicLibrary_Spass.SpassSL_Get");
+				return -1;	
+		    }
+		}
+		
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the CheckBox positions based on NR view 
+----------------------------------------------------------------------------------------------------------------------------*/	
+	    public function bool SpassEn_Get()
+	    {
+	    	if (BasicLibrary_NoiseReduction.NoiseReductionView_Get () == true)
+			{
+				if (BasicLibrary_Spass.SpassEn_Get_Sw () == 1)
+        		{	
+	    			println('[HAL]BLIB-SpassEn_Get  return TRUE');
+	    			return true;	
+	    		}
+	    		else
+	    		{
+	    			println('[HAL]BLIB-SpassEn_Get  return FALSE');
+	    			return false;		
+	    		}
+			}
+			else
+			{
+				if(BasicLibrary_Spass.SpassEn_Get_Sw () == 1|| BasicLibrary_Spass.SpassEn_Get_Hw () == true)
+        		{	
+	    			println('[HAL]BLIB-SpassEn_Get  return TRUE');
+	    			return true;	
+	    		}
+	    		else
+	    		{
+	    			println('[HAL]BLIB-SpassEn_Get  return FALSE');
+	    			return false;		
+	    		}
+			} 
+	    }
+
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Sets the HI controls based on the Status of CheckBox    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SpassEn_Set(int pos)
+		{
+			println('[HAL]BLIB-SpassEn_Set  pos='+pos);
+			if(pos==1)
+			{
+				hi:d8PhlNruSpassMode = d8PhlNruSpassMode.SPASS;
+				hi:d8PMicSpassUlimAutoNf[0]=d8PMicSpassUlimAutoNf._0_dB;
+				hi:d8PMicSpassUlimAutoNf[1]=d8PMicSpassUlimAutoNf._0_dB;
+	        	hi:d8PMicSpassUlimAutoNf[2]=d8PMicSpassUlimAutoNf._0_dB;
+	        	hi:d8PMicSpassUlimAutoNf[3]=d8PMicSpassUlimAutoNf._0_dB;
+	        	hi:d8PMicSpassUlimAutoNf[4]=d8PMicSpassUlimAutoNf._0_dB;
+	        	hi:d8PMicSpassUlimAutoNf[5]=d8PMicSpassUlimAutoNf._0_dB;
+	        	hi:d8PMicSpassUlimAutoNf[6]=d8PMicSpassUlimAutoNf._0_dB;
+	        	hi:d8PMicSpassUlimAutoNf[7]=d8PMicSpassUlimAutoNf._0_dB;
+        	
+        		if(hi:d8MVadBand[0] <= 8){hi:d8MFnyBand[0] = 8;} // new Spass implementation! Fancy doesn't need to be 13 anymore
+            	if(hi:d8MVadBand[1] <= 8){hi:d8MFnyBand[1] = 8;} // if Spass == on, then set FnyStart to 8 or higher (if DD or SL is set accordingly)
+            	if(hi:d8MVadBand[2] <= 8){hi:d8MFnyBand[2] = 8;}
+            	if(hi:d8MVadBand[3] <= 8){hi:d8MFnyBand[3] = 8;}
+				if(hi:d8MVadStart <= 8){hi:d8MFnyStart = 8;}
+			}
+			else{
+				hi:d8PMicSpassUlimAutoNf[0]=d8PMicSpassUlimAutoNf.M6_dB; 
+				hi:d8PMicSpassUlimAutoNf[1]=d8PMicSpassUlimAutoNf.M6_dB;
+				hi:d8PMicSpassUlimAutoNf[2]=d8PMicSpassUlimAutoNf.M6_dB;
+				hi:d8PMicSpassUlimAutoNf[3]= d8PMicSpassUlimAutoNf.M75_dB;
+				hi:d8PMicSpassUlimAutoNf[4]= d8PMicSpassUlimAutoNf.M75_dB;
+				hi:d8PMicSpassUlimAutoNf[5]= d8PMicSpassUlimAutoNf.M75_dB;
+				hi:d8PMicSpassUlimAutoNf[6]= d8PMicSpassUlimAutoNf.M75_dB;
+				hi:d8PMicSpassUlimAutoNf[7]= d8PMicSpassUlimAutoNf.M75_dB;
+				
+				hi:d8MFnyBand[0] = hi:d8MVadBand[0];
+				hi:d8MFnyBand[1] = hi:d8MVadBand[1];
+				hi:d8MFnyBand[2] = hi:d8MVadBand[2];
+				hi:d8MFnyBand[3] = hi:d8MVadBand[3];
+				hi:d8MFnyStart = hi:d8MVadStart;
+				
+				if(hi:d9FNruVadEn == d9FNruVadEn.on)
+				{			// in case SpeechNoiseMgmnt enabled
+					if(BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_MaxStrength() == true)
+					{ //
+						hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY_auto_nf;
+					}
+					else
+					{
+						hi:d8PhlNruSpassMode = d8PhlNruSpassMode.FANCY;
+					}
+				}
+				else
+				{														// in case SpeechNoiseMgmnt disabled
+					hi:d8PhlNruSpassMode = d8PhlNruSpassMode.off;
+				}
+			} 
+		} 
+
+
+//--------------------------------------------Sifit 7.3-----------------------------------------------------------
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the SW settings and returns the slider position  
+-----------------------------------------------------------------------------------------------------------------*/    
+		public function void SpassSL_Set_Sw(int pos)
+		{
+			println('[HAL]BLIB-SpassSL_Set_Sw  pos='+pos);
+		
+			switch (pos){
+				case 0:{ 
+					hi:d8SwMacroSpassSlHp = 0;
+				}				
+				case 1:{ 
+					hi:d8SwMacroSpassSlHp = 1;
+				}
+				case 2:{
+					hi:d8SwMacroSpassSlHp = 2;   
+				}
+				default:{ 
+					println('[HAL]BLIB-SpassSL_Set_Sw ERROR: Slider position out of SPEC/Range');
+					assertion(false, "[MacroError] Undefined state of SPASS Slider!
+								BasicLibrary_Spass.SpassSL_Set_Sw");
+				}
+			}
+			
+		}
+		
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI SW settings and returns the Slider positions 
+-----------------------------------------------------------------------------------------------------------------*/  
+		public function int SpassSL_Get_Sw()
+		{
+			if (hi:d8SwMacroSpassSlHp == 0)
+			{		
+	  			println('[HAL]BLIB-SpassSL_Get_Sw  pos= 0');
+	  			return 0;
+			}		
+			else if(hi:d8SwMacroSpassSlHp == 1)
+			{ 
+				println('[HAL]BLIB-SpassSL_Get_Sw  pos= 1');
+	  			return 1;
+			}
+			else if(hi:d8SwMacroSpassSlHp == 2)
+			{ 
+				println('[HAL]BLIB-SpassSL_Get_Sw  pos= 2');
+	  			return 2;
+			}	
+			else
+			{
+				println('ERROR: Slider position out of SPEC/Range');
+				assertion(false, "[MacroError] Undefined state of SPASS Slider!
+								BasicLibrary_Spass.SpassSL_Get_Sw");
+				return -1;
+		    }
+		}
+		
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the CheckBox positions     
+----------------------------------------------------------------------------------------------------------------------------*/	
+	    public function bool SpassEn_Get_Hw()
+	    {
+        	if (hi:d8PhlNruSpassMode == d8PhlNruSpassMode.SPASS)
+        	{	
+	    		println('[HAL]BLIB-SpassEn_Get_Hw  return TRUE');
+	    		return true;	
+	    	}
+	    	else
+	    	{
+	    		println('[HAL]BLIB-SpassEn_Get_Hw  return FALSE');
+	    		return false;		
+	    	}
+	    }
+	    
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the CheckBox positions     
+----------------------------------------------------------------------------------------------------------------------------*/	
+	    public function int SpassEn_Get_Sw()
+	    {
+        	if (hi:d8SwMacroSpassEnHP == d8SwMacroSpassEnHP.on)
+        	{	
+	    		println('[HAL]BLIB-SpassEn_Get_Sw return TRUE');
+	    		return 1;
+	    	}
+	    	else
+	    	{
+	    		println('[HAL]BLIB-SpassEn_Get_Sw  return FALSE');
+	    		return 0;		
+	    	}
+	    }
+	    
+/*----------------------------------------------------------------------------------------------------------------
+//   Description:  Compares the HI settings and returns the CheckBox positions     
+----------------------------------------------------------------------------------------------------------------------------*/	
+	    public function void SpassEn_Set_Sw(int pos)
+	    {
+        	if (pos == 1)
+        	{	
+        		hi:d8SwMacroSpassEnHP = d8SwMacroSpassEnHP.on;
+	    		println('[HAL]BLIB-SpassEn_Set_Sw return TRUE');
+	    	}
+	    	else
+	    	{
+	    		hi:d8SwMacroSpassEnHP = d8SwMacroSpassEnHP.off;
+	    		println('[HAL]BLIB-SpassEn_Set_Sw return FALSE');		
+	    	}
+	    }
+		
+/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY   Spass  
+-----------------------------------------------------------------------------------------------------------------*/			
+	}
+}

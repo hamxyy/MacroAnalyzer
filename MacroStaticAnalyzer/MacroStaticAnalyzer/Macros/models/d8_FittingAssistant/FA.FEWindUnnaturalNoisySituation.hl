@@ -1,0 +1,102 @@
+// First Draft based on FA.AATemplateFitAss.hl 											:2013-05-14 Raymond
+// Added empty SelectProposal2 and ApplyProposal2 for there is no code completion       :2013-05-21 Judith
+// Update setApply2IsVisible to true													:2013-05-30 Raymond
+// Added FA_P_EnWnc to proposal1														:2013-06-27 Raymond
+// Update due to CR62325																:2013-07-02 Judith
+// Updated FA_X_DecWnc to FA_X_EnWnc													:2013-07-04 Raymond
+//FR62273: FIAS - Display propsal cannot be applied text for Tinnitus ear side          :2013-07-05 Judith
+//------------------------------------------------7.3----------------------------------------------------------------
+// Clean up comments and refractor method argument										:2013-12-13 Raymond
+//------------------------------------------------7.4----------------------------------------------------------------
+// Update for wnc proposal to display the appropriate proposal							:2014-07-22 Mang Yew
+// Comment out proposal related to binaural feature										:2014-08-19	Mang Yew
+/*------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package FittingAssistent FEWindUnnaturalNoisySituation
+	{
+		application function bool IsVisible ()
+		{
+			return true;
+		} //closing FEWindUnnaturalNoisySituation.IsVisible
+		
+		application function bool IsEnabled ()
+		{
+			return true;
+		} //closing FEWindUnnaturalNoisySituation.IsEnabled
+		
+		application function void SelectProposal1 ()
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+			{
+				setApply1IsVisible (false);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_P_Tinnitus");
+			}
+			//Hide it for Sifit7.4 as Binaural Proposal will not be available. Will be used again in Sifit7.5
+//			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_EnWnc"))
+//			{
+//				setApply1IsVisible (true);
+//				setApply1IsEnabled (true);
+//				setProposalTextID1 ("FA_P_EnWnc");
+//			}
+//			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_DecWnc"))
+//			{
+//				setApply1IsVisible (true);
+//				setApply1IsEnabled (true);
+//				setProposalTextID1 ("FA_P_DecWnc");
+//			}
+//			else if (cap:PricePoint < PricePoint.PP100)
+//			{
+//				setApply1IsVisible (true);
+//				setApply1IsEnabled (false);
+//				setProposalTextID1 ("FA_X_EnWnc");
+//			}
+//			else if (cap:PricePoint < PricePoint.PP500)
+//			{
+//				setApply1IsVisible (true);
+//				setApply1IsEnabled (false);
+//				setProposalTextID1 ("FA_X_DecWnc");
+//			}
+//			else
+//			{
+//				setApply1IsVisible (true);
+//				setApply1IsEnabled (false);
+//				setProposalTextID1 ("FA_N_DecWnc");
+//			}
+			// added for 7.4 workaround. This shall be removed once Binaural proposal is available to work for Fitting assistant.
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_DecGainLowFreq"))
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (true);
+				setProposalTextID1 ("FA_P_DecGainLowFreq");
+			}
+			else
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_N_DecGainLowFreq");
+			}
+		} //closing FEWindUnnaturalNoisySituation.SelectProposal1
+		
+		application function void ApplyProposal1 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID1 ());
+		} //closing FEWindUnnaturalNoisySituation.ApplyProposal1
+		
+		application function void SelectProposal2 ()
+		{
+			setApply2IsVisible (false);
+			setApply2IsEnabled (false);
+			setProposalTextID2 ("");
+		} //closing FEWindUnnaturalNoisySituation.SelectProposal2
+		
+		application function void ApplyProposal2 ()
+		{
+			// do nothing
+		} //closing FEWindUnnaturalNoisySituation.ApplyProposal2
+		
+	} //package FitAss FEWindUnnaturalNoisySituation
+
+} //namespace shs_sat

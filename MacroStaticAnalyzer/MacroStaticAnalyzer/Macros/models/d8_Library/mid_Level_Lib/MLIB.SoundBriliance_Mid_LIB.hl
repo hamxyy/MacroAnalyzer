@@ -1,0 +1,176 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                                 MID LEVEL PRICEPOINT LIBRARY  
+// Initial Version                						   								:  2011-02-16   Nadine Seubert
+// add remapping function                                  								:  2011-03-01   Nadine Seubert
+// Removed Package LIB workaround(application fcns)        								:  2011-03-07   Cecil Wilson
+// add new pricepoint dependency for EN                    								:  2011-04-11   Nadine Seubert
+// added SoundBriliance_Default_InputMode_Pos 			   
+// removed cap:Pricepoint workaround					   								:  2011-06-27   Cecil Wilson
+// Add println for easy debuggin                           								:  2011-06-27   Chuah LayYuan
+// Add IsEnabled function                                  								:  2011-06-27   Chuah LayYuan
+// Add checking for FCO	status in Is_Enabled()			   								:  2011-07-18   Chuah LayYuan
+// updated closing remarks								   								:  2011-08-05   Jenny Lin
+// updated comments, the remapping for SL and En, default pos after FirstFit and
+// default pos for input mode according to MRS (D00089343) 								:  2011-08-29   Jenny Lin
+// added comments related to the controls and update the println to show the error (-1) :  2011-11-22	Jenny Lin
+// removed PP dependency for the setpos and getpos for the slider.						:  2012-02-14	Jenny Lin
+// rework SoundBriliance/ new Inpute from j.Lauer                                       : 2012-06-15 Nadine / Frauke
+// Deleted SoundBrillianceEn_DefaultPos: not needed anymore								: 2012-07-03 Nadia, Nadine, Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Update macro based on CR55955
+// Rework IsEnabled() of SB only enabled when FCO = OFF, Input mode = Tek/miniTek and 
+// not Tinnitus Pure noise																:  2012-07-17 Jenny Lin
+// ER56647: FITU: SoundBrilliance available for Ace but must not                : 2012-08-24 Nadine Seubert
+// CR57038: SoundBrilliance Implementation                                      : 2012-08-24 Nadine Seubert
+// ER57264: FITU - Macro - FCO & Soundbrilliance Interaction wrong              : 2012-09-04 Nadine Seubert
+// CR58761: MACRO: Cxx crash for Pp300 devices when Tek/minitek input mode is selected 
+// SoundBrilianceEN_Remapping(int pos) function has been re-worked so that for PPs lower than 500, a value of 
+// 20 is returned (i.e. soundbriliance check box=off), no matter what the value of the input argument to the function. : 2012-11-13 Al Manders
+// Added assertion error messages												: 2012-12-19 Ma Mie Mie Thein
+// Changed SB for Nitro to set off position (SB not available for Nitro all PP) : 2013-04-25 Sonia
+// ******SIFIT7.2_PEERREVIEWED: removed SoundBriliance_Default_InputMode_Pos (not use in macros)  :  2013-07-30   Jenny, Judith
+// refractor: Optimize code									: 2013-12-02 Jenny
+// Updated printline statement.								: 2014-03-03 Jenny
+// Sifit7.3 Peer review																: 2014-04-14 Jenny, Judith
+// FR67014 Set SoundBrilliance Slider Default to Minimum.							: 2014-05-09 Jenny
+/*----------------------------------------------------------------------------------------------------------------*/
+
+/*---------------------------------------------------7.4----------------------------------------------------------$$*/
+// Replaced High_Level_Library_Noiser.Noiser_IsOnAndPure() to 
+//BasicLibrary_Noiser.Noiser_IsOnAndPure () 										: 2014-08-07 Sultan
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib Mid_Level_Library_SoundBriliance
+	{
+
+	/*---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    SoundBrilianceEN_Remapping
+//   Input      :  <int> Slider checkbox from Cxx
+//   Ouput      :  <int> Actual checkbox position with respect to basic capability function
+//   Description:  remapping  checkbox positions;     
+//					pos_remapped:
+//					10 - OFF for 700
+//					20 - OFF for 500 deactivates higher channel
+//					30 - ON w.r.t. PP700
+//					40 - ON w.r.t. PP500 activates higher channel
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SoundBrilianceEN_Remapping (int pos) //SIFIT7.3PEERREVIEWED
+		{
+			int pos_remapped = -1; // Initilizing the position remapping 
+			if (pos == 1)
+			{
+			// SoundBrilliance is only available for PP700 & PP500 AND NOT SUPER POWER
+				if (cap:SuperPowerHI != SuperPowerHI.SuperPower)
+				{
+					if (cap:PricePoint == PricePoint.PP700)
+					{
+						pos_remapped = 30; //  checkbox ON state
+
+					}
+					else if (cap:PricePoint == PricePoint.PP500)
+					{
+						pos_remapped = 40; //  checkbox ON state
+
+					}
+					else
+					{
+					//default to off since it is not available for other PricePoint
+						pos_remapped = 10; //  checkbox OFF state
+
+					}
+				}
+				else
+				{
+				//default to off since it is not available for Super Power
+					pos_remapped = 10; //  checkbox OFF state
+
+				}
+			}
+			else
+			{ //SoundBrilliance = off.
+				if (cap:PricePoint == PricePoint.PP500)
+				{
+					pos_remapped = 20; //  checkbox OFF state 
+
+				}
+				else
+				{
+				//default to off since it is not available for other PricePoint
+					pos_remapped = 10; //  checkbox OFF state
+
+				}
+			}
+			println ('[HAL]: MLIB.SoundBrilianceEN_Remapping = ' + pos_remapped);
+			return pos_remapped;
+		} //Closes Mid_Level_Library_SoundBriliance.SoundBrilianceEN_Remapping
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    SoundBriliance_IsVisible
+//   Input		:  none
+//   Ouput      :  <bool> Returns True if visible; False if Not Visible 
+//   Description:  decides the visibility of the SoundBrilliance checkbox and slider.
+//		[2011-11-18]: From D00089343 v1.5 (in-work): Only PP700 & PP500 visible.
+//		[2013-10-25]: From Sifit7.3 MRS, SoundBrilliance resides in InputMode page and is dependent on Input mode selected.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SoundBriliance_IsVisible () //SIFIT7.3PEERREVIEWED
+		{
+		// SoundBrilliance shall only be visible when:
+		// Input Mode = Tek/miniTek AND PP700/PP500 AND non-super power HI.
+			if (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Tek_d_miniTek &&
+					((cap:PricePoint == PricePoint.PP700 ||
+							cap:PricePoint == PricePoint.PP500) &&
+						cap:SuperPowerHI == SuperPowerHI.NoSuperPower))
+			{
+				println ('[HAL]: MLIB.SoundBriliance_IsVisible = TRUE' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+				return true;
+			}
+			else
+			{
+				println ('[HAL]: MLIB.SoundBriliance_IsVisible = FALSE' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+				return false;
+			}
+		} //Closes Mid_Level_Library_SoundBriliance.SoundBriliance_IsVisible
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    SoundBriliance_Is_Enabled
+//   Input		:  none
+//   Ouput      :  <bool> Returns True if not grey out; False if grey out
+//   Description:  decides the greyed out of the SoundBrilliance -> this function is used for Checkbox and Slider
+//		[2013-10-25]: From Sifit7.3 MRS, SoundBrilliance resides in InputMode page.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SoundBriliance_Is_Enabled () //SIFIT7.3PEERREVIEWED
+		{
+		// SoundBrilliance shall only be enabled when not in Pure Noiser mode and FCO unchecked and EasyTek is connected.
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure () == false &&
+					BasicLibrary_FCO.FCOEn_Get () == false &&
+					BasicLibrary_UserControl.IsEasyTekConnected ())
+			{
+				println ('[HAL]: MLIB.SoundBriliance_Is_Enabled = TRUE' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+				return true;
+			}
+			else
+			{
+				println ('[HAL]: MLIB.SoundBriliance_Is_Enabled = FALSE' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+				return false;
+			}
+		} // Closing Mid_Level_Library_SoundBriliance.SoundBriliance_Is_Enabled
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    SoundBrilianceSL_DefaultPos
+//   Input		:  none
+//   Ouput      :  <int> Default position of the Slider for SoundBrilliance Slider
+//   Description:  DefaultPosition of the Slider for Soundbrilliance when the user enables it for the first time
+//              :  This position should be used in case there is invalid slider position found in macro   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SoundBrilianceSL_DefaultPos () //SIFIT7.3PEERREVIEWED
+		{
+			return 0; // FR67014 Set SoundBrilliance Slider Default to Minimum
+
+		} //Closes Mid_Level_Library_SoundBriliance.SoundBrilianceSL_DefaultPos
+
+	} //package Mid_Level_Library_SoundBriliance
+
+} //namespace shs.sat

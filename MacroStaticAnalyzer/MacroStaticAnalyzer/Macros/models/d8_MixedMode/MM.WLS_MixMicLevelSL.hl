@@ -1,0 +1,67 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                            WirelessAudio/Phone -  Microphone Level Slider 
+// Initial Version		         										   :  2011-03-14  Cecil Wilson
+// Updated IsEnabled,IsVisible functions								   :  2011-03-16  Cecil Wilson
+// Added Tinnitus and checkbox based Greyout						       :  2011-03-23  Cecil Wilson  
+// Merged Wireless Audio and Phone Macros								   :  2011-03-28  Cecil Wilson
+// Add println for MPV testing											   :  2011-09-22  Jenny Lin
+// Macro code Cleanup													   :  2012-02-14  Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Call the BLIB general getpos and setpos for the mix microphone slider,  
+// and remove the returning of 0 instead of the invalid value returned by the BLIB.  
+// Calling HLIB for the IsEnabled test 										: 2012-06-13  Jenny Lin
+// ******SIFIT7.2_PEERREVIEWED: 											:  2013-07-30   Jenny, Judith
+// updated IsVisible() to call the Is_Wireless_Input_Mode() and
+// maxpos MicrophoneLevelSL_MaxPos	: 2013-11-04 Jenny
+// refractor: Optimize code									: 2013-12-02 Jenny
+// updated println statement for debugging.											: 2014-01-15 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// ****** SIFIT7.4 ******
+// Updated SetPos to PrintEnvSettings to test SideSelection macro.  				:  2014-08-25   Jenny
+// Updated IsVisible to call BLIB instead of MLIB. Code cleanup: Updated printlines.	: 2014-10-21 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode WLS_MixMicLevelSL
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MixedMode.WLS_MixMicLevelSL.IsVisible'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+
+			bool retVal = BasicLibrary_InputMode.Is_Wireless_Input_Mode ();
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.WLS_MixMicLevelSL.IsEnabled');
+
+			bool retVal = High_Level_Library_MicrophoneMix.WLS_Mix_MicLevelSL_IsEnable ();
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.WLS_MixMicLevelSL.MaxPos');
+
+			int retVal = Mid_Level_Library_MicrophoneMix.MicrophoneLevelSL_MaxPos (); // This is a slider with 8 steps)
+			return retVal;
+		}
+
+		application function int GetPos ()
+		{
+			println ('[HAL]MixedMode.WLS_MixMicLevelSL.GetPos');
+
+			int retVal = High_Level_Library_MicrophoneMix.Get_MicrophoneLevelSL_CxxPos ();
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.WLS_MixMicLevelSL.SetPos'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+			
+			High_Level_Library_MicrophoneMix.Set_MicrophoneLevelSL_CxxPos (pos);
+		}
+	}
+}

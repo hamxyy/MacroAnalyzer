@@ -1,0 +1,108 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            MID LEVEL PRICEPOINT LIBRARY : Compression
+-----------------------------------------------------------------------------------------------------------------
+// Initial Version                                          						: 2011-08-18 Nadia Neugeborn 
+// Added Compression_Chan function													: 2012-03-20 Nadia Neugeborn 
+// Dual compression type for CxxFit (part of XcelAmp)								: 2012-04-02 Nadia Neugeborn
+// No specific compression for traditional formulas									: 2012-06-12 Nadia Neugeborn
+// FirstFit peer review updates														: 2012-07-20 Nadia & Judith
+******************************************CODE FREEZE************************************************************* 
+// FR53491 implemented compression radio buttons									: 2012-07-25 Nadia Neugeborn
+// CR56505 updated compression getPos and defaults									: 2012-07-30 Nadia Neugeborn
+// CR51742: Fix of logChanCount - remove Compression_Chan ()						: 2012-08-20 Nadia Neugeborn
+// Functions re-worked so that the new index '2' corresponds to Pp300 and Pp100 Xcel 
+// fit. (Pp300 & 100 Devices currently not relased yet)                             : 2012-11-23 Al Manders
+// Peer review update: added assertion for CompressionMethodRB_Remapping			: 2013-01-08 Mie Mie
+// CR59113: Compression_Method_Default(), CompressionMethodRB_Remapping(int pos) 
+// and annotation changed, as Pp300 now uses Almfit compression. 					: 2013-01-08 Al Manders
+// Updated remapped_pos for compression methode to separate Nitro from other devices: 2013-04-11 Sonia
+// FR61464 - Added PP75 code to CompressionMethodRB_Remapping (int pos). 			: 2013-04-18 Al
+// FR61464 - Added PP75 code to Compression_Method_Default ()       				: 2013-04-22 Al
+// Updated compression based on RP20. mini-peer review with Al						: 2013-07-17 Jenny & Al
+// ******SIFIT7.2_PEERREVIEWED: 					  								: 2013-07-31 Jenny,Judith,Al,Raymond
+//------------------------------------------------7.3----------------------------------------------------------------
+// FR64913: Replace ConnexxFit with BinaxFit										: 2014-02-27 Raymond
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{		
+	using shs_sat.*; //Not required as this library is not calling HLIB or BLIB
+				
+	package Lib Mid_Level_Library_Compression
+	{
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Mid Level PP LIBRARY Function:    CompressionMethodRB_Remapping
+		//   Input      :  <int> Radio button position from Cxx
+		//   Ouput      :  <string> 
+		//   Description:  To setup the compression scheme based on the formula and PricePoint.
+							   10 = ALM  (PP700/PP500/PP300)
+							   20 = XCEL  (PP100)
+							   30 = SIRION  (PP75)
+							   50 = TRADITIONAL  (ALL PP)
+		// ******SIFIT7.2_PEERREVIEWED
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int CompressionMethodRB_Remapping (int pos)
+		{
+			int remapped_pos = -1;
+			if (pos == 2)
+			{
+				if (cap:PricePoint == PricePoint.PP100)
+				{
+					//XCEL compression
+					remapped_pos = 20; // '"XCEL"
+				}
+				else if (cap:PricePoint == PricePoint.PP75)
+				{
+					//Sirion compression
+					remapped_pos = 30; // "SIRION"
+				}
+			}
+			else if (pos == 1)
+			{
+				if (cap:PricePoint == PricePoint.PP700 ||
+					cap:PricePoint == PricePoint.PP500 ||
+					cap:PricePoint == PricePoint.PP300)
+				{
+					//ALM compression
+					remapped_pos = 10; // "ALM"
+				}
+			}
+			else if (pos == 0)
+			{
+				remapped_pos = 50; // "TRADITIONAL"
+			}
+			assertion (remapped_pos >= 0,"[MacroError]MLIB Undefined position for CompressionScheme_Remapping, position not equal to Pricepoint!");
+			return remapped_pos;
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		//   Mid Level PP LIBRARY Function:    Compression_Method_Default()
+		//   Input		:  none
+		//   Ouput      :  <int> Default Compression Method
+		//   Description:  Determines the right Compression Method based on fitting formula
+		// ******SIFIT7.2_PEERREVIEWED
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int Compression_Method_Default ()
+		{
+			int retval = -1;
+			if (fit:SelectableFormula == SelectableFormula.BinaxFit)
+			{
+				if (cap:PricePoint >= PricePoint.PP300)
+				{
+					retval = 1; // ALM
+				}
+				else
+				{
+					retval = 2; // XCEL or Sirion
+				}
+			}
+			else
+			{
+				retval = 0; // TRADITIONAL
+			}
+			return retval;
+		}
+		
+	}
+}
+		

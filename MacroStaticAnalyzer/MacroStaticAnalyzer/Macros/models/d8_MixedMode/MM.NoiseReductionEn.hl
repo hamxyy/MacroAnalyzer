@@ -1,0 +1,69 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Noise Reduction Checkbox
+Initial Version																	: 2013-11-05 Mang Yew
+Sifit 7.3 Peer Reviewed															: 2014-04-14 Mang Yew
+Sifit7.4 Peer Reviewed															: 2014-11-13 Mang Yew	
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{	
+    using shs_sat.*;  
+    package MixedMode NoiseReductionEn
+    {
+		application function bool IsVisible()
+		{
+			println('[HAL]MixedMode.NoiseReductionEn.IsVisible = TRUE');
+			return true;
+		}
+				
+		application function bool IsEnabled()
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				println('[HAL]MixedMode.NoiseReductionEn.IsEnabled: FALSE');
+				return false;
+			}
+			else
+			{
+				println('[HAL]MixedMode.NoiseReductionEn.IsEnabled: TRUE');
+				return true;
+			}
+		}
+				
+		application function int MaxPos()
+		{
+	 		println('[HAL]MixedMode.NoiseReductionEn.MaxPos = 1');
+	 		
+			return 1;
+		}
+		
+		application function bool IsEnabledPos(int pos)
+		{
+	 		println('[HAL]MixedMode.NoiseReductionEn.IsEnabledPos = TRUE');
+	 					
+			return true;
+		}
+				
+		application function int GetPos()
+		{
+			int hp=env:Prog;		
+			if ( BasicLibrary_NoiseReduction.NoiseReductionEn_Get() == true)
+			{ 
+	 			println('[HAL]MixedMode.NoiseReductionEn.GetPos = 1 in HP='+hp);
+	 			return 1;
+	 		}
+			else
+			{
+				println('[HAL]MixedMode.NoiseReductionEn.GetPos = 0 in HP='+hp);
+				return 0;
+			} 		 
+		}
+				
+		application function void SetPos(int pos)
+		{
+			int hp=env:Prog;
+	 		println('[HAL]MixedMode.NoiseReductionEn.SetPos = ' + pos + ' in HP='+hp);	 		
+	 		High_Level_Library_NoiseReduction.NoiseReductionEn_Set(pos); 
+		}
+
+	}	//package MixedMode.NoiseReductionEn
+}	//namespace shs.sat

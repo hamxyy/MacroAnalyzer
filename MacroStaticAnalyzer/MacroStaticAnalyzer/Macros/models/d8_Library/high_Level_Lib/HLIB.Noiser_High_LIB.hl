@@ -1,0 +1,373 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                                 HIGH LEVEL LIBRARY Noiser
+// Initial Version                						     							:  2011-03-17 Meike Doose
+// Add functions for Tinnitus preset (Pink, White, Speech, HighTone) functions   		:  2011-11-02 Ma Mie Mie Thein
+// Removed calling NoiserPreset_PinkNoise from other preset functions as it was called in MixedMode: 2012-01-18 Ma Mie Mie Thein
+// Updated println 																		:  2012-05-03 Jenny
+// Added new function Noiser_IsOnAndPure to check settings of noiser.					:  2012-06-11 Alastair 
+// Peer review comments implemented														:  2012-06-19 MieMie/Cecil/Nadia
+// Updated based on peer review (ProgramSelection)										:  2012-06-27 Frauke, Jenny and co
+// FirstFit peer review: added Noiser_Set_Default() 									:  2012-07-18 Nadia & Judith
+// FR60546: Added NoiserDefault_Offset function to reduce firstfit & program selection default whitenoise level:2013-05-16 Mie Mie 
+*/
+// *********************************************CODE FREEZE*******************************************************
+// ER61121 (To deactivate FBC in pure Tinnitus mode)							        : 2012-05-30 Mang Yew   
+// Sifit 7.2 Peer Review																: 2013-08-01 Alastair, Raymond
+// Update ID number in Set_ProgramSelection function									:	2013-10-29 Sonia Stasiak
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Updated comments	for Set_ProgramSelection D9											:	2013-11-01 Sonia Stasiak
+// Updated Set_Program Selection with d9SwMacroProgramIdHp control instead of ID		:	2013-12-17 Sonia Stasiak
+// Added Noiser_IsOnAndPureOpposite ()                                                  :   2014-01-10 Al
+// ------------------------------------------------------------- SIFIT7.3 -----------------------------------------
+// Update for Sifit7.3: updated for the MPV changes.								: 2014-01-16 Jenny
+// Comment update for Program Selection													: 2014-03-19 Sonia
+// Sifit7.3 Peer review	: Updated comments.  											: 2014-04-14 Jenny, Sonia
+// PEER REVIEW CXX 7.3	for Program Selection										:	2014-05-06 Sonia, Mie Mie, Jenny
+/*$$----------------------------------------------------------------------------------------------------------------$$*/
+// ------------------------------------------------------------- SIFIT7.4 -----------------------------------------
+// Update for 7.4: added new mixed with mic checkbox    (also in default)               : 2014-05-28 Meike Steinbuss
+// first draft of modulated noise included												: 2014-06-04 Meike Steinbuss   
+// include dependencies regarding new tinnitus UI for tinnitus program					: 2014-06-16 Meike Steinbuss 
+// deleting of noiser RB																: 2014-07-7 Meike Steinbuss
+// inlcude aMNR dependencies for pure and mixed noiser mode								: 2014-07-7 Meike Steinbuss
+// include dependency to NoiserPresetModulatedNoiseRB_Set in NoiserPresetModulatedNoiseBU_Set: 2014-07-16 Meike Steinbuss
+// rearrange noiser mode and include p_tin_mode = pure again after rejection of CR in Progam CCB								: 2014-07-17 Meike Steinbuss
+// correct small error in NoiserPreset_ModulatedNoise									: 2014-07-22 Meike Steinbuss
+// include HighLevelLib for Static Presets because of Modulated Noise to  be turned off	: 2014-07-28 Meike
+// Re-write Set_ProgramSelection to call BLib.Is<program>									: 2014-09-16 Sonia
+// Added new function IsNoiserNotOnAndPure () to return true is Noise Not On and Pure	: 2014-10-01 Mang Yew
+// FR67820 : Added d8SwRecalculateFitRunning check in Noiser_Set_ProgramSelection function: 2014-10-08 Mie Mie
+// ER69023 : Tinnitus_Selection_Get function added										: 2014-10-10 Mie Mie
+// FR67820 : Undo macro changes in Noiser_Set_ProgramSelection function for this CR 
+// because this CR will be solved by SW													: 2014-10-16 Mie Mie
+// 7.4 Peer review Changes
+//	-- Renamed IsNoiserOnAndPureForSingleHi to IsNoiserOnAndPureForMonauralFitting      : 2014-11-12 Sultan/Alastair/Mie Mie/Frauke 
+
+/*$$----------------------------------------------------------------------------------------------------------------$$*/
+
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_Noiser
+	{
+
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    NoiserEn_Set
+//   Input      :  <int> Checkbox set w.r.t CxxPos
+//   Output      :  <void> 
+//   Description:  sets the Noiser checkbox based on CxxPos    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void NoiserEn_Set (int CxxPos) //SIFIT7.3PEERREVIEWED
+		{
+			// sets the checkbox
+			BasicLibrary_Noiser.NoiserEn_Set_Entry (CxxPos);
+			
+			// takes care of inter-dependence of FBC state when Noiser state change.
+			if (High_Level_Library_FeedbackStopper.FeedbackStopperEN_GetPos () == true)
+			{
+				High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set_For_Microphone_Tinnitus (1);
+			}
+		} // Closing High_Level_Library_Noiser.NoiserEn_Set		
+	
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    Noiser_MixMicrophoneEn_Set
+//   Input      :  <int> Checkbox set w.r.t CxxPos
+//   Output      :  <void> 
+//   Description:  sets the Noiser_MixMicrophone checkbox based on CxxPos    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Noiser_MixMicrophoneEn_Set (int CxxPos)
+		{
+			// sets the checkbox
+			BasicLibrary_Noiser.Noiser_MixMicrophoneEn_Set_Entry (CxxPos);
+			
+			// takes care of inter-dependence of FBC state when Noiser state change.
+			if (High_Level_Library_FeedbackStopper.FeedbackStopperEN_GetPos () == true)
+			{
+				High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set_For_Microphone_Tinnitus (1);
+			}
+		} // Closing High_Level_Library_Noiser.Noiser_MixMicrophoneEn_Set
+
+	/*----------------------------------------------------------------------------------------------------------------
+//   High Level LIBRARY Function:    NoiserPreset_PinkNoise
+//   Input      :  None
+//   Output      :  Set Tinnitus Pink Noise preset 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void NoiserPreset_PinkNoise () 
+
+		{
+			// Disable Modulated Noise
+			BasicLibrary_Noiser.NoiserPreset_ModulatedNoiseOff ();
+			// Apply PinkNoise
+			BasicLibrary_Noiser.NoiserPreset_PinkNoise ();
+		} //close High_Level_Library_Noiser.NoiserPreset_PinkNoise
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   High Level LIBRARY Function:    NoiserPreset_WhiteNoise
+//   Input      :  None
+//   Output      :  Set Tinnitus White Noise preset 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void NoiserPreset_WhiteNoise () 
+
+		{
+			// Disable Modulated Noise
+			BasicLibrary_Noiser.NoiserPreset_ModulatedNoiseOff ();
+			// Apply WhiteNoise
+			BasicLibrary_Noiser.NoiserPreset_WhiteNoise ();
+		} //close High_Level_Library_Noiser.NoiserPreset_WhiteNoise
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   High Level LIBRARY Function:    NoiserPreset_SpeechNoise
+//   Input      :  None
+//   Output      :  Set Tinnitus Speech Noise Noise preset 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void NoiserPreset_SpeechNoise () 
+
+		{
+			// Disable Modulated Noise
+			BasicLibrary_Noiser.NoiserPreset_ModulatedNoiseOff ();
+			// Apply SpeechNoise
+			BasicLibrary_Noiser.NoiserPreset_SpeechNoise ();
+		} //close High_Level_Library_Noiser.NoiserPreset_SpeechNoise
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   High Level LIBRARY Function:    NoiserPreset_HighToneNoise
+//   Input      :  None
+//   Output      :  Set Tinnitus High Tone preset 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void NoiserPreset_HighToneNoise () 
+		{
+			// Disable Modulated Noise
+			BasicLibrary_Noiser.NoiserPreset_ModulatedNoiseOff ();
+			// Apply HighToneNoise
+			BasicLibrary_Noiser.NoiserPreset_HighToneNoise ();
+		} //close High_Level_Library_Noiser.NoiserPreset_HighToneNoise
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   High Level LIBRARY Function:    NoiserPreset_HighToneNoise
+//   Input      :  None
+//   Output      :  Set Tinnitus High Tone preset 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void NoiserPreset_BrownianNoise () 
+		{
+			// Disable Modulated Noise
+			BasicLibrary_Noiser.NoiserPreset_ModulatedNoiseOff ();
+			// Apply BrownianNoise
+			BasicLibrary_Noiser.NoiserPreset_BrownianNoise ();
+		} //close High_Level_Library_Noiser.NoiserPreset_HighToneNoise
+		
+		/*----------------------------------------------------------------------------------------------------------------
+//   High Level LIBRARY Function:    NoiserPreset_ModulatedNoise
+//   Input      :  None
+//   Output      :  Enable Tinnitus Modulated Noise bit
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void NoiserPreset_ModulatedNoise () 
+		{
+			BasicLibrary_Noiser.NoiserPreset_ModulatedNoise ();
+			
+			if(hi:d9PhlTinOceanSetting == d9PhlTinOceanSetting.Set_1)
+			{
+				BasicLibrary_Noiser.NoiserPresetModulatedNoiseRB_Set_Entry (0);				
+			}
+			else if (hi:d9PhlTinOceanSetting == d9PhlTinOceanSetting.Set_2)
+			{
+				BasicLibrary_Noiser.NoiserPresetModulatedNoiseRB_Set_Entry (1);				
+			}
+			else if (hi:d9PhlTinOceanSetting == d9PhlTinOceanSetting.Set_3)
+			{
+				BasicLibrary_Noiser.NoiserPresetModulatedNoiseRB_Set_Entry (2);				
+			}
+			else if (hi:d9PhlTinOceanSetting == d9PhlTinOceanSetting.Set_4)
+			{
+				BasicLibrary_Noiser.NoiserPresetModulatedNoiseRB_Set_Entry (3);				
+			}
+		} //close High_Level_Library_Noiser.NoiserPreset_ModulatedNoise
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description :  If tinnitus noise is setup not equivalent to be activated and in Pure mode, return true.
+-----------------------------------------------------------------------------------------------------------------*/				
+		public function bool IsNoiserNotOnAndPure ()
+		{
+			bool retVal = BasicLibrary_Noiser.Noiser_IsOnAndPure () == false; 				
+			return retVal;			   
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    IsNoiserOnAndPureExclusiveInAnyFitting
+//   Input       :  none
+//   Output      :  <bool>
+//   Description :  If tinnitus noise is setup to on for either two sides of a binaural fitting or one side of
+* 					a monoaural fitting.      
+-----------------------------------------------------------------------------------------------------------------*/				
+		public function bool IsNoiserOnAndPureExclusiveInAnyFitting()
+		{
+			bool retVal = false;
+			if (IsNoiserOnAndPureInBinauralFitting() == true ||
+				IsNoiserOnAndPureForMonauralFitting() == true)				
+		  	{
+				retVal = true;				
+		  	}			  	
+			return retVal;			   
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    IsNoiserOnAndPureForMonauralFitting
+//   Input       :  none
+//   Output      :  <bool>
+//   Description :  
+* 					      
+-----------------------------------------------------------------------------------------------------------------*/		
+		public function bool IsNoiserOnAndPureForMonauralFitting()
+		{
+			bool retVal = env:DetHi != DetHi.BothSides &&	 						   
+						  BasicLibrary_Noiser.Noiser_IsOnAndPure();
+			return retVal;						 							  
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    IsNoiserOnAndPureOnOneSideOffOppSide
+//   Input       :  none
+//   Output      :  <bool>
+//   Description :  
+* 					  
+-----------------------------------------------------------------------------------------------------------------*/		
+		public function bool IsNoiserOnAndPureOnOneSideOffOppSide()
+		{
+			bool retVal = (BasicLibrary_Noiser.Noiser_IsOnAndPure() == true 
+								&& BasicLibrary_Noiser.Noiser_IsOnAndPureOpposite() == false) ||
+						  (BasicLibrary_Noiser.Noiser_IsOnAndPure() == false 
+								&& BasicLibrary_Noiser.Noiser_IsOnAndPureOpposite() == true);
+			return retVal;						 							  
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    IsNoiserOnAndPureInBinauralFitting
+//   Input       :  none
+//   Output      :  <bool>
+//   Description :  If tinnitus noise is setup for two sides of a binaural fitting 
+-----------------------------------------------------------------------------------------------------------------*/				
+		public function bool IsNoiserOnAndPureInBinauralFitting()
+		{
+			bool retVal = false;
+			if (env:DetHi == DetHi.BothSides)
+		  	{
+				if (BasicLibrary_Noiser.Noiser_IsOnAndPure() == true &&
+						BasicLibrary_Noiser.Noiser_IsOnAndPureOpposite() == true)
+				{
+					retVal = true;
+			   	}				
+		  	}			 
+			return retVal;			   
+		}		
+		
+
+/*---------------------------------------------------------------------------------------------------------*
+// High Level Library function: Noiser_Set_ProgramSelection
+//	Description	:	Function is setting Tinnitus Noiser Mode for all listening situation.
+//				:	In Tinnitus Program default white noise level is 6dB lower than the white noise preset (FR60546). 
+/*---------------------------------------------------------------------------------------------------------*/
+		public function void Noiser_Set_ProgramSelection ()
+		{
+			println ('[HAL]HLIB.Noiser_Set_ProgramSelection in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			
+				if (BasicLibrary_ProgramSelection.IsTinnitus() == true)
+				{
+					// Tinnitus Noiser set to ON, PURE NOISER mode, stimulus type WHITE NOISE, add offset
+				
+					High_Level_Library_Noiser.NoiserEn_Set(1);
+					High_Level_Library_Noiser.Noiser_MixMicrophoneEn_Set (0);
+					BasicLibrary_Noiser.NoiserPreset_WhiteNoise ();
+					BasicLibrary_Noiser.NoiserDefault_Offset ();
+				}
+				
+				else // (all other programs)
+				{
+					//Tinnitus Noiser set to OFF, Mix wit Mic checkbox ON (but greyed out)
+					
+					High_Level_Library_Noiser.NoiserEn_Set(0);
+					High_Level_Library_Noiser.Noiser_MixMicrophoneEn_Set (1);
+				}
+		} // closes High_Level_Library_Noiser.Noiser_Set_ProgramSelection()			
+/*----------------------------------------------------------------------------------------------------------------
+//   High Level LIBRARY Function:    Noiser_Set_Default
+//   Input      :  None
+//   Output      :  None
+//	 Description:  FirstFit should set Noiser (tinnitus) to off and noiser preset to "white noise". 
+//                 And firstfit default whitenoise level is 6dB lower than the Whitenoise preset. (FR60546)
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void Noiser_Set_Default () //SIFIT7.3PEERREVIEWED
+		{
+			High_Level_Library_Noiser.NoiserEn_Set(0); // Tinnitus OFF
+			High_Level_Library_Noiser.Noiser_MixMicrophoneEn_Set(1); //0:Pure, 1=Mixed
+
+			BasicLibrary_Noiser.NoiserPreset_WhiteNoise (); // Set preset to "White noise"
+			BasicLibrary_Noiser.NoiserDefault_Offset (); // Add additional offset to tinnitus default (FR60546)
+
+		} //close High_Level_Library_Noiser.Noiser_Set_Default()
+		
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+	 Cxx will use GetPos of Tinnitus Selection to decide whether or not sync between left and right side is needed 
+	 	0 = only one side (left or right side)
+		1 = both the same (both HIs are programmed to be either a) both modulated or b) both static)
+		2 = modulated right (only the right HI is set to modulated, left is static)
+		3 = modulated left (only the left HI is set to modulated, right is static) 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int Tinnitus_Selection_Get ()
+		{
+			println('[HAL]HlibNoiser.Tinnitus_Selection_Get');
+			int retval = 0;	// default to only one side
+
+			if(env:HiDriverWorkMode == HiDriverWorkMode.Fitting && env:DetHi == DetHi.BothSides)
+			{	
+			
+				if((BasicLibrary_Noiser.IsStaticNoiseSetInCurrentSide()
+					&& BasicLibrary_Noiser.IsStaticNoiseSetInOppSide())
+					||(BasicLibrary_Noiser.IsModuelateNoiseSetInCurrentSide()
+						&& BasicLibrary_Noiser.IsModuelateNoiseSetInOppSide()))
+					{
+						retval = 1;
+					}
+				else if(BasicLibrary_Noiser.IsModuelateNoiseSetInCurrentSide()
+					&& BasicLibrary_Noiser.IsStaticNoiseSetInOppSide())					
+					{
+						retval = 2;
+					}
+				else if(BasicLibrary_Noiser.IsStaticNoiseSetInCurrentSide()
+					&& BasicLibrary_Noiser.IsModuelateNoiseSetInOppSide())					
+					{
+						retval = 3;
+					}
+			}
+
+//			if(env:HiDriverWorkMode == HiDriverWorkMode.Fitting && env:DetHi == DetHi.BothSides)
+//			{						
+//				if((hi:d9FTinOceanEn == d9FTinOceanEn.off_d_constant_noise 
+//					&& opp(hi:d9FTinOceanEn) == d9FTinOceanEn.off_d_constant_noise)
+//					||(hi:d9FTinOceanEn == d9FTinOceanEn.on_d_modulated_noise
+//						&& opp(hi:d9FTinOceanEn) == d9FTinOceanEn.on_d_modulated_noise))
+//					{
+//						retval = 1;
+//					}
+//				else if(hi:d9FTinOceanEn == d9FTinOceanEn.on_d_modulated_noise 
+//					&& opp(hi:d9FTinOceanEn) == d9FTinOceanEn.off_d_constant_noise)
+//					{
+//						retval = 2;
+//					}
+//				else if(hi:d9FTinOceanEn == d9FTinOceanEn.off_d_constant_noise 
+//					&& opp(hi:d9FTinOceanEn) == d9FTinOceanEn.on_d_modulated_noise)
+//					{
+//						retval = 3;
+//					}
+//			}
+			else
+			{
+				retval = 0;	
+			}
+
+			return retval;
+		}
+
+} //package High_Level_Library_Noiser
+
+} //namespace shs.sat

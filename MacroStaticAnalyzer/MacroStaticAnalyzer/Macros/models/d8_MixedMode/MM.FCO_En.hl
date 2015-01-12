@@ -1,0 +1,56 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        FCO CheckBox
+// Initial Version                						                  		: 2011-08-03 Chuah LayYuan
+// Updated the SetPos to call the HLIB.SoundBrilianceEn_SetOFF_For_FCO			: 2011-08-29 Jenny Lin
+// Add println for MPV testing													: 2011-09-22 Jenny Lin
+// IsVisible reworked because of HLIB and MLIB added							: 2011-11-28 Nadia Neugeborn
+// call the HLib for the GetPos and the SetPos									: 2011-11-29 Jenny Lin
+// Macro code Cleanup															: 2012-02-14 Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Peer review changes															: 2012-06-20 Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Update function call to Fco_IsAvailable from FcoEn_IsVisible						:2013-06-11 Raymond
+// optimize code.															: 2014-03-03 Jenny
+// Sifit7.3 Peer review																: 2014-04-21 Jenny, Jeline
+// FR68941 to disable FCO when tinnitus is ON and Pure						:2014-09-02 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat {	
+	using shs_sat.*;	
+
+	package MixedMode FCO_En{		
+
+	application function bool IsVisible(){
+		println('[HAL]MM - FCO_En - IsVisible');
+		return Mid_Level_Library_FCO.Fco_IsAvailable();			
+	}// closes IsVisible
+	
+	application function bool IsEnabled()
+	{
+		bool retVal = false;
+		retVal = High_Level_Library_FCO.FCOIsEnabled(); 								
+ 		println('[HAL]MM - FCO_En - IsEnabled = ' + retVal);
+		return retVal;
+	}// closes IsEnabled
+
+	application function int MaxPos(){
+ 		println('[HAL]MM - FCO_En - MaxPos = 1');			
+		return 1;	// This is a Check Box with 2 states. 0 and 1		
+	}// closes MaxPos
+			
+ 	application function bool IsEnabledPos(int pos){		
+ 		println('[HAL]MM - FCO_En - IsEnabledPos = TRUE (always)');
+ 		return true;
+ 	}// closes IsEnabledPos
+	
+ 	application function int GetPos(){	 		
+ 		println('[HAL]MM - FCO_En - GetPos');
+		return High_Level_Library_FCO.FCO_CxxGet();
+ 	}// closes GetPos
+ 	 	
+	application function void SetPos(int pos){	
+ 		println('[HAL]MM - FCO_En - SetPos');
+		High_Level_Library_FCO.FCO_CxxSet(pos);
+	}// closes SetPos
+
+	}//package MixedMode.FCO_En
+}//namespace shs.sat

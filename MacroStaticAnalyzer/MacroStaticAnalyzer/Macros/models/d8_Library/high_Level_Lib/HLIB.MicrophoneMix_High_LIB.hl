@@ -1,0 +1,618 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                                 HIGH LEVEL LIBRARY: MicrophoneMix
+// Initial Version                						     							:  2011-11-08 Chuah LayYuan
+// Updated formatting and included the IsEnable function for the Telecoil MixMic Slider :  2012-03-15 Cecil Wilson
+// Added MixMicrophone_Set_Mode for Telecoil and Wireless, and HLIB of EWindscreen to set to OFF
+// when MixMicrophone checkbkox is deactivated.											:	2012-06-13  Jenny Lin
+// Update descriptions, IsEnabled test call check Tinnitus HLIB, default to false,   
+// add in WLS and DAI mixmic slider IsEnabled test.										:	2012-06-14 Jenny Lin 
+// Implementation for CR61635 (Disable FBC and WNC if input mode is non-mic input),
+// ER61121 (To deactivate FBC in pure Tinnitus mode)							        : 2012-05-30 Mang Yew  
+// ******SIFIT7.2_PEERREVIEWED: 					  									:  2013-07-30   Jenny, Judith
+// Added MixMicrophoneEn_For_InputModeDD(), MixMicrophoneSL_For_InputModeDD()
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SIFIT7.3 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// WLSLevelSL_For_InputModeDD() and DAILevelSL_For_InputModeDD()						: 2013-11-04 Jenny
+// sets mnr, amnr, inr controls for mixed mic checkbox.									: 2013-12-23 Jenny
+// updated println statement for debugging.												: 2014-01-10 Jenny
+// removed unused variable.																: 2014-01-24 Jenny
+// FR64463: In Microphone_MixMicrophoneEn_Set_Mode, Split decision based on env:Prog and cap:WlsAudio, and
+// update MixMicrophoneEn_For_InputModeDD based on Physical position.					: 2014-02-19 Jenny
+// updated comments.																	: 2014-03-03 Jenny
+// FR65770: added Set_AuxGainAtten12to15 to Telecoil_MixMicrophoneEn_Set_Mode, Microphone_MixMicrophoneEn_Set_Mode, 
+// DAI_MixMicrophoneEn_Set_Mode, and WLS_MixMicrophoneEn_Set_Mode (depends on SoundBrilliance) and
+// set Mnr always on and amnr on when there is microphone input.						: 2014-03-26 Jenny
+// updated the physicalpos for DAI (from 6 to 5) for MixMicrophoneEn_For_InputModeDD.	: 2014-04-07 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// ER65597 In Prefit macro, Sets Input mode to and ensure SwAuxMode = Off_MicOnly.	re-write 
+// Microphone_MixMicrophoneEn_Set_Mode to include a bool input to indicate from Prefit or not. : 2014-05-28 Jenny
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SIFIT7.4 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Rebuild MixMicrophoneEn and MixMicrophoneSl according to Nele and DirectSoundComp					: 2014-07-07 Meike Steinbuss
+// Include BasicLibrary_MicrophoneMix.MicLevelSL_Set_Strength_Sw into Set_MicrophoneLevelSL_CxxPos		: 2014-07-07 Meike Steinbuss
+// adjust WLS_MixMicrophoneEn_Set_Mode																	: 2014-07-29 Meike
+------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_MicrophoneMix
+	{
+
+	/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    Set_MicrophoneLevelSL_CxxPos
+//   Input      :  <int> Slider position from Cxx sliders
+//   Output      :  none
+//   Description:  remapping  Slider positions;  Price point and Family resolving via Mid_level_Lib.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void Set_MicrophoneLevelSL_CxxPos (int CxxPos) 
+		{
+		// Remap the pos to pos_wrt_basic_fcn  using the Remapping function
+			int XX_dB = Mid_Level_Library_MicrophoneMix.MicrophoneLevelSlider_Remapping (CxxPos);
+
+			// Set the actual HI settings using basic library functions		
+			BasicLibrary_MicrophoneMix.MicLevelSL_Set_XX_dB (XX_dB);
+			// Set the SW Macro Variable using basic library functions
+			BasicLibrary_MicrophoneMix.MicLevelSL_Set_Strength_Sw (XX_dB);
+		} // Closing High_Level_Library_MicrophoneMix.Set_MicrophoneLevelSL_CxxPos
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    Get_MicrophoneLevelSL_CxxPos
+//   Input      :  None
+//   Output      :  <int> Actual slider position with respect to Current Device 
+//   Description:  BACKMAPING  Slider positions;   Reverse of Price point and Family resolving function.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int Get_MicrophoneLevelSL_CxxPos () //SIFIT7.3PEERREVIEWED
+		{
+			int CxxPos = -1;
+			int a = -1;
+			// Get the current position with respect to the Basic function  
+			int XX_dB = BasicLibrary_MicrophoneMix.MicLevelSL_Get_XX_dB ();
+			// This function returns the Maxmimum number of steps for this UI
+			int maxstep = Mid_Level_Library_MicrophoneMix.MicrophoneLevelSL_MaxPos ();
+			while (a < maxstep)
+			{ //  Test each position from 0 to maximum available for this device
+				++ a; // a=a+1
+				if (XX_dB == Mid_Level_Library_MicrophoneMix.MicrophoneLevelSlider_Remapping (a))
+				{
+					CxxPos = a;
+					break;
+				}
+			}
+			println('[HAL]HLIB.Get_MicrophoneLevelSL_CxxPos =' + CxxPos + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+			return CxxPos;
+		} //Closing High_Level_Library_MicrophoneMix.Get_MicrophoneLevelSL_CxxPos
+
+	/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    Set_WLSLevelSL_CxxPos
+//   Input      :  <int> Slider position from Cxx sliders
+//   Output      :  none
+//   Description:  remapping  Slider positions;  Price point and Family resolving via Mid_level_Lib.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void Set_WLSLevelSL_CxxPos (int CxxPos) //SIFIT7.3PEERREVIEWED
+		{
+		// Remap the pos to pos_wrt_basic_fcn  using the Remapping function
+			int XX_dB = Mid_Level_Library_MicrophoneMix.WLSLevelSlider_Remapping (CxxPos);
+
+			// Set the actual HI settings using basic library functions		
+			BasicLibrary_MicrophoneMix.WLSLevelSL_Set_XX_dB (XX_dB);
+		} // Closing High_Level_Library_MicrophoneMix.Set_WLSLevelSL_CxxPos
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    Get_WLSLevelSL_CxxPos
+//   Input      :  None
+//   Output      :  <int> Actual slider position with respect to Current Device 
+//   Description:  BACKMAPING  Slider positions;   Reverse of Price point and Family resolving function.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int Get_WLSLevelSL_CxxPos () //SIFIT7.3PEERREVIEWED
+		{
+			int CxxPos = -1;
+			int a = -1;
+			// Get the current position with respect to the Basic function  
+			int XX_dB = BasicLibrary_MicrophoneMix.WLSLevelSL_Get_XXdB ();
+			// This function returns the Maxmimum number of steps for this UI
+			int maxstep = Mid_Level_Library_MicrophoneMix.WLSLevelSL_MaxPos ();
+			while (a < maxstep)
+			{ //  Test each position from 0 to maximum available for this device
+				++ a; // a=a+1
+				if (XX_dB == Mid_Level_Library_MicrophoneMix.WLSLevelSlider_Remapping (a))
+				{
+					CxxPos = a;
+					break;
+				}
+			}
+			println('[HAL]HLIB.Get_WLSLevelSL_CxxPos =' + CxxPos + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+			return CxxPos;
+		} //Closing High_Level_Library_MicrophoneMix.Get_WLSLevelSL_CxxPos
+
+	/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    Set_DAILevelSL_CxxPos
+//   Input      :  <int> Slider position from Cxx sliders
+//   Output      :  none
+//   Description:  remapping  Slider positions;  Price point and Family resolving via Mid_level_Lib.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void Set_DAILevelSL_CxxPos (int CxxPos) //SIFIT7.3PEERREVIEWED
+		{
+		// Remap the pos to pos_wrt_basic_fcn  using the Remapping function
+			int XX_dB = Mid_Level_Library_MicrophoneMix.DAILevelSlider_Remapping (CxxPos);
+
+			// Set the actual HI settings using basic library functions		
+			BasicLibrary_MicrophoneMix.DAILevelSL_Set_XX_dB (XX_dB);
+		} // Closing High_Level_Library_MicrophoneMix.Set_DAILevelSL_CxxPos
+
+		/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    Get_DAILevelSL_CxxPos
+//   Input      :  None
+//   Output      :  <int> Actual slider position with respect to Current Device 
+//   Description:  BACKMAPING  Slider positions;   Reverse of Price point and Family resolving function.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int Get_DAILevelSL_CxxPos () //SIFIT7.3PEERREVIEWED
+		{
+			int CxxPos = -1;
+			int a = -1;
+			// Get the current position with respect to the Basic function  
+			int XX_dB = BasicLibrary_MicrophoneMix.DAILevelSL_Get_XXdB ();
+			// This function returns the Maxmimum number of steps for this UI
+			int maxstep = Mid_Level_Library_MicrophoneMix.DAILevelSL_MaxPos ();
+			while (a < maxstep)
+			{ //  Test each position from 0 to maximum available for this device
+				++ a; // a=a+1
+				if (XX_dB == Mid_Level_Library_MicrophoneMix.DAILevelSlider_Remapping (a))
+				{
+					CxxPos = a;
+					break;
+				}
+			}
+			println('[HAL]HLIB.Get_DAILevelSL_CxxPos =' + CxxPos + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+			return CxxPos;
+		} //Closing High_Level_Library_MicrophoneMix.Get_DAILevelSL_CxxPos
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    MixMicrophoneEn_For_InputModeDD
+//   Input      :  <int> input mode physical position 
+//   Output      :  <void> 
+//   Description:  calls Basiclib function to set the MixMicrophone checkbox controls and also EWindscreen HLIB
+//					to turn off Ewindscreen when MixMicrophone checkbox is deactivated.  
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void MixMicrophoneEn_For_InputModeDD (int physicalPos) //SIFIT7.3PEERREVIEWED
+		{
+			if (physicalPos == 0){ // (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Microphone)
+				println('[HAL]HLIB.MixMicrophoneEn_For_InputModeDD >> For Microphone Input' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				High_Level_Library_MicrophoneMix.Microphone_MixMicrophoneEn_Set_Mode (false); // ER65597 false = not prefit
+			}
+
+			else if (Mid_Level_Library_InputMode.Is_Wireless_Input_Mode_basedon_PhysicalPos(physicalPos)){
+			// Mix with Mic Checkboxes Enabled for Wirless Input
+				println('[HAL]HLIB.MixMicrophoneEn_For_InputModeDD >> For Wireless Input >> Sets to ON' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				High_Level_Library_MicrophoneMix.WLS_MixMicrophoneEn_Set_Mode (1);
+			}
+
+			else if (physicalPos == 1){ //(hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Telecoil)
+				println('[HAL]HLIB.MixMicrophoneEn_For_InputModeDD >> For Telecoil Input >> Sets to On' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				High_Level_Library_MicrophoneMix.Telecoil_MixMicrophoneEn_Set_Mode (1);
+			}
+
+			else if (physicalPos == 5){ //(hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Direct_Audio_InputFM)
+				println('[HAL]HLIB.MixMicrophoneEn_For_InputModeDD >> For DAI Input >> Sets to ON' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				High_Level_Library_MicrophoneMix.DAI_MixMicrophoneEn_Set_Mode (1);
+			}
+			
+			else
+			{
+				println('[HAL]High_Level_Library_MicrophoneMix.MixMicrophoneEn_For_InputModeDD d8SwMacroInputModeHp ERROR!!! NO VALID STEP!!!' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+			}
+		} // Closing High_Level_Library_MicrophoneMix.MixMicrophoneEn_For_InputModeDD 
+
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    MixMicrophoneSL_For_InputModeDD
+//   Input      :  <void> 
+//   Output      :  <void> 
+//   Description:  calls Basiclib function to set the MixMicrophone checkbox controls and also EWindscreen HLIB
+//					to turn off Ewindscreen when MixMicrophone checkbox is deactivated.  
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void MixMicrophoneSL_For_InputModeDD () //SIFIT7.3PEERREVIEWED
+		{
+			int MicLevelSL_pos = Mid_Level_Library_MicrophoneMix.MicrophoneMode_Mix_MicLevelSL_Default_pos(); // 0dB
+			
+			if (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Direct_Audio_InputFM)
+			{
+			// propose to add in the logic to include SpeechActivatedFM HW control to decide on the MicLevel.				
+				if (BasicLibrary_DAI.SpeechActivatedFM_En_Get_ModeHW () == 1)
+				{
+					println('[HAL]HLIB.MixMicrophoneSL_For_InputModeDD >> For DAI Input >> with SpeechActivated FM ON' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+					MicLevelSL_pos = Mid_Level_Library_MicrophoneMix.SpeechActFM_Mix_MicLevelSL_Default_pos (); // -9dB
+
+				}
+			}
+			else if (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Microphone ||
+				hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Telecoil ||
+				hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Bluetooth_Phone ||
+				hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Tek_d_miniTek ||
+				hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.MiniTek_FM ||
+				hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.miniTek_Telecoil)
+			{
+			// 0dB
+
+			}
+			else
+			{
+				assertion (false, "[MacroError] HLIB.MixMicrophoneSL_For_InputModeDD >> Invalid d8SwMacroInputModeHp in HI");
+			}
+			
+			println ('[HAL]:HLIB.MixMicrophoneSL_For_InputModeDD >> CxxPos =' + MicLevelSL_pos + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+			High_Level_Library_MicrophoneMix.Set_MicrophoneLevelSL_CxxPos (MicLevelSL_pos);
+			
+		} // Closing High_Level_Library_MicrophoneMix.MixMicrophoneSL_For_InputModeDD 
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    WLSLevelSL_For_InputModeDD
+//   Input      :  <void> 
+//   Output      :  <void> 
+//   Description:  calls Basiclib function to set the MixMicrophone checkbox controls and also EWindscreen HLIB
+//					to turn off Ewindscreen when MixMicrophone checkbox is deactivated.  
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void WLSLevelSL_For_InputModeDD () //SIFIT7.3PEERREVIEWED
+		{
+			int WLSLevelSL_pos = 0;
+			if (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Bluetooth_Phone ||
+					hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Tek_d_miniTek ||
+					hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.MiniTek_FM ||
+					hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.miniTek_Telecoil)
+			{
+				WLSLevelSL_pos = Mid_Level_Library_MicrophoneMix.WLS_LevelSL_Default_pos (); // 0dB
+				High_Level_Library_MicrophoneMix.Set_WLSLevelSL_CxxPos (WLSLevelSL_pos);
+				println ('[HAL]:HLIB.WLSLevelSL_For_InputModeDD >> CxxPos =' + WLSLevelSL_pos + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+			}
+			else {
+			// Do nothing
+
+			}
+		} // Closing High_Level_Library_MicrophoneMix.WLSLevelSL_For_InputModeDD 
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    DAILevelSL_For_InputModeDD
+//   Input      :  <void> 
+//   Output      :  <void> 
+//   Description:  calls Basiclib function to set the MixMicrophone checkbox controls and also EWindscreen HLIB
+//					to turn off Ewindscreen when MixMicrophone checkbox is deactivated.  
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void DAILevelSL_For_InputModeDD () //SIFIT7.3PEERREVIEWED
+		{
+			int DAILevelSL_pos = Mid_Level_Library_MicrophoneMix.DAI_LevelSL_Default_pos (); // 0dB
+			
+			if (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Direct_Audio_InputFM)
+			{
+				High_Level_Library_MicrophoneMix.Set_DAILevelSL_CxxPos (DAILevelSL_pos);
+				println ('[HAL]:HLIB.WLS_LevelSL_For_InputModeDD >> CxxPos =' + DAILevelSL_pos + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+			}
+			else 
+			{
+			// Do nothing
+
+			}
+		} // Closing High_Level_Library_MicrophoneMix.WLS_LevelSL_For_InputModeDD 
+
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    Telecoil_Mix_MicLevelSL_IsEnable
+//   Input      :  <void> 
+//   Output      :  <bool> Returns the Enable state of the Slider
+//   Description: It shall be greyed out when the Tinnitus Pure Noise is selected (d8PTinEn = on, d8PTinMode = pure), 
+//				  else it shall be enabled or 
+// 				  It shall be greyed out when Mixed with Microphone checkbox is deactivated.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool Telecoil_Mix_MicLevelSL_IsEnable () //SIFIT7.3PEERREVIEWED
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure () == false &&
+					BasicLibrary_MicrophoneMix.Telecoil_MixMicrophoneEn_Get_Mode () == 1)
+			{
+				println('[HAL]HLIB.Telecoil_Mix_MicLevelSL_IsEnable = TRUE');
+				return true;
+			}
+			else
+			{
+				println('[HAL]HLIB.Telecoil_Mix_MicLevelSL_IsEnable = FALSE');
+				return false;
+			}
+		} // Closing High_Level_Library_MicrophoneMix.Telecoil_Mix_MicLevelSL_IsEnable	 
+
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    WLS_Mix_MicLevelSL_IsEnable
+//   Input      :  <void> 
+//   Output      :  <bool> Returns the Enable state of the Slider
+//   Description: It shall be greyed out when the Tinnitus Pure Noise is selected (d8PTinEn = on, d8PTinMode = pure), 
+//				  else it shall be enabled or 
+// 				  It shall be greyed out when Mixed with Microphone checkbox is deactivated.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool WLS_Mix_MicLevelSL_IsEnable () //SIFIT7.3PEERREVIEWED
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure () == false &&
+					BasicLibrary_MicrophoneMix.WLS_MixMicrophoneEn_Get_Mode () == 1)
+			{
+				println('[HAL]HLIB.WLS_Mix_MicLevelSL_IsEnable = TRUE');
+				return true;
+			}
+			else
+			{
+				println('[HAL]HLIB.WLS_Mix_MicLevelSL_IsEnable = FALSE');
+				return false;
+			}
+		} // Closing High_Level_Library_MicrophoneMix.WLS_Mix_MicLevelSL_IsEnable	
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    DAI_Mix_MicLevelSL_IsEnable
+//   Input      :  <void> 
+//   Output      :  <bool> Returns the Enable state of the Slider
+//   Description: It shall be greyed out when the Tinnitus Pure Noise is selected (d8PTinEn = on, d8PTinMode = pure), 
+//				  else it shall be enabled or 
+// 				  It shall be greyed out when Mixed with Microphone checkbox is deactivated. 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool DAI_Mix_MicLevelSL_IsEnable () //SIFIT7.3PEERREVIEWED
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure () == false &&
+					BasicLibrary_MicrophoneMix.DAI_MixMicrophoneEn_Get_Mode () == 1)
+			{
+				println('[HAL]HLIB.DAI_Mix_MicLevelSL_IsEnable = TRUE');
+				return true;
+			}
+			else
+			{
+				println('[HAL]HLIB.DAI_Mix_MicLevelSL_IsEnable = FALSE');
+				return false;
+			}
+		} // Closing High_Level_Library_MicrophoneMix.DAI_Mix_MicLevelSL_IsEnable
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    Telecoil_MixMicrophoneEn_Set_Mode
+//   Input      :  <int> Cxx position 
+//   Output      :  <void> 
+//   Description:  For MixMicrophone checkbox, WNC and FBC HW control will be turn OFF when MixMicEn unchecked.
+			1) calls Basiclib function to set the MixMicrophone checkbox controls and 
+			2) Set the FBC if it was originally on, and check the MixMicrophone & Tinnitus to set FBC accordingly.
+			3) Set the EWindscreen to turn off Ewindscreen when MixMicrophone checkbox is deactivated.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Telecoil_MixMicrophoneEn_Set_Mode (int CxxPos) //SIFIT7.3PEERREVIEWED
+		{
+		//Mix with Microphone activated/ deactivated based on CxxPos
+			BasicLibrary_MicrophoneMix.Telecoil_MixMicrophoneEn_Set_Mode (CxxPos);
+			
+			// FR65770 : Sets Auxiliary Gain Attenuation Settings (0: 63dB - attenuated, 1: 0dB - not attenuated)
+			// sets to 0dB for Telecoil only and mixed-mode Input
+			BasicLibrary_SoundBriliance.Set_AuxGainAtten12to15(1);
+			
+			// Sets the MNR, aMNR, INR controls
+			BasicLibrary_MicrophoneMix.Set_MNR_Controls(1);	// always on
+			BasicLibrary_MicrophoneMix.Set_aMNR_Controls(CxxPos);	// based on CxxPos
+			BasicLibrary_MicrophoneMix.Set_INR_Controls(1); // always ON for Telecoil mode.
+
+			// FR61635 : EWindscreen & FBC HW to be turned OFF if Mixed Mic OFF, EWindScreen OFF & FBC untouched for 7.0/7.1
+			if (High_Level_Library_FeedbackStopper.FeedbackStopperEN_GetPos () == true)
+			{
+				println('[HAL]HLIB.Telecoil_MixMicrophoneEn_Set_Mode >> Calling FeedbackStopperEn_Set_For_Microphone_Tinnitus ON' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set_For_Microphone_Tinnitus (1);
+			}
+			if (High_Level_Library_EWindScreen.eWindScreenEn_Get () == 1)
+			{
+				println('[HAL]HLIB.Telecoil_MixMicrophoneEn_Set_Mode >> Calling EWindScreenEn_Set_For_Microphone ON' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				High_Level_Library_EWindScreen.EWindScreenEn_Set_For_Microphone (1);
+			}
+		} // Closing High_Level_Library_MicrophoneMix.Telecoil_MixMicrophoneEn_Set_Mode 
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    WLS_MixMicrophoneEn_Set_Mode
+//   Input      :  <int> Cxx position 
+//   Output      :  <void> 
+//   Description:  For MixMicrophone checkbox, WNC and FBC HW control will be turn OFF when MixMicEn unchecked.
+			1) calls Basiclib function to set the MixMicrophone checkbox controls and 
+			2) Set the FBC if it was originally on, and check the MixMicrophone & Tinnitus to set FBC accordingly.
+			3) Set the EWindscreen to turn off Ewindscreen when MixMicrophone checkbox is deactivated.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void WLS_MixMicrophoneEn_Set_Mode (int CxxPos) 
+		{
+		
+		//Mix with Microphone activated/ deactivated based on CxxPos
+			BasicLibrary_MicrophoneMix.WLS_MixMicrophoneEn_Set_Mode (CxxPos);
+			
+		//if MixMicrophone checkbox gets ticked (CxxPos = 1), Mic Level Slider has to be reset according to d8SwMacroMixMicLevelSlHp
+			if (CxxPos == 1){
+			
+				if(BasicLibrary_MicrophoneMix.MicLevelSL_Get_XX_dB () ==  -21) 
+				{
+				BasicLibrary_MicrophoneMix.MicLevelSL_Set_XX_dB (-21); // slider reset to -21dB
+				}
+				else if (BasicLibrary_MicrophoneMix.MicLevelSL_Get_XX_dB () ==  -18){
+				BasicLibrary_MicrophoneMix.MicLevelSL_Set_XX_dB (-18); // slider reset to -18dB
+				}
+				else if (BasicLibrary_MicrophoneMix.MicLevelSL_Get_XX_dB () ==  -15){
+				BasicLibrary_MicrophoneMix.MicLevelSL_Set_XX_dB (-15); // slider reset to -15dB
+				}
+				else if (BasicLibrary_MicrophoneMix.MicLevelSL_Get_XX_dB () ==  -12){
+				BasicLibrary_MicrophoneMix.MicLevelSL_Set_XX_dB (-12); // slider reset to -12dB
+				}
+				else if (BasicLibrary_MicrophoneMix.MicLevelSL_Get_XX_dB () ==  -9){
+				BasicLibrary_MicrophoneMix.MicLevelSL_Set_XX_dB (-9); // slider reset to -9dB
+				}
+				else if (BasicLibrary_MicrophoneMix.MicLevelSL_Get_XX_dB () ==  -6){
+				BasicLibrary_MicrophoneMix.MicLevelSL_Set_XX_dB (-6); // slider reset to -6dB
+				}
+				else if (BasicLibrary_MicrophoneMix.MicLevelSL_Get_XX_dB () ==  -3){
+				BasicLibrary_MicrophoneMix.MicLevelSL_Set_XX_dB (-3); // slider reset to -3dB
+				}
+				else if (BasicLibrary_MicrophoneMix.MicLevelSL_Get_XX_dB () ==  0){
+				BasicLibrary_MicrophoneMix.MicLevelSL_Set_XX_dB (0); // slider reset to 0dB
+				}
+			}
+			else{
+				// "mute" microphone signal with the help of high attenuation of mic path due to Nele feature that always needs mic signal
+            	BasicLibrary_MicrophoneMix.MicLevelSL_Set_XX_dB (-63); // slider set to -63dB
+			
+			}
+			
+			// FR65770 : Sets Auxiliary Gain Attenuation Settings (0: 63dB - attenuated, 1: 0dB - not attenuated)
+			// if SB = on, sets to 0dB, else, 63dB
+			if(hi:d8PSmxShifiAuxEn == d8PSmxShifiAuxEn.on){
+				
+				BasicLibrary_SoundBriliance.Set_AuxGainAtten12to15(1);	
+			}
+			else{
+				BasicLibrary_SoundBriliance.Set_AuxGainAtten12to15(0);
+			}
+					
+			// Sets the MNR, aMNR, INR controls
+			BasicLibrary_MicrophoneMix.Set_MNR_Controls(1);	// always on
+			BasicLibrary_MicrophoneMix.Set_aMNR_Controls(CxxPos);	// based on CxxPos
+			BasicLibrary_MicrophoneMix.Set_INR_Controls(0); // always OFF for non-Telecoil mode.
+
+			// FR61635 : EWindscreen & FBC HW to be turned OFF if Mixed Mic OFF, EWindScreen OFF & FBC untouched for 7.0/7.1
+			if (High_Level_Library_FeedbackStopper.FeedbackStopperEN_GetPos () == true)
+			{
+				println('[HAL]HLIB.WLS_MixMicrophoneEn_Set_Mode >> Calling FeedbackStopperEn_Set_For_Microphone_Tinnitus ON' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set_For_Microphone_Tinnitus (1);
+			}
+			if (High_Level_Library_EWindScreen.eWindScreenEn_Get () == 1)
+			{
+				println('[HAL]HLIB.WLS_MixMicrophoneEn_Set_Mode >> Calling EWindScreenEn_Set_For_Microphone ON' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				High_Level_Library_EWindScreen.EWindScreenEn_Set_For_Microphone (1);
+			}
+		} // Closing High_Level_Library_MicrophoneMix.WLS_MixMicrophoneEn_Set_Mode 
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    DAI_MixMicrophoneEn_Set_Mode
+//   Input      :  <int> Check box position from Cxx
+//   Output      :  <void>    
+//   Description:  
+//			* Set the MixMicrophone checkbox according to CXX position using BLIB.
+//			* When MixMicrophone == 1
+* 					check DAI_ToggleEn software control, and set back hardware control
+*					check SpeechActivatedFM_En software control, and set back hardware control
+* 					check EWindscreen software control, and set back hardware control
+*					check FeedbackStopper software control, and set back hardware control
+//			* When MixMicrophone == 0
+* 					set DAI_ToggleEn hardware control to OFF
+* 					set SpeechActivatedFM_En hardware controls to OFF
+* 					set EWindscreen hardware controls to OFF
+* 					set FeedbackStopper hardware controls to OFF
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void DAI_MixMicrophoneEn_Set_Mode (int CxxPos) //SIFIT7.3PEERREVIEWED
+		{
+		//Mix with Microphone activated/ deactivated based on CxxPos
+			BasicLibrary_MicrophoneMix.DAI_MixMicrophoneEn_Set_Mode (CxxPos);
+
+			// FR65770 : Sets Auxiliary Gain Attenuation Settings (0: 63dB - attenuated, 1: 0dB - not attenuated)
+			// sets to 0dB for DAI only and mixed-mode Input
+			BasicLibrary_SoundBriliance.Set_AuxGainAtten12to15(1);
+			
+			// Sets the MNR, aMNR, INR controls
+			BasicLibrary_MicrophoneMix.Set_MNR_Controls(1);	// always on
+			BasicLibrary_MicrophoneMix.Set_aMNR_Controls(CxxPos);	// based on CxxPos
+			BasicLibrary_MicrophoneMix.Set_INR_Controls(0); // always OFF for non-Telecoil mode.
+
+			if (CxxPos == 1)
+			{
+				// Toggle is Enabled due to MixMix checkbox is now checked need to SET the Toggle Functionality ON
+				if (BasicLibrary_DAI.DAI_ToggleEn_Get_Mode () == 1 &&
+						High_Level_Library_DAI.DAI_ToggleEn_IsEnabled () == true) 
+				{
+					println ('[HAL]High_Level_Library_MicrophoneMix- Toggle set to ON');
+					BasicLibrary_DAI.DAI_ToggleEn_Set_Mode (1);
+				}
+				else
+				{
+					println ('[HAL]High_Level_Library_MicrophoneMix- Toggle set to OFF');
+					BasicLibrary_DAI.DAI_ToggleEn_Set_Mode (0);
+
+					// Set the Speech activated FM to the previous positions indicated by SwMacro
+					if (BasicLibrary_DAI.SpeechActivatedFM_En_Get_Mode () == 1)
+					{
+						println ('[HAL]High_Level_Library_MicrophoneMix- SpeechActivatedFM set to ON');
+						High_Level_Library_DAI.SpeechActivatedFM_En_Set (1);
+					}
+					else
+					{
+						println ('[HAL]High_Level_Library_MicrophoneMix- SpeechActivatedFM set to OFF');
+						High_Level_Library_DAI.SpeechActivatedFM_En_Set (0);
+					}
+				}
+			}
+			else{ //mix mic OFF
+			//Set Toggle to off (but need to Retain the sw macro variable) 
+				println ('[HAL]High_Level_Library_MicrophoneMix- Toggle set to OFF');
+				BasicLibrary_DAI.DAI_ToggleEn_Set_Mode_Only_Hardware (0);
+
+				//Set Speech activated FM to off (but need to Retain the sw macro variable) so no call to HLIB
+				println ('[HAL]High_Level_Library_MicrophoneMix- SpeechActivatedFM set to OFF');
+				BasicLibrary_DAI.SpeechActivatedFM_En_Set_Mode_Only_Hardware (0);
+
+				// Set Mic slider to 0dB due to change in Speech Activated FM state
+				High_Level_Library_MicrophoneMix.Set_MicrophoneLevelSL_CxxPos (Mid_Level_Library_MicrophoneMix.MicrophoneMode_Mix_MicLevelSL_Default_pos());
+			}
+			
+			
+			// to reset WNC and FBC based on microphone input.
+			if (High_Level_Library_EWindScreen.eWindScreenEn_Get () == 1)
+			{
+				println('[HAL]HLIB.DAI_MixMicrophoneEn_Set_Mode >> Calling EWindScreenEn_Set_For_Microphone ON' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				High_Level_Library_EWindScreen.EWindScreenEn_Set_For_Microphone (1);
+			}
+			if (High_Level_Library_FeedbackStopper.FeedbackStopperEN_GetPos () == true)
+			{
+				println('[HAL]HLIB.DAI_MixMicrophoneEn_Set_Mode >> Calling FeedbackStopperEn_Set_For_Microphone_Tinnitus ON' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set_For_Microphone_Tinnitus (1);
+			}
+		} // Closing High_Level_Library_MicrophoneMix.DAI_MixMicrophoneEn_Set_Mode
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    Microphone_MixMicrophoneEn_Set_Mode
+//   Input      :  <bool> ER65597 true from Prefit (over-write to Off_MicOnly), false otherwise
+//   Output      :  <void> 
+//   Description:  For MixMicrophone checkbox, WNC and FBC HW control will be turn OFF when MixMicEn unchecked.
+			1) calls Basiclib function to set the MixMicrophone checkbox controls and 
+			2) Set the FBC if it was originally on, and check the MixMicrophone & Tinnitus to set FBC accordingly.
+			3) Set the EWindscreen to turn off Ewindscreen when MixMicrophone checkbox is deactivated.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Microphone_MixMicrophoneEn_Set_Mode (bool prefit) //SIFIT7.3PEERREVIEWED
+		{
+			//FR64463: In Universal Hearing Program (HP0) and with Wireless audio capability instruments, 
+			// set the HI to Mic + Wireless input, else, only Microphone input path enabled.
+			if(env:Prog == 0 && cap:WlsAudio == WlsAudio.exists){
+				if(prefit){
+					// ER65597: if calling from Prefit, set to Off_MicOnly
+					BasicLibrary_MicrophoneMix.Microphone_MixMicrophoneEn_Set_Mode (true);	// true : set to Off_MicOnly
+				}
+				else{
+					//FR64463: In Universal Hearing Program (HP0) and with Wireless audio capability instruments, 
+					// set the HI to Mic + Wireless input, else, only Microphone input path enabled.
+					BasicLibrary_MicrophoneMix.Microphone_MixMicrophoneEn_Set_Mode (false);	// false : set to MicWLA
+				}
+			}
+			else{
+				BasicLibrary_MicrophoneMix.Microphone_MixMicrophoneEn_Set_Mode (true);	// true: set to Off_MicOnly
+			}
+			
+			// FR65770 : Sets Auxiliary Gain Attenuation Settings (0: 63dB - attenuated, 1: 0dB - not attenuated)
+			// sets to 63dB for Microphone Input
+			BasicLibrary_SoundBriliance.Set_AuxGainAtten12to15(0);			
+			
+			// Sets the MNR, aMNR, INR controls
+			BasicLibrary_MicrophoneMix.Set_MNR_Controls(1);	// always ON for Microphone mode
+			BasicLibrary_MicrophoneMix.Set_aMNR_Controls(1);	// always ON for Microphone mode
+			BasicLibrary_MicrophoneMix.Set_INR_Controls(0); // always OFF for non-Telecoil mode.
+
+			// FR61635 : EWindscreen & FBC HW to be turned OFF if Mixed Mic OFF, EWindScreen OFF & FBC untouched for 7.0/7.1
+			if (High_Level_Library_EWindScreen.eWindScreenEn_Get () == 1)
+			{
+				println('[HAL]HLIB.DAI_MixMicrophoneEn_Set_Mode >> Calling EWindScreenEn_Set_For_Microphone ON' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				High_Level_Library_EWindScreen.EWindScreenEn_Set_For_Microphone (1);
+			}
+			if (High_Level_Library_FeedbackStopper.FeedbackStopperEN_GetPos () == true)
+			{
+				println('[HAL]HLIB.DAI_MixMicrophoneEn_Set_Mode >> Calling FeedbackStopperEn_Set_For_Microphone_Tinnitus ON' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set_For_Microphone_Tinnitus (1);
+			}
+		} // Closing High_Level_Library_MicrophoneMix.Microphone_MixMicrophoneEn_Set_Mode 
+
+
+		/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of HIGH Level PP LIBRARY    Microphone Mix 
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package High_Level_Library_MicrophoneMix
+
+} //namespace shs.sat

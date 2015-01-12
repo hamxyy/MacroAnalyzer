@@ -1,0 +1,33 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// 											Mid_Level_Library BWNC
+// Initial version																	: 2013-10-21 Raymond
+// Updated BWNCEn_DefaultPos to check for Mic Mode enabled							: 2013-11-06 Raymond
+// Refractor BWNCEn_DefaultPos														: 2013-11-13 Raymond
+// First uncommented draft															: 2013-11-29 Raymond
+// Updated comments and checks for BWNCEn_DefaultPos								: 2013-12-17 Raymond
+// Combine BWNCEn_DefaultPos with HLIB.BWNCEn.SetDefault							: 2013-12-26 Raymond
+// Updated IsVisible logic to include checks for min requirements					: 2014-02-18 Raymond
+// Calling the BinFeaturesForDirectionalDevices_MinPossReqmts from 
+*  Mid_Level_Library_Mic_Mode.BinFeaturesForDirectionalDevices_MinPossReqmts() 		: 2014-10-16 Sultan
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib Mid_Level_Library_BWNC
+	{
+/*---------------------------------------------------------------------------------------------------------------*
+   Mid Level PP LIBRARY Function:    BWNCEn_IsVisible
+   Input		:  none
+   Ouput      :  <bool> Returns True if visible; False if Not Visible 
+   Description:  decides the visibility of BWNCEn 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool BWNCEn_IsVisible ()
+		{
+			return (Mid_Level_Library_Mic_Mode.BinFeaturesForDirectionalDevices_MinPossReqmts() &&
+					cap:PricePoint == PricePoint.PP700);
+		} // Closes Mid_Level_Library_BWNC.BWNCEn_IsVisible
+
+	} //package Mid_Level_Library_BWNC
+
+} // namespace shs.sat

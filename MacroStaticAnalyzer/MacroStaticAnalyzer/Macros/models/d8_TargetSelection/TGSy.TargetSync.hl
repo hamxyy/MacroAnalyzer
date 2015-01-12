@@ -1,0 +1,138 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// 			                        First Fit Wizard - Target synchronize
+// Initial Version                						                		:  	2011-04-28  Nadine Seubert
+// update for new HAL Version                                           		:  	2011-05-30  Nadine Seubert
+// updated NAL-BALL and Open sync												:  	2011-10-11  Nadia Neugeborn
+// Include Xcel synchronisation													:  	2012-02-13  Meike Steinbuss
+// Uncomment XcelFit, comment ConnexxFit and include one more XcelFIt sync path	: 	2012-02-29 	Meike Steinbuss
+// old ConnexxFit deleted (saved as backup in G:\Projects\AE_Projekte\AUD_Platform_Projects\Audiology08\Sifit7.0\Macros\OldCxxFit_Code) : 2012-04-02 Meike Steinbuss
+// Macro peer review updates													:	2012-07-10	Nadia & Judith
+// Added code for PP75 devices (Binaural synchronisation is not used with PP75) :   2013-04-18  Al. 
+// *********************************************CODE FREEZE*******************************************************
+//------------------------------------------------7.3----------------------------------------------------------------
+// FR64913: Replace ConnexxFit with BinaxFit											: 2014-02-27 Raymond
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat {
+	
+	using shs_sat.*;
+
+	package TargetSync TGSy{
+	
+	application function void SyncTargetFormula(){
+	println("TARGET SYNC: Begin running SyncTargetFormula() macro");
+	
+/*---------------------------------------------------------------------------------------------------------------*
+// This macro is only running for BinaxFit and if both sides are selected. 
+// This macro synchronize both sides based on the following rule: If the other side is taking one higher acclimatisation level 
+// or one higher formular both sides will be synchronize to the lower one (diagram available in Fitnesse).
+-----------------------------------------------------------------------------------------------------------------*/
+		
+	// BinaxFit Synchronisation. NOT used for PP75 fittings!
+	
+  if(cap:PricePoint > PricePoint.PP75)
+   {
+    	
+	if ((side(Sides.RightSide,fit:SelectableFormula) == SelectableFormula.BinaxFit) &&
+		(side(Sides.LeftSide,fit:SelectableFormula) == SelectableFormula.BinaxFit))
+	{
+		
+		// Right: Fig6 Acc3 & Left: Fig6 Acc1 --> Right: Fig6 ACC 1 (TC 1.1)
+		if( side(Sides.RightSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.LeftSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.RightSide,fit:AccLevel) == AccLevel.Acc3
+ 			&& side(Sides.LeftSide,fit:AccLevel) == AccLevel.Acc1 )
+ 			{	
+  				side(Sides.RightSide,fit:AccLevel) = AccLevel.Acc1;
+  				println("TARGET SYNC: RightSide was FIG6 Acc3, LeftSide was FIG6 Acc1, both sides synchronized to FIG6 Acc1");
+			}
+		
+		// Left: Fig6 Acc3 & Right: Fig6 Acc1 --> Left: Fig6 ACC 1 (TC 2.1)
+		else if( side(Sides.LeftSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.RightSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.LeftSide,fit:AccLevel) == AccLevel.Acc3
+ 			&& side(Sides.RightSide,fit:AccLevel) == AccLevel.Acc1 )
+ 			{		
+  				side(Sides.LeftSide,fit:AccLevel) = AccLevel.Acc1;
+  				println("TARGET SYNC: LeftSide was FIG6 Acc3, RightSide was FIG6 Acc1, both sides synchronized to FIG6 Acc1");
+			}
+			
+		// Right: Fig6 Acc3 & Left: Fig6 Acc2 --> Left & Right: Fig6 ACC 1 (TC 1.2)
+		else if( side(Sides.RightSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.LeftSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.RightSide,fit:AccLevel) == AccLevel.Acc3
+ 			&& side(Sides.LeftSide,fit:AccLevel) == AccLevel.Acc2 )
+ 			{
+  				side(Sides.RightSide,fit:AccLevel) = AccLevel.Acc1;
+  				side(Sides.LeftSide,fit:AccLevel) = AccLevel.Acc1;
+  				println("TARGET SYNC: RightSide was FIG6 Acc3, LeftSide was FIG6 Acc2, both sides synchronized to FIG6 Acc1");
+			}
+		
+		// Left: Fig6 Acc3 & Right: Fig6 Acc2 --> Left & Right: Fig6 ACC 1 (TC 3.1)
+		else if( side(Sides.RightSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.LeftSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.RightSide,fit:AccLevel) == AccLevel.Acc2
+ 			&& side(Sides.LeftSide,fit:AccLevel) == AccLevel.Acc3 )
+ 			{
+  				side(Sides.LeftSide,fit:AccLevel) = AccLevel.Acc1;
+  				side(Sides.RightSide,fit:AccLevel) = AccLevel.Acc1;
+				println("TARGET SYNC: LeftSide was FIG6 Acc3, RightSide was FIG6 Acc2, both sides synchronized to FIG6 Acc1");
+			}
+			
+		// Right: Fig6 Acc2 & Left: Fig6 Acc1 --> Right: Fig6 ACC 1 (TC 3.2)	
+		else if( side(Sides.RightSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.LeftSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.RightSide,fit:AccLevel) == AccLevel.Acc2
+ 			&& side(Sides.LeftSide,fit:AccLevel) == AccLevel.Acc1 )
+ 			{
+  				side(Sides.RightSide,fit:AccLevel) = AccLevel.Acc1;
+  				println("TARGET SYNC: RightSide was FIG6 Acc2, LeftSide was FIG6 Acc1, both sides synchronized to FIG6 Acc1");
+			}
+		
+		// Left: Fig6 Acc2 & Right: Fig6 Acc1 --> Left: Fig6 ACC 1 (TC 2.2)	
+		else if( side(Sides.RightSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.LeftSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.RightSide,fit:AccLevel) == AccLevel.Acc1
+ 			&& side(Sides.LeftSide,fit:AccLevel) == AccLevel.Acc2 )
+ 			{
+  				side(Sides.LeftSide,fit:AccLevel) = AccLevel.Acc1;
+				println("TARGET SYNC: LeftSide was FIG6 Acc2, RightSide was FIG6 Acc1, both sides synchronized to FIG6 Acc1");
+			}
+	
+		// Right: NalBall Acc3 & Left: Fig6 Acc2 --> Right: Fig6 ACC2  (TC 4.1)	
+		else if( side(Sides.RightSide,fit:CalculationFormula) == CalculationFormula.NalBall
+ 			&& side(Sides.LeftSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.RightSide,fit:AccLevel) == AccLevel.Acc3
+ 			&& side(Sides.LeftSide,fit:AccLevel) == AccLevel.Acc2 )
+ 			{
+ 				side(Sides.RightSide,fit:CalculationFormula) = CalculationFormula.Fig6;
+  				side(Sides.RightSide,fit:AccLevel) = AccLevel.Acc2;
+  				println("TARGET SYNC: RightSide was NAL-BALL Acc3, LeftSide was FIG6 Acc2, both sides synchronized to FIG6 Acc2");
+			}
+	
+		// Left: NalBall Acc3 & Right: Fig6 Acc2 --> Left: Fig6 ACC2  (TC 3.3)	
+		else if( side(Sides.RightSide,fit:CalculationFormula) == CalculationFormula.Fig6
+ 			&& side(Sides.LeftSide,fit:CalculationFormula) == CalculationFormula.NalBall
+ 			&& side(Sides.RightSide,fit:AccLevel) == AccLevel.Acc2
+ 			&& side(Sides.LeftSide,fit:AccLevel) == AccLevel.Acc3 )
+ 			{
+ 				side(Sides.LeftSide,fit:CalculationFormula) = CalculationFormula.Fig6;
+  				side(Sides.LeftSide,fit:AccLevel) = AccLevel.Acc2;
+  				println("TARGET SYNC: LeftSide was NAL-BALL Acc3, RightSide was FIG6 Acc2, both sides synchronized to FIG6 Acc2");
+			}
+		else{
+			println("TARGET SYNC: No target sync needed / No target sync is run");
+		}
+	  } // BinaxFit check
+	 } // >PP75 check	
+	else{
+		// Traditional Formulas (not BinaxFit)
+		println("TARGET SYNC: Not appliable");
+	}
+				
+		println("TARGET SYNC: End running SyncTargetFormula() macro");
+				
+		} // Closes application function void SyncTargetFormula()
+	}	//package TargetSync
+}	//namespace shs.sat

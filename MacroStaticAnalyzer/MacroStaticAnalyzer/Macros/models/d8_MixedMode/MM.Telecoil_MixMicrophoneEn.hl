@@ -1,0 +1,63 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                            Telecoil Mix with Microphone Checkbox
+// Initial Version  	         										   :  2011-03-14   Cecil Wilson
+// Added Tinnitus greyout											       :  2011-03-23   Cecil Wilson
+// Add println for MPV testing											   :  2011-09-22   Jenny Lin  
+// Macro code Cleanup													   :  2012-02-14   Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Removed the resetting of the retval to be 0 when function returns -1 in GetPos : 2012-06-13 Jenny Lin
+// calling tinnitus HLIB													: 2012-06-14 Jenny Lin
+// ******SIFIT7.2_PEERREVIEWED: No changes required						:  2013-07-30   Jenny, Judith
+// updated IsVisible() to call the Is_Telecoil_Input_Mode()	: 2013-11-04 Jenny
+// refractor: Optimize code									: 2013-12-02 Jenny
+// updated println statement for debugging.											: 2014-01-15 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// ****** SIFIT7.4 ******
+// Updated SetPos to PrintEnvSettings to test SideSelection macro.  				:  2014-08-25   Jenny
+// Updated IsVisible to call BLIB instead of MLIB. Code cleanup: Updated printlines.	: 2014-10-21 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode Telecoil_MixMicrophoneEn
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MixedMode.Telecoil_MixMicrophoneEn.IsVisible'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+
+			bool retVal = BasicLibrary_InputMode.Is_Telecoil_Input_Mode();
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.Telecoil_MixMicrophoneEn.IsEnabled');
+
+			bool retVal = (BasicLibrary_Noiser.Noiser_IsOnAndPure () == false);
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.Telecoil_MixMicrophoneEn.MaxPos');
+
+			int retVal = 1;
+			return retVal;
+		}
+
+		application function int GetPos ()
+		{
+			println ('[HAL]MixedMode.Telecoil_MixMicrophoneEn.GetPos');
+
+			int retVal = BasicLibrary_MicrophoneMix.Telecoil_MixMicrophoneEn_Get_Mode ();
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.Telecoil_MixMicrophoneEn.SetPos'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+			
+			High_Level_Library_MicrophoneMix.Telecoil_MixMicrophoneEn_Set_Mode (pos);
+		}
+	}
+}

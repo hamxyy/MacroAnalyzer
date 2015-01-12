@@ -1,0 +1,60 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Noiser Checkbox
+// Initial Version																	:  2012-03-22  Ma Mie Mie Thein
+// Updated IsVisible function to call MLIB to check cap:TinMaskerAvailable			:  2012-05-03  Jenny Lin
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5
+// This file is not in use for SIFIT 7.0/7.1										:  2012-06-19 MieMie/Cecil/Nadia
+// *********************************************CODE FREEZE*******************************************************  
+// Sifit 7.2 Peer Review														: 2013-08-01 Alastair, Raymond
+// ------------------------------------------------------------- SIFIT7.3 -----------------------------------------
+// Update for Sifit7.3: added the checkbox.								: 2014-01-16 Jenny
+// Sifit7.3 Peer review																: 2014-04-14 Jenny, Sonia
+// ------------------------------------------------------------- SIFIT7.4 -----------------------------------------
+// Peer review update: added comments and corrected typo NoiserRB to NoiserEn in 
+// getpos and setpos printlin 														: 2014-11-11 MieMie
+/*-------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*; // this is necessary to call library function	
+	package MixedMode NoiserEn
+	{
+		application function bool IsVisible () // This IsVisible function is not called by Connexx
+		{
+			println ('[HAL]MM - NoiserEn - IsVisible = ' + Mid_Level_Library_Noiser.Noiser_Visibility ());
+			return Mid_Level_Library_Noiser.Noiser_Visibility ();
+		} 
+		 
+		application function bool IsEnabled () // This IsEnabled function is not called by Connexx
+		{
+			println ('[HAL]MM - NoiserEn - IsEnabled = ' +  Mid_Level_Library_Noiser.NoiserEn_Enability ());
+			return Mid_Level_Library_Noiser.NoiserEn_Enability ();
+		} 	
+		 		
+		application function int MaxPos () // This MaxPos function is not called by Connexx
+		{
+			println ('[HAL]MM - NoiserEn - MaxPos = 1');
+			return 1;
+		}
+		 
+		application function bool IsEnabledPos (int pos) // This IsEnabledPos function is not called by Connexx
+		{
+			println ('[HAL]MM - NoiserEn - IsEnabledPos = TRUE for pos=' + pos);
+			return true;
+		}
+		 
+		application function int GetPos ()
+		{
+			println ('[HAL]MM - NoiserEn - GetPos');
+			return (BasicLibrary_Noiser.NoiserEn_Get_Entry());
+		} 
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MM - NoiserEn - SetPos = ' + pos);
+			High_Level_Library_Noiser.NoiserEn_Set(pos);
+		} 
+		
+	} //package MixedMode.NoiserEn
+
+} //namespace shs.sat
+

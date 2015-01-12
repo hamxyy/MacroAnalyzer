@@ -1,0 +1,62 @@
+//----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY  Nele
+// Initial Version                                         : 2014-04-02		MeSt
+// Added unmute of d8FSmxInputMute [0] and [1] in NeleEn_Set_Entry()	: 2014-08-20 MieMie
+// Delete MieMies changes and adjust accordingly to reset MixWithMic checkbox for backward compatibility reasons : 2014-09-02 Meike 
+// Code cleanup: Updated printlines.												: 2014-10-20 Jenny
+//---------------------------------------------------------------------------------------------------------------
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_Nele
+	{
+
+		/*----------------------------------------------------------------------------------------------------------------
+		  Description:  Obtains the Nele checkbox tick status    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int NeleEn_Get_Entry ()
+		{ 
+			println ('[HAL]BLIB.BasicLibrary_Nele.NeleEn_Get_Entry');
+			
+			int retval = -1;
+		
+			if (hi:d9PNleEn == d9PNleEn.on)
+			{
+				retval = 1;
+			}
+			else 
+			{
+				retval = 0;
+			}
+			
+			return retval;
+		}
+		
+		/*----------------------------------------------------------------------------------------------------------------
+		  Description:  Sets the Nele HW controls based on the SetPos index, 0 or 1.    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void NeleEn_Set_Entry (int pos)
+		{ 	
+			println ('[HAL]BLIB.BasicLibrary_Nele.NeleEn_Set_Entry');
+			
+			if (pos == 1)
+			{	
+				hi:d9PNleEn = d9PNleEn.on; // switch on Nele
+
+				// for backward compatibility reasons mixed with mic checkbox has to be reseted 
+				if (BasicLibrary_MicrophoneMix.WLS_MixMicrophoneEn_Get_Mode() == 1)
+				{
+					High_Level_Library_MicrophoneMix.WLS_MixMicrophoneEn_Set_Mode (1);
+				}
+				else
+				{
+					High_Level_Library_MicrophoneMix.WLS_MixMicrophoneEn_Set_Mode (0);
+				}
+			}
+			else
+			{
+				hi:d9PNleEn = d9PNleEn.off; // switch off Nele
+			}
+		}
+	}
+}

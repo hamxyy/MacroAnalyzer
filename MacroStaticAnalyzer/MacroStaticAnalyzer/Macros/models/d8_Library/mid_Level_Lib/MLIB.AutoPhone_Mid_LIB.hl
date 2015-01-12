@@ -1,0 +1,176 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            MID LEVEL LIBRARY : Mid_Level_Library_AutoPhone
+// Initial version                                                                      :  2011-03-09  Cecil Wilson
+// Added Cap workaround																	:  2011-03-24  Cecil Wilson
+// Removed Cap workarounds																:  2011-05-19  Cecil Wilson
+// Fixed the visibility for Mic inputmode for HP1										:  2011-08-11  Cecil Wilson
+// Peer review comments added															:  2012-06-15  Cecil Wilson
+// ******SIFIT7.2_PEERREVIEWED: 					  									:  2013-07-30   Jenny, Judith
+// Updated AutoPhoneEn_IsVisible()														: 2013-11-04 Jenny
+// updated for Sifit7.3.																: 2013-12-23 Jenny
+// updated println statement for debugging.												: 2014-01-10 Jenny
+// *********************************************CODE FREEZE******************************************************* 
+// Sifit7.3 Peer review																	: 2014-04-15 Jenny, Judith
+// FR68862: Hide Autophone checkbox for Induction Loop Program 
+// and optimize the code to call blib program selection.								: 2014-09-22 Jenny
+// Added AutoPhoneEn_IsVisible_In_CXX_Opp.												: 2014-10-09 Jenny
+// Updated AutoPhoneEn_IsVisible: removed Autocoil check, and move to the CXX and Hicoss lib. 
+// Updated AutoPhoneEn_IsVisible_In_CXX: move logics to called lib.
+// Updated AutoPhoneEn_IsVisible_In_HICOSS: to check for Autocoil cap.
+// Added AutoPhoneEn_IsVisible_In_CXX_Binaural and AutoPhoneEn_IsVisible_In_CXX_Monaural
+// removed AutoPhoneEn_IsVisible_In_CXX_Opp since not use anymore.						: 2014-10-23 Jenny
+/*---------------------------------------------------------------------------------------------------------------*
+*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib Mid_Level_Library_AutoPhone
+	{
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		// Description: Decides the visibility of the AutoPhone Checkbox, based on availability of 
+		// 			    Autocoil capability (Automatic switching of HP due to Magnet/phone receiver) and Cxx/Hicoss.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool AutoPhoneEn_IsVisible ()
+		{
+			println('[HAL]MLIB.Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible');
+			
+			bool retVal = false;
+			
+			// D9: {Different for CXX and Hicoss} Autophone checkbox shall be visible if Autocoil is available AND ...	
+			if(env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+			{
+				retVal = AutoPhoneEn_IsVisible_In_CXX();
+			}
+			else
+			{ 
+				retVal = AutoPhoneEn_IsVisible_In_HICOSS();
+			}
+
+			println('[HAL]MLIB.Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible >> ' + retVal);
+			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		// Description: Decides the visibility of the AutoPhone Checkbox in CXX (Fitting)
+		//				Visibility is determined based on the current InputMode and Programs selected (side-dependent).
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool AutoPhoneEn_IsVisible_In_CXX ()
+		{
+			println('[HAL]MLIB.Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible_In_CXX');
+			bool retVal = false;
+			
+			if(env:DetHi == DetHi.BothSides)
+			{
+				retVal = AutoPhoneEn_IsVisible_In_CXX_Binaural();
+			}
+			else
+			{
+				retVal = AutoPhoneEn_IsVisible_In_CXX_Monaural();
+			}
+
+			println('[HAL]MLIB.Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible_In_CXX >> ' + retVal);
+			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		// Description: Decides the visibility of the AutoPhone Checkbox in CXX (Fitting)
+		//				Visibility is determined based on the current InputMode and Programs selected (side-dependent).
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool AutoPhoneEn_IsVisible_In_CXX_Binaural ()
+		{
+			println('[HAL]MLIB.Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible_In_CXX_Binaural');
+			bool retVal = false;
+			
+			if(env:DetHi == DetHi.BothSides)
+			{
+				if(cap:AutocoilAvailable == AutocoilAvailable.exists && 
+					opp(cap:AutocoilAvailable) == AutocoilAvailable.exists)
+				{
+					if(BasicLibrary_ProgramSelection.IsPhoneAcoustically() ||
+						BasicLibrary_ProgramSelection.IsPhoneTelecoilProgramSetInCurrentSide() ||
+						BasicLibrary_ProgramSelection.IsPhoneTelecoilProgramSetInOppSide() )
+					{
+						retVal = true;
+						println('[HAL]MLIB.Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible_In_CXX_Binaural @@@ for both side with Autocoil capability');
+					}
+				}
+				else if(cap:AutocoilAvailable == AutocoilAvailable.exists && 
+					opp(cap:AutocoilAvailable) == AutocoilAvailable.none)
+				{
+					if(BasicLibrary_ProgramSelection.IsPhoneAcoustically() ||
+						BasicLibrary_ProgramSelection.IsPhoneTelecoilProgramSetInCurrentSide())
+					{
+						retVal = true;
+						println('[HAL]MLIB.Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible_In_CXX_Binaural @@@ for current side with Autocoil capability');
+					}
+				}					
+				else if(cap:AutocoilAvailable == AutocoilAvailable.none && 
+					opp(cap:AutocoilAvailable) == AutocoilAvailable.exists)
+				{
+					if(BasicLibrary_ProgramSelection.IsOppPhoneAcoustically() ||
+						BasicLibrary_ProgramSelection.IsPhoneTelecoilProgramSetInOppSide())
+					{
+						retVal = true;
+						println('[HAL]MLIB.Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible_In_CXX_Binaural @@@ for opposite side with Autocoil capability');
+					}
+				}
+			}
+			
+			println('[HAL]MLIB.Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible_In_CXX_Binaural >> ' + retVal);
+			return retVal;
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		// Description: Decides the visibility of the AutoPhone Checkbox in CXX (Fitting)
+		//				Visibility is determined based on the current InputMode and Programs selected (side-dependent).
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool AutoPhoneEn_IsVisible_In_CXX_Monaural ()
+		{
+			println('[HAL]MLIB.Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible_In_CXX_Monaural');
+			bool retVal = false;
+			
+			if(cap:AutocoilAvailable == AutocoilAvailable.exists)
+			{
+				if(BasicLibrary_ProgramSelection.IsPhoneAcoustically() ||
+					BasicLibrary_ProgramSelection.IsPhoneTelecoilProgramSetInCurrentSide())
+				{
+					retVal = true;
+				}
+			}
+
+			println('[HAL]MLIB.Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible_In_CXX_Monaural >> ' + retVal);
+			return retVal;
+		}		
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		// Description: Decides the visibility of the AutoPhone Checkbox in HICOSS (Service)
+		//				Visibility is determined based on the current InputMode selected only (non-side dependent).
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool AutoPhoneEn_IsVisible_In_HICOSS ()
+		{
+			println('[HAL]MLIB.Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible_In_HICOSS');
+			
+			bool retVal = false;
+			
+			if(cap:AutocoilAvailable == AutocoilAvailable.exists)
+			{
+				// For Microphone input, not in HP0 AND
+				// For Telecoil input, shall always be visible.						
+				if(hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Microphone && 
+					env:Prog != 0 )
+				{
+					retVal = true;
+				}
+				else if(hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Telecoil)
+				{
+					retVal = true;
+				}
+			}
+			
+			return retVal;
+		}
+
+	}
+
+}

@@ -1,0 +1,75 @@
+
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                          DirButton for TestSettings
+// Initial Version		         									    		: 2012-01-13 Nadine Seubert
+// change package to MixedMode for test proposal                        		: 2012-01-23 Nadine Seubert
+// update for highlev lib for DirMic + visibility                       		: 2012-01-27 Nadine Seubert
+// Comment out GetPos call since Cxx does not read the GetPos for TestSettings	: 2012-04-04 Jenny Lin
+// Updated the comments and println												: 2012-04-18 Jenny Lin
+// Peer review changes															: 2012-07-17 MieMie, Jenny
+// Peer review 7.3 done															: 2014-05-02 MieMie, Jenny
+// *********************************************CODE FREEZE*******************************************************
+/*$$---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat {
+	
+	using shs_sat.*;
+	            
+		package TestSettings DirBu{
+
+		application function bool IsVisible() {
+		
+			bool retval = true;
+			// Visibility is always true for twin mic devices, for single mic devices the visiblity should be set to false             
+            retval = Mid_Level_Library_TestSettings.TestSettings_IsVisible();
+
+			int hp=env:Prog;
+			if (retval == true ){ println('[HAL]TestSettings - DirButton - IsVisible = TRUE in HP='+hp);	}
+			else			{ println('[HAL]TestSettings - DirButton - IsVisible = FALSE in HP='+hp);	}			
+
+			return retval;			
+		}
+
+		application function bool IsEnabled() {
+			// Always enabled	
+	
+	     		int hp=env:Prog;
+
+			println('[HAL]TestSettings - DirButton - IsEnabled = TRUE in HP='+hp);	
+					
+
+			return true;	
+		}
+
+		application function int MaxPos() {
+			
+	 		int hp=env:Prog;
+	 		println('[HAL]TestSettings - DirButton - MaxPos = 1 in HP='+hp);
+			return 1;     // This is a Check Box with 2 states. 0 and 1
+		}		
+
+	 	application function int GetPos() {	
+	 		
+ 		    int retval = 1;	
+ 		    // Comment out since Cxx does not read the GetPos for TestSettings
+			//retval = High_Level_Library_TestSettings.TestSettingsDirBu_Get();
+
+	 		int hp=env:Prog;
+	 		println('[HAL]TestSettings - DirButton - GetPos = '+ retval + ' in HP='+hp);
+	 		
+			return retval;
+	 	}
+	 	
+		application function void SetPos(int pos) {
+			
+			int hp=env:Prog;
+	 		println('[HAL]TestSettings - DirButton - SetPos = ' + pos + ' in HP='+hp);
+			
+			High_Level_Library_TestSettings.TestSettingsDirBu_Set(pos);
+			
+			// Set the Button to pos;
+		
+		}
+		
+	}	//package TestSettings.DirBu
+}

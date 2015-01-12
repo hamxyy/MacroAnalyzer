@@ -1,0 +1,77 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Spass Slider
+// Initial Version                						    					:  2011-03-17   Frauke Schall
+// Update IsVisible and IsEnabled dependecies									:  2011-03-22	Frauke Schall
+// Grey out Spass sliders when microphone modes are grey out					:  2011-08-05   Ma Mie Mie Thein													
+// Add println for MPV testing													:  2011-09-22   Jenny Lin
+// Updated OmniDirectional check in IsEnable									:  2012-05-14   Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Peer review changes															: 2012-06-14 Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Updated the omnidirectional to (remapped_pos >= 90)				: 2012-11-19 Jenny
+// Added assertion message									: 2012-12-18 Jenny Lin
+// Updated IsVisible Function													:	2013-12-13 	Mang Yew
+// 7.3 Peer Review: Updated Mic_Mode_Is_Enabled with IsTinnitusPureandMicModeEnabled	: 2014-04-14 Raymond
+// Sifit 7.4 Peer Review Code cleanup											: 2014-11-14 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode SpassSL
+	{
+		application function bool IsVisible ()
+		{
+			bool retval = Mid_Level_Library_Spass.SpassSL_IsVisible ();
+			if (retval == true)
+			{
+				println ('[HAL]MixedMode.SpassSL.IsVisible = TRUE');
+			}
+			else
+			{
+				println ('[HAL]MixedMode.SpassSL.IsVisible = FALSE');
+			}
+			return retval;
+		}
+		application function bool IsEnabled ()
+		{
+			int hp = env:Prog;
+			if (BasicLibrary_Spass.SpassEn_Get () == false ||
+				BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled() == false ||
+				(Mid_Level_Library_Mic_Mode.MicModeIsOmni() == true))
+			{
+				println ('[HAL]MixedMode.SpassSL.IsEnabled = FALSE in HP=' + hp);
+				return false;
+			}
+			else
+			{
+				println ('[HAL]MixedMode.SpassSL.IsEnabled = TRUE in HP=' + hp);
+				return true;
+			}
+		}
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.SpassSL.MaxPos = 2');
+			return 2;
+		}
+		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MixedMode.SpassSL.IsEnabledPos = TRUE');
+			return true;
+		}
+		application function int GetPos ()
+		{
+			int hp = env:Prog;
+			int retval = High_Level_Library_Spass.SpassSL_Get ();
+			println ('[HAL]MixedMode.SpassSL.GetPos = ' + retval + ' in HP=' + hp);
+			return retval;
+		}
+		application function void SetPos (int pos)
+		{
+			int hp = env:Prog;
+			println ('[HAL]MixedMode.SpassSL.SetPos = ' + pos + ' in HP=' + hp);
+			High_Level_Library_Spass.SpassSL_Set (pos);
+		}
+
+	}
+
+}

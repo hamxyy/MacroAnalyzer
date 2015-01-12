@@ -1,0 +1,64 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									PROGRAM SELECTION - Stroll
+
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Initial version																			: 2013-11-04 Sonia Stasiak
+// Uncommented code, added d9SwMacroProgramIdHp												: 2013-12-03 Sonia Stasiak
+// Updated Apply function with d9SwMacroProgramIdHp, code tuning							: 2013-12-17 Sonia Stasiak
+// PEER REVIEW CXX 7.3																		: 2014-05-06 Sonia, Mie Mie, Jenny 
+/*-----------------------------------------------------Cxx 7.4-----------------------------------------------------*
+// Code clean up																			: 2014-09-03 Sonia
+/*-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package ProgramSelection AfternoonStroll
+	{
+		application function int GetID ()
+		{
+			int retVal = 16;
+			println ('[HAL]PS - AfternoonStroll.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "Stroll";
+			println ('[HAL]PS - AfternoonStroll.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 16; // Stroll
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - AfternoonStroll.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());				
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 16; // Stroll
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - AfternoonStroll.IsEnabled = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());				
+			return retVal;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetStroll();
+			
+			println ('[HAL]PS - AfternoonStroll.Apply started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();	
+			println ('[HAL]PS - AfternoonStroll.Apply done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function int GetOrderNumber ()
+		{
+			int retVal = 13;
+			println ('[HAL]PS - AfternoonStroll.GetOrderNumber = ' + retVal);			
+			return retVal;
+		}
+	}
+}
+//------------------------------------ END of PROGRAM SELECTION - Stroll ------------------------------------------*/

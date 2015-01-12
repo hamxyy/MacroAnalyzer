@@ -1,0 +1,71 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									PROGRAM SELECTION - Induction Loop (T)
+
+/*--------------------------------------------- Cxx 7.4 -----------------------------------------------------------*
+// Initial Version based on InductionLoop program		         							: 2014-07-30 Sonia Stasiak
+// Change Apply function to call BLib.Set<program> to set d9SwmacroProgramIdHp				: 2014-09-16 Sonia
+// Code clean up																			: 2014-09-17 Sonia
+/*-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package MonAppProgramSelection InductionLoop_T
+	{
+		application function int GetID ()
+		{
+			int retVal = 21;
+			println ('[HAL]PS - InductionLoop_T.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "Induction Loop (T)";
+			println ('[HAL]PS - InductionLoop_T.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 21; // Induction Loop (T)
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - InductionLoop_T.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 21; // Induction Loop (T)
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - InductionLoop_T.IsEnabled = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetInductionLoopT();
+			
+			println ('[HAL]PS - InductionLoop_T.Apply started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - InductionLoop_T.Apply done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function void ApplyComplementary ()
+		{
+			BasicLibrary_ProgramSelection.SetPrivacy();
+			
+			println ('[HAL]PS - InductionLoop_T.ApplyComplementary started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - InductionLoop_T.ApplyComplementary done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function int GetOrderNumber ()
+		{
+			int retVal = 15;
+			println ('[HAL]PS - InductionLoop_T.GetOrderNumber = ' + retVal);
+			return retVal;
+		}	
+	}
+}
+//------------------------------------ END of PROGRAM SELECTION - Induction Loop (T) ------------------------------*/

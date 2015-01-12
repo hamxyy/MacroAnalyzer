@@ -1,0 +1,277 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                                 HIGH LEVEL LIBRARY Beep
+// Initial Version                						     							:  2011-04-19 Meike Doose
+// change else if into if																:  2011-05-18 Meike Doose
+// Added in Beeps_Set_Default() function 												:  2011-07-11 Nadia Neugeborn
+// Added println in Beeps_Set_Default() function										:  2011-07-20 Nadia Neugeborn
+// VCLocal is replaced with d8PhlVcRange												:  2011-08-03 Nadia Neugeborn
+// VcRange is set after FirstFit														:  2011-11-28 Nadia Neugeborn
+// Check for enabling VcRange calls different function 									:  2012-04-12 Nadia Neugeborn
+// Added HLIBs for the beeps and updated the beeps link from BLIB to HLIB.				:  2012-04-20 Jenny Lin
+// int retval = -1 and if else deleted where it is not necessary                        :  2012-06-06 Judith Koeppe
+// Updated Beeps_Set_Default() due to CR54353 - VC defaults								:  2012-06-11 Nadia	Neugeborn
+// FirstFit peer review updates - VC range to off is no VC available					:  2012-07-19 Nadia & Judith
+// Added BasicLibrary_FeedbackStopper.FBCStartUpCtrl_Set() for BeepPowerOnOffEn_Set
+// due to ER56215.																		:  2012-07-30 Mang Yew
+// In Beeps_Set_Default(), the profile is now set to basic for PP75 devices.            :  2013-06-05 Al
+// *********************************************CODE FREEZE*******************************************************
+// BeepPowerOnOffEn_Set: FR57317: Macro Startup Melody / Power On Delay / FBC			:  2012-09-04 Frauke
+// Removed ProgramControlLocal and update defaultBeeps due to ER59269 .  				: 2013-01-31 Mang Yew
+// Updated default Loudness set for Nitro devices										: 2013-04-26 Sonia Stasiak
+// Update capabilities for default Loudness to separate Nitro BTE						: 2013-06-17 Sonia Stasiak
+// Peer review comments update															: 2013-07-31 Sonia & Alastair
+// *********************************************CODE FREEZE*******************************************************
+// Removed Check_Volume_Change_UserControl from set default VCRange to meet MRS for binax: 23013-01-14 Ma Mie Mie Thein
+// CR64681: Updated Beeps_Set_Default Frequency default to 1500Hz instead of 750Hz and 
+// updated println statement for debugging.											: 2014-01-10 Jenny
+// (FF Default) removed duplication setting of frequency is already done in the Sound profile setting.	: 2014-01-24 Jenny
+// FR66291: added intellizoom beep to default firstfit settings in Beeps_Set_Default().	: 2014-04-16 Jenny
+// Default for Power On/Off is set to ON via Power On Delay, no longer through beeps	: 2014-04-24 Frauke
+// Sifit7.3 Peer review	: Added comments for Power-on/off beeps and added Intellizoom checkbox setting to BeepAlertProfileDD_Set.
+// Removed the variable in Beeps_Set_Default and directly call the function for the BeepLoudnessDD_DefaultCxxPos.
+// Update Beeps_Set_Default to remove check for VC availability and sets it to ON always for VCLimit 
+// and VCPower on-position, as per MDS.													: 2014-04-30 Jenny, Jeline
+// FR67065 : Updated BeepAlertProfileDD_Set to check for POD instead of BeepPowerOnOffEn_Get_Entry.	: 2014-05-20 MieMie, Jenny
+// Sifit7.4 Peer review: 
+	--Replace High_Level_Library_Beep.BeepFrequencyDD_Get 
+	  with BasicLibrary_Beep.BeepFrequencyDD_Get_Entry										
+    --Sifit7.4 Peer review: deleted dot notation 1.2.2.1 of 
+      BeepAlertProfileDD_Get and BeepFrequencyDD_Get		   							 : 2014-11-19 MieMie/Sultan/Jeline
+	--Cleanup code on indentation.	
+/*----------------------------------------------------------------------------------------------------------------$$*/
+
+namespace shs_sat 
+{
+	
+    using shs_sat.*;
+    
+	package  Lib High_Level_Library_Beep
+	{
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:   A function call Basic Lib to set Alert profile. Based on the Alert profile, controls d8FIndTrgMi
+							Will be set.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void BeepAlertProfileDD_Set(int pos) //SIFIT7.4PEERREVIEWED
+		{ 					
+			// update the SoundProfile beep
+			BasicLibrary_Beep.BeepAlertProfileDD_Set_Entry(pos);
+			
+			// Set all other Beeps to the respective basic/advance beeps.
+			if(BasicLibrary_Beep.BeepProgramChangeEn_Get_Entry()== 1){
+				BasicLibrary_Beep.BeepProgramChangeEn_Set_Entry(1);
+			}
+			// even though the Power On/Off beeps is linked to the POD now, still have to reset the tones to Basic/Advanced!
+			if(BasicLibrary_PowerOnDelay.PowerOnDelayEn_Get_Entry () == true){ 
+				BasicLibrary_Beep.BeepPowerOnOffEn_Set_Entry(1);
+			}
+			else{
+				BasicLibrary_Beep.BeepPowerOnOffEn_Set_Entry(0);
+			}
+			if(BasicLibrary_Beep.BeepIntelliZoomEn_Get_Entry()==1){
+				BasicLibrary_Beep.BeepIntelliZoomEn_Set_Entry(1);
+			}
+			if(BasicLibrary_Beep.BeepVCChangeEn_Get_Entry()== 1){
+				BasicLibrary_Beep.BeepVCChangeEn_Set_Entry(1);
+			}
+			if(BasicLibrary_Beep.BeepVCLimitEn_Get_Entry()== 1){
+				BasicLibrary_Beep.BeepVCLimitEn_Set_Entry(1);
+			}
+			if(BasicLibrary_Beep.BeepVCPowerOnPosEn_Get_Entry()== 1){
+				BasicLibrary_Beep.BeepVCPowerOnPosEn_Set_Entry(1);
+			}
+			if(BasicLibrary_Beep.BeepLowBatteryEn_Get_Entry()== 1){
+				BasicLibrary_Beep.BeepLowBatteryEn_Set_Entry(1);
+			}
+
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		   Description:  Basic Lib call to set the control of the frequency in DD.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void BeepFrequencyDD_Set(int pos) //SIFIT7.4PEERREVIEWED
+		{	 
+			// calling BLIB to set the controls
+			BasicLibrary_Beep.BeepFrequencyDD_Set_Entry(pos);
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Basic Lib call to set the control for the Loudness in DD.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void BeepLoudnessDD_Set(int pos)  //SIFIT7.4PEERREVIEWED
+		{	
+			// calling BLIB to set the controls
+			BasicLibrary_Beep.BeepLoudnessDD_Set_Entry(pos);
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Basic Lib call to get the position of the Loudness in DD
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int BeepLoudnessDD_Get() //SIFIT7.4PEERREVIEWED
+		{ 
+			return BasicLibrary_Beep.BeepLoudnessDD_Get_Entry();
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Basic Lib call to set the control of the Low Battery beep.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void BeepLowBatteryEn_Set(int pos) //SIFIT7.4PEERREVIEWED
+		{	 
+			BasicLibrary_Beep.BeepLowBatteryEn_Set_Entry(pos);
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Basic Lib call to get the state of the control for Low Battery beeps.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int BeepLowBatteryEn_Get()  //SIFIT7.4PEERREVIEWED
+		{
+			// calling BLIB to get the controls
+			return (BasicLibrary_Beep.BeepLowBatteryEn_Get_Entry());
+		}
+		
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Basic Lib call to set the control for PowerOnOff beep based on Tone scheme
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void BeepPowerOnOffEn_Set(int pos) //SIFIT7.4PEERREVIEWED
+		{	 
+			// Sifit7.3: Power on-off beeps is not shown in CXX System Sounds Page anymore, but will be tied to Power-on delay checkbox.	
+			// calling BLIB to set the controls
+			BasicLibrary_Beep.BeepPowerOnOffEn_Set_Entry(pos);
+			if(pos == 1){
+				BasicLibrary_PowerOnDelay.PowerOnDelayEn_Set_Entry(pos); //FR57317: Macro Startup Melody / Power On Delay / FBC
+			}
+			else{
+				BasicLibrary_FeedbackStopper.FBCStartUpCtrl_Set(); //is already set in PowerOnDelayEn_Set_Entry, so only needed for pos = 0
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Basic Lib call to get the state of the control set for PowerOnOff Beep.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int BeepPowerOnOffEn_Get() //SIFIT7.4PEERREVIEWED
+		{ 
+			// Sifit7.3: Power on-off beeps is not shown in CXX System Sounds Page anymore, but will be tied to Power-on delay checkbox.	
+			// calling BLIB to get the controls
+			return (BasicLibrary_Beep.BeepPowerOnOffEn_Get_Entry());
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Basic Lib call to set the controls for Program Change Beep.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void BeepProgramChangeEn_Set(int pos) //SIFIT7.4PEERREVIEWED
+		{	  
+			// calling BLIB to set the controls
+			BasicLibrary_Beep.BeepProgramChangeEn_Set_Entry(pos);
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Basic Lib call to get the state of the controls for Program Change Beep.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int BeepProgramChangeEn_Get() //SIFIT7.4PEERREVIEWED
+		{ 			
+			// calling BLIB to get the controls
+			return (BasicLibrary_Beep.BeepProgramChangeEn_Get_Entry());
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Basic Lib call to set the controls for VCChange Beep based on Tone Scheme.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void BeepVCChangeEn_Set(int pos) //SIFIT7.4PEERREVIEWED
+		{	 
+			// calling BLIB to set the controls
+			BasicLibrary_Beep.BeepVCChangeEn_Set_Entry(pos);
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Basic Lib call to get the state of the control for VCChange Beep.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int BeepVCChangeEn_Get()  //SIFIT7.4PEERREVIEWED
+		{
+			// calling BLIB to get the controls
+			return (BasicLibrary_Beep.BeepVCChangeEn_Get_Entry());
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Basic Lib call to set the control for VCLimit Beep based on Tone scheme.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void BeepVCLimitEn_Set(int pos)  //SIFIT7.4PEERREVIEWED
+		{	
+			// calling BLIB to set the controls
+			BasicLibrary_Beep.BeepVCLimitEn_Set_Entry(pos);
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int BeepVCLimitEn_Get()  //SIFIT7.4PEERREVIEWED
+		{
+			// calling BLIB to get the controls
+			return (BasicLibrary_Beep.BeepVCLimitEn_Get_Entry());
+		}	// Closing High_Level_Library_Beep.BeepVCLimitEn_Get
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void BeepVCPowerOnPosEn_Set(int pos)  //SIFIT7.4PEERREVIEWED
+		{	
+			// calling BLIB to set the controls
+			BasicLibrary_Beep.BeepVCPowerOnPosEn_Set_Entry(pos);
+		}	// Closing High_Level_Library_Beep.BeepVCPowerOnPosEn_Set
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int BeepVCPowerOnPosEn_Get() //SIFIT7.4PEERREVIEWED
+		{  
+			// calling BLIB to get the controls 
+			return (BasicLibrary_Beep.BeepVCPowerOnPosEn_Get_Entry());
+		}	// Closing High_Level_Library_Beep.BeepVCPowerOnPosEn_Get
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Activate relevant beeps and VC range according to the MRS/MDS    
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Beeps_Set_Default() //SIFIT7.4PEERREVIEWED
+		{ 
+
+				// Default for Sound Profile is Advanced for PP > 75, and Basic for PP <= 75.
+				if (cap:PricePoint > PricePoint.PP75){ 
+					// For > PP75, Default AlertProfile is ADVANCED and
+					// For BeepFrequency in Advance profile is not required.
+					High_Level_Library_Beep.BeepAlertProfileDD_Set(1); //Advanced
+					// Beep Frequency does not need to be set.
+				}
+				else{
+					// For PP75, Default AlertProfile is BASIC and
+					// For BeepFrequency in Basic profile, already set to 1500Hz (CR64681)in the BeepAlertProfileDD_Set.
+					High_Level_Library_Beep.BeepAlertProfileDD_Set(0); //Basic
+				}
+				
+				// Default for Beep Loudness is 75 dB for ALL HI (CR64681)
+				BasicLibrary_Beep.BeepLoudnessDD_Set_Entry(Mid_Level_Library_Beep.BeepLoudnessDD_DefaultCxxPos());
+	
+				// Default for program change is ON
+				High_Level_Library_Beep.BeepProgramChangeEn_Set(1);
+				
+				// Sifit7.3: Power on-off beeps is not shown in CXX System Sounds Page anymore, but will be tied to Power-on delay checkbox. Not set here!
+				// Default for VC change is OFF
+				High_Level_Library_Beep.BeepVCChangeEn_Set(0);
+								
+				// Default VC range: 16dB. In D9, VC control should always be on to support touchControl.
+				BasicLibrary_Beep.VcRange_Set_Entry(2);
+				// Note: if different VC range needs to be set please add this into MLIB
+				println('[HAL]: HLIB - Beeps_Set_Default - VC range set');
+
+				// FR66291 Default IntelliZoom beeps is ON.  
+				BasicLibrary_Beep.BeepIntelliZoomEn_Set_Entry(1);
+								
+				// Default for VC limit and VC Power-on position is ON, In D9, VC control should always be on to support touchControl.
+				High_Level_Library_Beep.BeepVCLimitEn_Set(1);
+				High_Level_Library_Beep.BeepVCPowerOnPosEn_Set(1);
+				println('[HAL]: HLIB - Beeps_Set_Default - VC beeps = ON');
+								
+				//Default for Low Battery is ON
+				High_Level_Library_Beep.BeepLowBatteryEn_Set(1);
+		}		
+	}
+	
+}

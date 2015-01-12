@@ -1,0 +1,58 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                       Autophone Selection (shows Side information in CXX)
+// Initial Version					                						    				: 2014-10-10 Jenny
+// Updated IsEnabled, return false for monaural fitting -> do not show the panel in CXX.		: 2014-10-17 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode AutoPhoneSelection
+	{
+		/* Panel to be shown for AutoPhoneSelection
+	     * 0 -> Default/None 
+	     * 1 -> Both
+	     * 2 -> Right Only
+	     * 3 -> Left Only   
+	     */	
+	     
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MixedMode.AutoPhoneSelection.IsVisible'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+
+			bool retVal = High_Level_Library_AutoPhone.AutophoneSelection_IsVisible();
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.AutoPhoneSelection.IsEnabled');
+
+			// false -> selection panel not visible >> Selection panel should not be visible in monaural fitting.
+			bool retVal = BasicLibrary_CommUtil.IsBinaurallyFitting(); 
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.AutoPhoneSelection.MaxPos');
+
+			int retVal = 3;
+			return retVal;
+		}
+		
+		application function int GetPos ()
+		{
+			println ('[HAL]MixedMode.AutoPhoneSelection.GetPos');
+
+			int retVal = High_Level_Library_AutoPhone.AutophoneSelection_Get ();
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.AutoPhoneSelection.SetPos'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+			
+			assertion(false, "[HAL]MixedMode.AutoPhoneSelection.SetPos ==> NOT IMPLEMENTED");
+		}
+	}
+}

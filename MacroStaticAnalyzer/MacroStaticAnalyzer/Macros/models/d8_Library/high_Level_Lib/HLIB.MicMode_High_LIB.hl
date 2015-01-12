@@ -1,0 +1,821 @@
+/*---------------------------------------------------------------------------------------------------------------
+//                           HIGH LEVEL PRICEPOINT LIBRARY 		 : Mic_Mode
+/*---------------------------------------------------------------------------------------------------------------
+//-----------------MicMode has changed from D8 to D9 hence to history of D8 in here------------------------------
+// Added Mic_Mode_Set_Dir function														: 2013-10-31 Raymond
+// Added Dir, NF, SL, SF functions 														: 2013-11-01 Raymond
+// Updated comments	for Set_ProgramSelection D9											: 2013-11-01 Sonia Stasiak
+// Refractor Getter and Setter to call MLIB and BLIB									: 2013-11-08 Raymond
+// Added Function call for MicMode dependencies											: 2013-11-11 Raymond
+// Refractor controls comparison to call grouping functions								: 2013-11-12 Raymond
+// Corrected comments																	: 2013-11-14 Raymond
+// Refractor MicMode_Setters for ProgramSelection										: 2013-11-28 Raymond
+// Added NoisyEnv_IsVisiblePhysicalPos													: 2013-11-29 Raymond
+// Updated Set_Program Selection with d9SwMacroProgramIdHp control instead of ID		: 2013-12-17 Sonia Stasiak
+// In MicMode_Set_Default (), the Sin HW and SW variables are now set.          		: 2014-01-07 Al
+// Corrections to IsEnabled library functions                                   		: 2014-01-10 Al
+// Added NoisyEnv_IsEnabledPhysicalPos ()                                       		: 2014-01-16 Al
+// Old unused D8 code deleted                                       					: 2014-02-06 Al
+// Added MicMode_AllOthersIsEnabled()                                           		: 2014-02-14 Al
+// reworked SF_IsEnabled() to simplify code                                     		: 2014-02-26 Al
+// Added NoisyEnv_IsEnabledPos                                                  		: 2014-03-11 Al
+// Comment update for Program Selection								            		: 2014-03-19 Sonia
+// MicMode_Set_ProgramSelection() now sets the TV program and NE program 
+*  radiobutton software macro variables 												: 2014-03-18 Al
+// Replaced calls to Dir_LogicRouteForOff() with ResetOmniForIzWncOo() and 
+// OmniMicModeProc().``````````````````````````````````````````      		       	    : 2014-03-18 Al 
+// New mic mode tab position added in Selection_GetPos() - pos 0, for the 
+*  invalid micmode error screen 											   		 	: 2014-04-02 Al
+// Mic_Mode_Is_Enabled() extended to include the binaural-noiser use case.   		   	: 2014-04-02 Al 
+// annotation update in Selection_GetPos()                            					: 2014-02-16 Al
+// In MicMode_Set_ProgramSelection(), changed else if(Mid_Level_Library_Mic_Mode.
+*  DirIsVisible()) to else if(cap:DirMicAvailable == DirMicAvailable.dir) 	            : 2014-02-16 Al
+// FR66287: Added additional else if path in Selection_GetPos for non-wireless 
+*  Noisy Environment 																	: 2014-05-02 Raymond
+// PEER REVIEW CXX 7.3	for Program Selection											: 2014-05-06 Sonia, Mie Mie, Jenny
+// ER67367: Added function to reset d8SwMacroVarEn26 in micmode_set_default				: 2014-05-27 Raymond
+// ER67401: Added binaural feature checks in Selection_GetPos() for monaural fitting	: 2014-06-05 Raymond
+//------------------------------------------------------7.3-------------------------------------------------------
+// Added SingleDirMicEn_IsEnabled(), SingleDirMicEn_GetPos(), Mic_Mode_Set_SDMdir()     : 2014-07-02 Al
+// Added SDM mode use-cases to Selection_GetPos(), Mic_Mode_Set_TV(), 
+*  and MicMode_Set_ProgramSelection() 												    : 2014-07-02 Al
+// Replaced DirOmni_IsEnabled to DirIsEnabled and OmniIsEnabled Function      			: 2014-07-02 Sultan
+// Replaced NF_IsEnabled with NFIsEnabled								      			: 2014-07-02 Sultan
+// In Get_SelectionPos, for Noisy Environment and Narrow Focus condition, replaced 
+// it with condition to check for monoaural fitting 					      			: 2014-07-02 Sultan
+//------------------------------------------------------7.4-------------------------------------------------------
+// Updated MicMode_Set_ProgramSelection and Selection_GetPos to include the new TV 
+*  program use-cases for the Single Dir Mic mic modes.                                  : 2014-07-09 Al
+// Updated the default omni mode in MicMode_Set_ProgramSelection to include Sdm.        : 2014-07-22 Al
+// In Mic_Mode_Set_Dir, updated call to OmniMicModeProc with string input.           	: 2014-07-24 Al
+// Update comment on Set_Program Selection (added new Induction Loop (T) program)		: 2014-07-30 Sonia Stasiak
+// Re-write Set_ProgramSelection to call BLib.Is<program>								: 2014-09-16 Sonia
+// Selection_GetPos() - Replaced ID0x to BasicLibrary_ProgramSelection.Is<program> 		: 2014-09-17 Sultan
+// ER69222 new position for MicMode_Selection macro to diff between SL and SF			: 2014-09-26 Al, Sultan, Frauke
+// Code cleanup - Cleaned functions header comments and closing comments				: 2014-10-21 Sultan 
+// FR69523-->Updated NFIsEnabled(),NoisyEnv_IsEnabledPosAdded(),Mic_Mode_Set_Dir,
+*  MicMode_Set_ProgramSelection & Mic_Mode_Set_NoisyEnv for pp300bx NF.					: 2014-10-16 Sultan	
+// Cxx 7.4 Peer Review for Program Selection (only)										: 2014-11-20 Sonia, Jenny, Niklas	
+//----------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package Lib High_Level_Library_Mic_Mode
+	{
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Actual Mic Mode RadioButton position and sub controls to the default after FF position 
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void MicMode_Set_Default ()
+		{
+			// ER67367: Reset d8SwMacroVarEn26 to off position for when PostFit, RecalFit, REMParamOn are activated
+			BasicLibrary_Mic_Mode.SetInvalidOmniMicModeTestSetFlag(false);
+			
+		    // Get the default position from Mid Level Library
+            string MicMode_FFdefault = Mid_Level_Library_Mic_Mode.MicMode_DefaultPos ();	
+			// Set the Default position for the Mic Mode                
+			Mid_Level_Library_Mic_Mode.MicMode_Set(MicMode_FFdefault);
+			                             				
+			// set default position for Checkbox Speech in Noise Only under Automatic Mic Mode (always off).
+            High_Level_Library_Mic_Mode.MicModeSpeechInNoiseEn_Set(0);
+            				
+			// set default position for Activation Threshold dropdown menu
+			High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_DefaultPos ();
+		}
+				
+		/*---------------------------------------------------------------------------------------------------------------*		     
+		   Description:  Generic IsEnabled for the micmode checkboxes and radiobuttons.
+		   *             (Note that there are specific greying-out conditions for individual micmode features, 
+		   *              which are taken care of by other functions.)    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool Mic_Mode_Is_Enabled ()            
+		{			
+		    //User Interface controls should grey out when Telecoil Only, DAI only, Tek/MiniTek only, 
+			//bluetooth only, MiniTekFM only, MiniTekTelecoil only or Tinnnitus Noiser only.  		      
+			if (env:DetHi == DetHi.BothSides)
+		  	{
+				if ((BasicLibrary_Noiser.Noiser_IsOnAndPure() == true &&
+					 	BasicLibrary_Noiser.Noiser_IsOnAndPureOpposite() == true) ||
+					 BasicLibrary_MicrophoneMix.MixMicrophoneEn_Get_Mode () == 0)
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			}	
+			else
+			{
+				if (BasicLibrary_Noiser.Noiser_IsOnAndPure() == true ||
+						BasicLibrary_MicrophoneMix.MixMicrophoneEn_Get_Mode () == 0)
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			}					
+		}
+	
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns IsEnabled for the Universal program and listening program UI mic mode macros   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool MicModeUIsAreEnabled()
+		{			
+			if (env:HiDriverWorkMode != HiDriverWorkMode.Fitting)
+			{
+				return false;
+			}	
+			else // Universal program mic mode UI should be greyed-out in Hicoss.
+			{
+				return true;   
+			}					  	
+		}
+	
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns IsEnabled for the All others listening program mic mode UI. 
+		   *             Note!!! Greying-out of this UI due to Hicoss, or an invalid mic mode is covered 
+		   * 					 by the Mic_Mode_Selection macro.  
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool MicMode_AllOthersIsEnabled()
+		{
+		  // Note! different input modes on both ears is not a use case in 7.3, so no need to check for this now.
+		  // However, different input modes on both sides will be a use case in 7.4, so will need to extend the code then.			
+		  if (BasicLibrary_MicrophoneMix.MixMicrophoneEn_Get_Mode() == 0)
+		  {
+			   return false;   
+		  }	
+		  else 
+		  {
+			   return true;   
+		  }					  	
+		}	
+
+		/*---------------------------------------------------------------------------------------------------------------*		    
+		   Description:  Returns IsEnabled for Directional panels in the Universal program.    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool DirIsEnabled()
+		{
+			bool retVal = true;
+													
+			if(High_Level_Library_Noiser.IsNoiserOnAndPureExclusiveInAnyFitting() == true)
+			{
+				retVal = false;
+			}													 		 											
+		
+			return retVal;		  	
+		} 
+	
+		/*---------------------------------------------------------------------------------------------------------------*		
+	   	Description:  Returns IsEnabled for OmniDirectional panels in the Universal program.
+				      * If Noiser is on, Omni panel is turned off in the Universal Program    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool OmniIsEnabled()
+		{	
+			bool retVal = true;
+			//If Noiser is on in Tinitus, Omni should be disabled in Universal program											  
+		    if (High_Level_Library_Noiser.IsNoiserOnAndPureExclusiveInAnyFitting() == true)
+		    {
+				retVal = false;
+			}
+			return retVal;					  				 
+		} 
+
+		
+
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns IsEnabled for the Single Dir Mic directional checkbox    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SingleDirMicIsEnabled()
+		{
+			if(Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable() == true)
+			{ 
+				if (BasicLibrary_Noiser.Noiser_IsOnAndPure() == true &&
+		           BasicLibrary_Noiser.Noiser_IsOnAndPureOpposite() == true)
+		       	{
+					return false;
+		       	}
+		       	else
+		       	{
+		           	return true;
+		       	}	
+	     	}
+		 	else
+	     	{
+		    	return false;
+		 	}	
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns IsEnabled for Narrow Focus and Side Look
+		   * Conditions for enabling Narrow Focus
+		   * * Directional Microphone is activated
+		   * * Binaural Fitting Mode is active
+		   * * Supports Directional Microphone  
+		   * * Supports e2e capabilities
+		   * * Performance Level is 700 or Price Point Level is 500
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool NFIsEnabled()
+		{
+			bool retVal = false;
+
+			if((Mid_Level_Library_Mic_Mode.IsNarrowFocusAvailable()==true || Mid_Level_Library_Mic_Mode.IsNarrowFocusSPASSAvailable()==true)
+				&& BasicLibrary_Mic_Mode.GetDirSwEnIsOn())				
+			{								
+				retVal = true;	
+				//tinitus masker should be disabled for Narrow Focus to be on
+				if(High_Level_Library_Noiser.IsNoiserOnAndPureInBinauralFitting() == true)
+				{
+					retVal = false;															
+				} 									  						
+			}			
+			return retVal;							  			 		
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns IsEnabled for SideLook.   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SL_IsEnabled()
+		{
+		  
+		  	if ((BasicLibrary_Noiser.Noiser_IsOnAndPure() == true &&
+		    	  BasicLibrary_Noiser.Noiser_IsOnAndPureOpposite() == true) ||
+		      	BasicLibrary_Mic_Mode.GetDirSwEnIsOn() == false)
+		  	{
+		    	 return false;
+		  	}
+		  	else
+		  	{
+		    	 return true;
+		  	}			
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns IsEnabled for Speech Focus. 
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SFIsEnabled()
+		{		       
+		  	if (BasicLibrary_Mic_Mode.GetDirSwEnIsOn () == false)
+		  	{
+		  		return false;
+		  	}
+		  	else
+		  	{
+		  		if (env:DetHi == DetHi.BothSides)
+		  		{
+		  			if ((BasicLibrary_Noiser.Noiser_IsOnAndPure () == true &&
+		  					BasicLibrary_Noiser.Noiser_IsOnAndPureOpposite () == true))
+		  			{
+		  				return false;
+		  			}
+		  			else
+		  			{
+		  				return true;
+		  			}
+		  		}
+		  		else // monaural condition
+		  		{
+		  			if (BasicLibrary_Noiser.Noiser_IsOnAndPure () == true)
+		  			{
+		  				return false;
+		  			}
+		  			else
+		  			{
+		  				return true;
+		  			}
+		  		}
+		  	}
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns IsEnabledPos status for mic mode in Noisy Environmental Program panel    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool NoisyEnv_IsEnabledPos(int pos)
+		{
+			bool retval = false;
+			switch(pos)
+			{
+				case 0: // Directional panel always enabled
+				{  
+						retval = true;	
+				}
+				case 1:
+				{ 
+					// Greying-out status of the Narrow Focus panel depends on whether sufficient static-capabilities 
+					// exist to support this feature. 
+					if(Mid_Level_Library_Mic_Mode.IsNarrowFocusAvailable() || Mid_Level_Library_Mic_Mode.IsNarrowFocusSPASSAvailable())
+					{
+						retval = true;
+					}
+					else
+					{
+						retval = false;
+					}					
+				}
+				default:
+				{
+					retval = false;
+					assertion (false, "[MacroError] mic mode NE radiobutton pos not defined");
+				}
+			}
+			return retval;
+		}
+				
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns Getter position for OmniDirectional radiobutton    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int Omni_GetPos()
+		{
+			if (BasicLibrary_Mic_Mode.GetOmniSwRbIsOn())
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns Getter position for Single Dir Mic Directional checkbox    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int SingleDirMicEn_GetPos()
+		{
+			if (BasicLibrary_Mic_Mode.GetSDMdirSwEnIsOn())
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns Getter position for Directional checkbox    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int Dir_GetPos()
+		{
+			if (BasicLibrary_Mic_Mode.GetDirSwEnIsOn())
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Returns Getter position for Narrow Focus checkbox    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int NF_GetPos()
+		{
+			if (BasicLibrary_Mic_Mode.GetNfSwEnIsOn())
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns Getter position for Side Look checkbox    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int SL_GetPos()
+		{
+			if (BasicLibrary_Mic_Mode.GetSlSwEnIsOn() == true)
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns Getter position for Speech Focus checkbox    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int SFGetPos()
+		{
+			if (BasicLibrary_Mic_Mode.GetSfSwEnIsOn())
+			{
+				return 1;			
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns Getter position for NoisyEnv radiobutton pos    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int NoisyEnv_GetPos()
+		{
+			return BasicLibrary_Mic_Mode.GetMicModeNoisyEnvRbPos(); // TO USE IN IT44
+				
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		    
+		   Description:  Returns Getter position for TV radiobutton pos    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int TV_GetPos()
+		{
+			return BasicLibrary_Mic_Mode.GetMicModeTvRbPos();// TO USE IN IT44	
+			
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns Getter position for the mic mode Selection macro. The getter position determines which
+		   *             of the various micmode UIs is displayed in Connexx.    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int Selection_GetPos()
+		{ 
+
+          	int pos = -1;
+
+			  // Check that if Connexx is running, a valid mic mode has been activated.
+			  // If not then return pos = 5, which displays the invalid-micmode dialogue.
+			if(env:HiDriverWorkMode == HiDriverWorkMode.Fitting &&
+			  	Mid_Level_Library_Mic_Mode.Is_MicMode_Valid_InCxx () == false) 
+			{
+				pos = 0; // Display the invalid-micmode dialogue screen.		     		     
+			}
+			else if(BasicLibrary_ProgramSelection.IsUniversal())  
+			{
+				if(Mid_Level_Library_Mic_Mode.SingleDirMicIsVisible() == true)
+			    {
+					pos = 7; // Display the Universal program micmode UI for SingleDirMic mode- added for 7.4
+				}
+				else
+			    {
+					pos = 1; // Display regular Universal program micmode UI
+				}
+			} 
+			else if(BasicLibrary_ProgramSelection.IsNoisyEnv() &&		  		 		  		
+					Mid_Level_Library_Mic_Mode.NFIsVisible() == true)
+			{
+				// Display Noisy Environment micmode UI. (Dir mic and narrow focus option must be available for this!)
+				pos = 2;
+			}
+			else if(BasicLibrary_ProgramSelection.IsNoisyEnv() &&
+					((Mid_Level_Library_Mic_Mode.IsNarrowFocusAvailable() == false && cap:DirMicAvailable == DirMicAvailable.dir) ||
+			  		Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable() == true))
+			{
+				pos = 3; // Display Noisy Environment micmode UI (Directional).
+			}	    
+			else if(BasicLibrary_ProgramSelection.IsTV() &&
+						(cap:DirMicAvailable == DirMicAvailable.dir || Mid_Level_Library_Mic_Mode.SingleDirMicIsVisible() == true)) 
+			{
+				pos = 5;// Display Tv program micmode UI
+			}	
+			else if(BasicLibrary_ProgramSelection.IsStroll())
+			{
+				if(Mid_Level_Library_Mic_Mode.SLIsVisible()	== true)
+				{
+					pos=4;//Display Afternoon Stroll SideLook micmode UI
+				}
+				else if(Mid_Level_Library_Mic_Mode.SFIsVisible() == true)
+				{
+					pos = 8;//Display Afternoon Stroll SpeechFocus micmode UI
+				}
+			} 			
+			else 
+			{
+				//Display All other programs UI. (This UI is not visible in the tinnitus program, 
+				//as micmode selection IsVisible returns false.)
+				pos = 6;
+			}
+			  
+			return pos;
+		}
+
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Setter method for Dir mic mode
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void Mic_Mode_Set_Dir (int pos)
+		{
+			if (pos == 1) // Directional Checkbox is TICKED! (Set one of the Directional modes)
+			{
+				// Set d9SwMacroDirectionalEnHp to on
+				BasicLibrary_Mic_Mode.SetDirSwEnIsOn(true);
+				 
+				// Turn on Spass & reset SNM controls, if previously on.
+				High_Level_Library_Spass.SpassEn_ForOmni("Directional");
+				 
+				// Set FBC to dual mic configuration. 
+				BasicLibrary_FeedbackStopper.FBCSwitchdepMicMode_Set(1);
+				
+				// Set SwMicMode, SIN and Wnc controls based on the tick-states of the other 
+				// mic mode checkboxes in the Universal program. 
+				Mid_Level_Library_Mic_Mode.Dir_LogicRouteForOn(); 
+			}
+			else // Directional Checkbox is not TICKED! (Set an Omnidirectional mode)
+			{
+				// Set d9SwMacroDirectionalEnHp to off
+				BasicLibrary_Mic_Mode.SetDirSwEnIsOn(false); 
+				
+				// Turn OFF Spass & reset SNM controls, if required.
+				High_Level_Library_Spass.SpassEn_ForOmni("Omnidirectional"); 
+				
+				// Set the Wnc HW controls to equal the values of the SW controls.
+				BasicLibrary_EWindScreen.EWindScreen_ResetHwCtrlsToSwVars(); 
+				
+				// Set micmode SIN HW control off.
+				BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(0); 
+				
+				if (hi:d8SwMacroSnmSinEnHp == d8SwMacroSnmSinEnHp.on && hi:d8SwMacroNrViewHp == d8SwMacroNrViewHp.advance)
+				{
+					// Set snm SIN HW controls on if the SW control is on, and we're in the extended snm view.
+					BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set(1);
+				}
+								
+    			// Set SwMicMode to SwMicModeForOmni
+				Mid_Level_Library_Mic_Mode.OmniMicModeProc("Omni_mode");  
+				
+				// Adjust SwMicMode if necessary, according to the activation states of Wnc / Izoom / OpenOpt
+				string ctrlvalue_set = Mid_Level_Library_Mic_Mode.ResetOmniForIzWncOo();
+				
+				// Set the FBC parameters accordingly. 
+				Mid_Level_Library_Mic_Mode.SetFBCforOmni(ctrlvalue_set); 		
+													                                                   
+			}
+		}
+
+
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Setter method for mic mode for the Binaural Single Dir Mic directional mode checkbox. 
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void Mic_Mode_Set_SDMdir(int pos)
+		{
+			if (pos == 1) // Binaural Single Dir Mic directional checkbox selected
+			{
+				Mid_Level_Library_Mic_Mode.MicMode_Set("SDMdir_mode");
+	    	    BasicLibrary_Mic_Mode.SetSDMdirSwEnIsOn(true); 
+			}
+			else // // Binaural Single Dir Mic directional checkbox de-selected (runs SDM omni mode).
+			{
+				Mid_Level_Library_Mic_Mode.MicMode_Set("SDMomni_mode"); 
+		        BasicLibrary_Mic_Mode.SetSDMdirSwEnIsOn(false);
+			}
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Setter method for NF mic mode
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void Mic_Mode_Set_NF (int pos)
+		{
+			if (pos ==1) // Narrow Focus Checkbox is TICKED!
+			{
+				BasicLibrary_Mic_Mode.SetNfSwEnIsOn(true); // Set d9SwMacroNarrowfocusEnHp to on
+				Mid_Level_Library_Mic_Mode.NF_LogicRouteForOn();
+			}
+			else // Narrow Focus Checkbox is not TICKED!
+			{
+				BasicLibrary_Mic_Mode.SetNfSwEnIsOn(false); // Set d9SwMacroNarrowfocusEnHp to off
+				Mid_Level_Library_Mic_Mode.NF_LogicRouteForOff();
+			}
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Setter method for SL mic mode
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void Mic_Mode_Set_SL(int pos)
+		{
+			if (pos == 1) // Side Look Checkbox is TICKED!
+			{
+				BasicLibrary_Mic_Mode.SetSlSwEnIsOn(true); // Set d9SwMacroSidelookEnHp to on
+				Mid_Level_Library_Mic_Mode.SL_LogicRouteForOn();
+			}
+			else // Side Look Checkbox is not TICKED!
+			{
+				BasicLibrary_Mic_Mode.SetSlSwEnIsOn(false); // Set d9SwMacroSidelookEnHp to off
+				Mid_Level_Library_Mic_Mode.SL_LogicRouteForOff();
+			}
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Setter method for SF mic mode
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void Mic_Mode_Set_SF(int pos)
+		{
+			if (pos == 1) // Speech Focus Checkbox is TICKED!
+			{
+				BasicLibrary_Mic_Mode.SetSfSwEnIsOn(true); // Set d9SwMacroSpeechfocusEnHp to on
+				Mid_Level_Library_Mic_Mode.SF_LogicRouteForOn();				
+			}
+			else // Speech Focus Checkbox is not TICKED!
+			{
+				BasicLibrary_Mic_Mode.SetSfSwEnIsOn(false); // Set d9SwMacroSpeechfocusEnHp to off
+				Mid_Level_Library_Mic_Mode.SF_LogicRouteForOff();
+			}
+
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Setter method for mic mode for NoisyEnv program
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void Mic_Mode_Set_NoisyEnv(int pos)
+		{
+			if (pos == 0) // Directional radiobutton selected
+			{
+				if(Mid_Level_Library_Mic_Mode.IsNarrowFocusSPASSAvailable())
+				{
+					BasicLibrary_Spass.SpassEn_Set(0);
+				}
+				Mid_Level_Library_Mic_Mode.MicMode_Set("Dir_mode"); // Activate the appropriate directional mic mode								    
+			}
+			else if (pos == 1) // Narrow Directionality radiobutton selected
+			{
+				if(Mid_Level_Library_Mic_Mode.IsNarrowFocusSPASSAvailable())
+				{
+					Mid_Level_Library_Mic_Mode.MicMode_Set("Dir_mode"); // Activate the appropriate directional mic mode
+					BasicLibrary_Spass.SpassEn_Set(1);
+					
+				    BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(0); // mic mode
+				    BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set(0); // snm
+				}
+				else
+				{
+					Mid_Level_Library_Mic_Mode.MicMode_Set("NF_mode"); // Activate the appropriate NarrowFocus mic mode
+				}		
+			}
+		    else 
+			{
+				assertion (pos >= 0, "[MacroError] SetPos position is NOT correctly defined!");
+			}
+			BasicLibrary_Mic_Mode.SetMMNoisyEnvSwCtrl(pos);  // Add in IT44
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Setter method for mic mode for 'all other' listening programs
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void Mic_Mode_Set_AllOthers(int pos)
+		{
+			if (pos == 0) // Directional radiobutton selected
+			{
+				// Activate the appropriate Omnidirectional mic mode
+				Mid_Level_Library_Mic_Mode.MicMode_Set("Omni_mode"); 
+			}
+			else 
+			{
+				assertion (pos >= 0, "[MacroError] SetPos position is NOT correctly defined!");
+			}
+		}
+
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Setter method for mic mode for TV program
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void Mic_Mode_Set_TV(int pos)
+		{
+			if (pos == 0) // Together (OmniDirectional) radiobutton selected
+			{
+			    if(Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable() == true)
+			    {
+			    	Mid_Level_Library_Mic_Mode.MicMode_Set("SDMomni_mode");
+			    }
+			    else
+			    {
+					Mid_Level_Library_Mic_Mode.MicMode_Set("Omni_mode"); // Activate the appropriate omni mic mode
+				}
+				
+				BasicLibrary_Mic_Mode.SetMMTvSwCtrl(pos);   // Set the radiobutton position
+			}
+			else if (pos == 1) // Alone (Directional) radiobutton selected
+			{
+				if(Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable() == true)
+			    {
+			    	Mid_Level_Library_Mic_Mode.MicMode_Set("SDMdir_mode");
+			    }
+			    else
+			    {
+			    	// Activate the appropriate directional mic mode
+					Mid_Level_Library_Mic_Mode.MicMode_Set("Dir_mode"); 
+				}
+				
+				BasicLibrary_Mic_Mode.SetMMTvSwCtrl(pos);  // Set the radiobutton position
+			}
+			else 
+			{
+				assertion (pos >= 0, "[MacroError] SetPos position is NOT correctly defined!");
+			}
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Setter method for mic mode for Afternoon Stroll program
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void Mic_Mode_Set_AftrStroll(int pos)
+		{
+			if (pos == 0) // Speech Focus / Sidelook radiobutton selected
+			{
+			   if (Mid_Level_Library_Mic_Mode.SLIsVisible() == true) // PP700 Sidelook mode available
+			   {
+			       Mid_Level_Library_Mic_Mode.MicMode_Set("SL_mode"); // Activate the appropriate Sidelook mode
+			   }
+			   else // Speech focus only
+			   {
+			       Mid_Level_Library_Mic_Mode.MicMode_Set("SF_mode"); // Activate the appropriate Speechfocus mode
+			   }
+			}
+		    else
+		    {
+		       assertion (pos >= 0, "[MacroError] SetPos position is NOT correctly defined!");
+		    }		
+		}
+
+		/*---------------------------------------------------------------------------------------------------------*
+		  Description	:	Function is setting Microphone Mode for all listening situation. 
+		/*---------------------------------------------------------------------------------------------------------*/
+		public function void MicMode_Set_ProgramSelection()
+		{
+			println ('[HAL]HLIB Mic_Mode.Mic_Mode_Set_ProgramSelection in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+
+			if (BasicLibrary_ProgramSelection.IsNoisyEnv() == true)			
+			{ 
+				// 1) Set Narrow Focus if available (UI: NF radiobutton selected, Directional available)
+				// 2) If not, set Directional Mode if available (UI: show only Directional icon)
+				// 3) If not, set Single Dir Mic dir mode if available (UI: show only Directional icon) 
+				// 4) Otherwise set to Omnidirectional (UI: show only Omni icon)
+				 
+             	if (Mid_Level_Library_Mic_Mode.IsNarrowFocusAvailable() || Mid_Level_Library_Mic_Mode.IsNarrowFocusSPASSAvailable())
+             	{
+                	High_Level_Library_Mic_Mode.Mic_Mode_Set_NoisyEnv(1);         
+             	}                                                        
+             	else if(cap:DirMicAvailable == DirMicAvailable.dir)
+             	{
+                 	High_Level_Library_Mic_Mode.Mic_Mode_Set_NoisyEnv(0); 
+            	}                                                        
+             	else if(Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable() == true)
+             	{
+                 	Mid_Level_Library_Mic_Mode.MicMode_Set("SDMdir_mode"); 
+             	}                                                         
+             	else
+             	{
+                	Mid_Level_Library_Mic_Mode.MicMode_Set("Omni_mode");
+             	}
+       		}
+			
+			else if (BasicLibrary_ProgramSelection.IsTV() == true &&
+		  	    		(cap:DirMicAvailable == DirMicAvailable.dir || 
+		  	    		 Mid_Level_Library_Mic_Mode.SingleDirMicIsVisible() == true)) 
+		  	// 1) Set Single Dir Mic omni mode if available (UI: Omni radiobutton selected, Directional available)
+		  	// 2) Otherwise set to Omnidirectional (UI: Omni radiobutton selected, Directional available) 
+		  	{ 
+            	High_Level_Library_Mic_Mode.Mic_Mode_Set_TV(0);      
+            }
+      
+			else if (BasicLibrary_ProgramSelection.IsTinnitus() == true)
+       		{
+     			// same as Universal (do nothing)
+       		}       		
+       		else if (BasicLibrary_ProgramSelection.IsStroll() == true)
+       		{  
+	    		// 1) Set SideLook if available (UI: show only Spacial Speech Focus icon)
+       			// 2) Otherwise set Speech Focus (UI: show only Speech Focus icon)  
+       		
+            	if (Mid_Level_Library_Mic_Mode.SLIsVisible() == true)
+			 	{
+			    	Mid_Level_Library_Mic_Mode.MicMode_Set("SL_mode");
+			 	}
+			 	else 
+			 	{
+			 		// Speech focus only
+			      	Mid_Level_Library_Mic_Mode.MicMode_Set("SF_mode");  
+			 	}   
+			}       
+       		else // (all other programs)
+
+       		{
+            	if (Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable() == true)
+             	{
+                	Mid_Level_Library_Mic_Mode.MicMode_Set("SDMomni_mode");             	
+ 				}
+             	else
+             	{
+                	Mid_Level_Library_Mic_Mode.MicMode_Set("Omni_mode");
+             	}
+       		}
+   		 }
+   		 
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Set the mic mode Speech in noise only checkbox, acc to set pos.
+		-----------------------------------------------------------------------------------------------------------------*/		
+        public function void MicModeSpeechInNoiseEn_Set(int pos)
+		{
+	        BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(pos); // Set HW variables
+	        BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_SWSet(pos); // Set SW variable
+        }
+        
+	}
+	
+}	

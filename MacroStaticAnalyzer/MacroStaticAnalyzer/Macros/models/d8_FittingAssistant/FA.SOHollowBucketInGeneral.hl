@@ -1,0 +1,80 @@
+// First Draft based on FA.AATemplateFitAss.hl 											:2013-04-18 Raymond
+// Updated Package Name																	:2013-05-06 Judith
+// Updated builtin functions name														:2013-05-14 Raymond
+// Update setApply2IsVisible, setApply2IsEnabled to false								:2013-05-30 Raymond
+// Update due to CR62325																:2013-07-02 Judith
+//FR62273: FIAS - Display propsal cannot be applied text for Tinnitus ear side          :2013-07-05 Judith
+//------------------------------------------------7.3----------------------------------------------------------------
+// Clean up comments and refractor method argument										:2013-12-13 Raymond
+// Updated proposal 2 for custom devices												:2014-07-10 Mang Yew
+/*------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package FittingAssistent SOHollowBucketInGeneral
+	{
+		application function bool IsVisible ()
+		{
+			return true;
+		} //closing SOHollowBucketInGeneral.IsVisible
+		application function bool IsEnabled ()
+		{
+			return true;
+		} //closing SOHollowBucketInGeneral.IsEnabled
+		application function void SelectProposal1 ()
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+			{
+				setApply1IsVisible (false);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_P_Tinnitus");
+			}			
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_BTMuffled"))
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (true);
+				setProposalTextID1 ("FA_P_BTMuffled");
+			}
+			else
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_N_BTMuffled");
+			}
+		} //closing SOHollowBucketInGeneral.SelectProposal1
+		application function void ApplyProposal1 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID1 ());
+		} //closing SOHollowBucketInGeneral.ApplyProposal1
+		application function void SelectProposal2 ()
+		{
+			if (cap:HICategory == HICategory.ITE)
+			{
+				setApply2IsVisible (false);
+				setApply2IsEnabled (false);
+				setProposalTextID2("");
+			}
+			else
+			{
+				if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+				{
+					setApply2IsVisible (false);
+					setApply2IsEnabled (false);
+					setProposalTextID2 ("FA_P_Tinnitus");
+				}			
+				else 
+				{
+					setApply2IsVisible (false);
+					setApply2IsEnabled (false);
+					setProposalTextID2 ("FA_P_IncVentSize_NoApply");
+				}
+			}
+		} //closing SOHollowBucketInGeneral.SelectProposal2
+		application function void ApplyProposal2 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID2 ());
+		} //closing SOHollowBucketInGeneral.ApplyProposal2
+
+	} //package FitAss SOHollowBucketInGeneral
+
+} //namespace shs_sat

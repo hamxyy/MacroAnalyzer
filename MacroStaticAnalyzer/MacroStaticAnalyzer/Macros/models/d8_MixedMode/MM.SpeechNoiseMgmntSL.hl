@@ -1,0 +1,76 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        SpeechNoiseMgmnt Slider
+// Initial Version                						   				: 2011-02-23 Meike Doose and Frauke Schall
+// initialize Get Pos													: 2011-02-28 Meike Doose
+// include IsVisible and IsEnabled										: 2011-03-01 Meike Doose
+// include IsEnabled when Tinnitus is set to Noise		    			: 2011-03-22 Meike Doose
+// change isVisible to be not visible when multichannel is selected		: 2011-05-13 Meike Doose
+// Add println for MPV testing											: 2011-09-22 Jenny Lin
+// Deleted comments above application functions that descibe what 
+// the functions do  													: 2012-06-05 Alastair Manders  
+// *********************************************CODE FREEZE*******************************************************
+// IsVisible() now calls SpeechNoiseMgmntSL_IsVisible()     			: 2013-03-04 Alastair Manders
+// Clean up																: 2014-10-10 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{	
+	using shs_sat.*;
+	
+	package MixedMode SpeechNoiseMgmntSL
+	{
+		application function bool IsVisible()
+		{
+			bool retVal = High_Level_Library_SpeechNoiseMgmnt.IsSpeechNoiseMgmntSliderVisible ();														
+			println('[HAL]MixedMode.SpeechNoiseMgmntSL.IsVisible = '+retVal + BasicLibrary_DebugPrint.PrintCurrentProg ());
+					
+			return retVal;	
+		}
+						
+		application function bool IsEnabled()
+		{
+			bool retVal = High_Level_Library_SpeechNoiseMgmnt.IsSnmSliderDdRbEnabled ();			
+			println('[HAL]MixedMode.SpeechNoiseMgmntSL.IsEnabled = '+retVal + BasicLibrary_DebugPrint.PrintCurrentProg());
+			
+			return retVal;
+		}
+				
+		application function int MaxPos()
+		{
+			int retval = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_MaxPos();			
+			println('[HAL]MixedMode.SpeechNoiseMgmntSL.MaxPos = ' + retval);
+									
+			return  retval;
+		}
+				
+		application function bool IsVisiblePhysicalPos(int physicalPos)
+		{
+
+			bool retVal = High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_IsVisiblePhysicalPos(physicalPos);		
+			println('[HAL]MixedMode.SpeechNoiseMgmntSL.IsVisiblePhysicalPos = ' + retVal + '. physicalpos='+ physicalPos);
+			
+			return retVal;		
+		} 
+						
+		application function bool IsEnabledPos(int pos)
+		{
+	 		println('[HAL]MixedMode.SpeechNoiseMgmntSL.IsEnabledPos = TRUE');
+	 					
+			return true;
+		}
+			
+		application function int GetPos()
+		{
+			int retVal = High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Get();
+	 		println('[HAL]MixedMode.SpeechNoiseMgmntSL.GetPos = ' + retVal + BasicLibrary_DebugPrint.PrintCurrentProg ());
+			
+			return retVal; 	
+		}
+						
+		application function void SetPos(int pos)
+		{
+			println('[HAL]MixedMode.SpeechNoiseMgmntSL.SetPos = ' + pos  + BasicLibrary_DebugPrint.PrintCurrentProg ());		
+			High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Set(pos);
+		}
+
+	}
+}

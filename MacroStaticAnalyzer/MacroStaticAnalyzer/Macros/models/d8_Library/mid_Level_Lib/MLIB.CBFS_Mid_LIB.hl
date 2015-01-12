@@ -1,0 +1,70 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            MID LEVEL PRICEPOINT LIBRARY : CBFS
+// Initial Version                                          						: 2012-08-13 Nadia Neugeborn 
+// *********************************************CODE FREEZE*******************************************************
+// FR57284: Macro CBFS controls shall be enable after First Fit                     : 2012-09-03 Nadine Seubert
+// Added a new case for PP75 in CbfsEn_IsVisible(), which returns 'false'           : 2013-03-14 Al Manders
+// Added a new case for PP75 in CBFS_Default(), which returns '0'               : 2013-03-14 Al Manders
+// Update default after FirstFit for Nitro to set to CBFS to off					: 2013-04-25 Sonia
+// Sifit 7.2 MDS review: Only Nitro BTE default to OFF, Nitro customs follow platform settings. : 2013-07-02 Jenny
+// Sifit 7.2 Peer Review													: 2013-07-31 Jenny, Judith, Raymond
+// Sifit 7.3 PEER REVIEW														: 2014-04-14 MieMie, Mang Yew 
+// Sifit 7.4 PEER REVIEW. CBFS_Default: comment out Nitro code, not for 7.4.		: 2014-11-12 Jenny, Niklas 
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	package Lib Mid_Level_Library_CBFS
+	{
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		//   Description:  CBFS only available for PP700 and PP500.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool CbfsEn_IsVisible ()
+		{
+			bool retval = true;
+			if (cap:PricePoint >= PricePoint.PP500)
+			{
+				// CBFS available for PP700/PP500, therefore visible
+				retval = true;
+			}
+			else
+			{
+				retval = false;
+			}
+			return retval;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  After FirstFit settings for CBFS.
+		* It shall be activated for PP700 & PP500 (where it is visible).
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int CBFS_Default ()
+		{
+			int retval = 0;
+			
+			if (Mid_Level_Library_CBFS.CbfsEn_IsVisible () == true)
+			{
+				// CBFS activated if it is visible
+				retval = 1;
+				
+//				// NOT FOR 7.4: Below code is for NITRO BTE and needs to be revisited when there is NITRO BTE in D9 PLF.
+//				if (cap:GMax >= 80)
+//				{
+//					retval = 0;
+//				}
+			}
+			else
+			{
+				// CBFS NOT activated if not visible.
+				retval = 0;
+			}
+			return retval;
+		}
+
+	}
+
+}
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Middle Level PP LIBRARY CBFS
+-----------------------------------------------------------------------------------------------------------------*/

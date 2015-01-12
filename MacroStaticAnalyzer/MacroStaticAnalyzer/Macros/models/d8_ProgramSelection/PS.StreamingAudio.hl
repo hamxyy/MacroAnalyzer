@@ -1,0 +1,74 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									PROGRAM SELECTION - Streaming Audio
+
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Initial version based on Program Selection Tek/miniTek				         			: 2013-11-02 Sonia Stasiak
+// Updated Apply function with d9SwMacroProgramIdHp, code tuning							: 2013-12-17 Sonia Stasiak
+// PEER REVIEW CXX 7.3																		: 2014-05-06 Sonia, Mie Mie, Jenny
+/*--------------------------------------------- Cxx 7.4 -----------------------------------------------------------*
+// Update GetOrderNumber function after adding new Induction Loop program					: 2014-07-31 Sonia
+// Change Apply function to call BLib.Set<program> to set d9SwmacroProgramIdHp				: 2014-09-16 Sonia
+// Code clean up																			: 2014-09-17 Sonia
+//-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package ProgramSelection StreamingAudio
+	{
+		application function int GetID ()
+		{
+			int retVal = 17;
+			println ('[HAL]PS - StreamingAudio.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "Streaming Audio";
+			println ('[HAL]PS - StreamingAudio.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 17; // Streaming Audio
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - StreamingAudio.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 17; // Streaming Audio
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - StreamingAudio.IsEnabled = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			return retVal;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetStreamingAudio();
+	
+			println ('[HAL]PS - StreamingAudio.Apply started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());			
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - StreamingAudio.Apply done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function int GetOrderNumber ()
+		{
+			int retVal = 16;
+			println ('[HAL]PS - StreamingAudio.GetOrderNumber = ' + retVal);
+			return retVal;
+		}
+				
+		application function bool CanCopy ()
+		{
+			// Streaming Audio is a program which cannot be copied
+			bool retVal = false;
+			println ('[HAL]PS - StreamingAudio.CanCopy = ' + retVal);
+			return retVal;
+		}
+	}
+}
+//--------------------------------------- END of PROGRAM SELECTION - Streaming Audio ------------------------------*/

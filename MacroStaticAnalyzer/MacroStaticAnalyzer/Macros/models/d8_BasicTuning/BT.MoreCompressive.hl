@@ -1,0 +1,58 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Basic Tuning: MoreCompressiveBu
+// Initial Version (see FR59650)               			     						:2011-08-18 Al
+// Second 'if' changed to 'else if'.                                                :2013-07-16 Al
+// *********************************************CODE FREEZE*******************************************************
+// Sifit 7.2 Peer review. Updated IsEnabled() function : 2013-08-05 Alastair, MieMie, Jennt
+// ER63134: Set IsVisible = true for GMax >= 80, and false for all other devices   :2013-08-30 Al
+// FR68941 to disable Basic Tuning Button when tinnitus is ON and Pure				:2014-09-02 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode BasicTuning_MoreCompressiveBu
+	{
+		application function bool IsVisible ()
+		{
+		  if (cap:GMax >= 80)
+		   {
+		   println ('[HAL]: BT.BasicTuning_MoreCompressiveBu-IsVisible TRUE');
+		   return true;
+		   }
+		  else
+		   {
+		   println ('[HAL]: BT.BasicTuning_MoreCompressiveBu-IsVisible FALSE');
+		   return false;
+		   }	
+		}
+		application function bool IsEnabled ()
+		{
+			bool retVal = false;
+			retVal = High_Level_Library_BasicTuning.MoreCompressiveBuIsEnabled();
+			println('[HAL]: BT.BasicTuning_MoreCompressiveBu-IsEnabled = ' + retVal);
+			return retVal;
+		}
+		application function int MaxPos ()
+		{
+			return 1;
+		}
+		application function bool IsEnabledPos (int pos)
+		{
+			return true;
+		}
+		application function int GetPos ()
+		{
+			return 1; //Always return 1	 
+
+		}
+		application function void SetPos (int pos)
+		{
+		//Call CurveLibrary when button is pressed
+				println ('[HAL]: BT.BasicTuning_MoreCompressiveBu-SetPos');
+				CL_CurveLibrary.ApplyOffset_LevHigh_Partial ("BT_LoudSoundsDown");
+				CL_CurveLibrary.ApplyOffset_LevLow_Partial ("BT_SoftSoundsUp");
+		}
+	} // closes MixedMode BasicTuning_MoreCompressiveBu
+
+} //namespace shs.sat
+// end of file

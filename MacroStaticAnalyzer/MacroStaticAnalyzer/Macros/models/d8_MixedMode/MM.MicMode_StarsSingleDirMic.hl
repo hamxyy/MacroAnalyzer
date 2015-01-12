@@ -1,0 +1,54 @@
+/*----------------------------------------------------------------------------------------------------------------
+// 								Mic Mode Stars for Single Dir Mic
+//----------------------------------------------------------------------------------------------------------------
+// Initial version v7.4																: 2014-07-09 Sultan
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_StarsSingleDirMic
+	{
+		application function bool IsVisible ()
+		{
+			bool retVal = Mid_Level_Library_MicModeStars.SingleDirMicStarsIsVisible();
+			println ('[HAL]MM - Mic_Mode_StarsSingleDirMic.IsVisible = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			bool retVal = Mid_Level_Library_MicModeStars.SingleDirMicStarsIsEnabled();
+			println ('[HAL]MM - Mic_Mode_StarsSingleDirMic.IsEnabled = ' + retVal);
+			return retVal;
+		} 
+		
+		application function int MaxPos ()
+		{
+			int retVal = 5;
+			println ('[HAL]MM - Mic_Mode_StarsSingleDirMic.MaxPos = ' + retVal);
+			return retVal;
+		} 
+		
+ 		application function bool IsEnabledPos (int pos)
+		{
+			bool retVal = true;
+			println ('[HAL]MM - Mic_Mode_StarsSingleDirMic.IsEnabledPos = ' + retVal);
+			return retVal;
+		}
+		
+ 		application function int GetPos ()
+		{
+			int retVal = Mid_Level_Library_MicModeStars.GetSingleDirMicStars();
+			println ('[HAL]MM - Mic_Mode_StarsSingleDirMic.GetPos = ' + retVal);
+			return retVal;
+		} 
+		
+ 		application function void SetPos (int pos)
+		{
+			
+		} 
+		 		
+	} 
+} 

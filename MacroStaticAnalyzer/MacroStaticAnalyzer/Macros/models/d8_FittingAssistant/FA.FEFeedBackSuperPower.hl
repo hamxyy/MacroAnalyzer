@@ -1,0 +1,77 @@
+// FR63126	   																		:2013-08-29 Judith
+//----------------------------------------------------------- 7.3 ---------------------------------------------------
+// Clean up comments and refractor method argument									:2013-12-13 Raymond
+/*------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package FittingAssistent FEFeedBackSuperPower
+	{
+		application function bool IsVisible ()
+		{
+			return cap:GMax >= 80;
+		} //closing FEFeedBackSuperPower.IsVisible
+		application function bool IsEnabled ()
+		{
+			return true;
+		} //closing FEFeedBackSuperPower.IsEnabled
+		application function void SelectProposal1 ()
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+			{
+				setApply1IsVisible (false);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_P_Tinnitus");
+			}
+			else if ((cap:GMax >= 80) && (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_DecGainLowFreqSoft")))
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (true);
+				setProposalTextID1 ("FA_P_DecGainLowFreqSoft");
+			}
+			else if ((cap:GMax >= 80) && (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_DecGainLowFreq")))
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (true);
+				setProposalTextID1 ("FA_P_DecGainLowFreq");
+			}
+			else
+			{
+				setApply1IsVisible (false);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_P_CheckEarMold_NoApply");
+			}
+		} //closing FEFeedBackSuperPower.SelectProposal1
+		application function void ApplyProposal1 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID1 ());
+		} //closing FEFeedBackSuperPower.ApplyProposal1
+		application function void SelectProposal2 ()
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+			{
+				setApply2IsVisible (false);
+				setApply2IsEnabled (false);
+				setProposalTextID2 ("FA_P_Tinnitus");
+			}
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_ActivateFBC"))
+			{
+				setApply2IsVisible (true);
+				setApply2IsEnabled (true);
+				setProposalTextID2 ("FA_P_ActivateFBC");
+			}
+			else
+			{
+				setApply2IsVisible (false);
+				setApply2IsEnabled (false);
+				setProposalTextID2 ("FA_P_CGM_NoApply");
+			}
+		} //closing FEFeedBackSuperPower.SelectProposal2				
+		application function void ApplyProposal2 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID2 ());
+		} //closing FEFeedBackSuperPower.ApplyProposal2
+
+	} //package FitAss FEChirpWhistleSuperPower
+
+} //namespace shs_sat

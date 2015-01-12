@@ -1,0 +1,221 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY 		:   AutoPhone
+// Initial Version                                         		:  	2011-03-08  Cecil Wilson
+// Changed HP IDs to Zero based and added Set functions  		:   2011-03-09  Cecil Wilson
+// Changed the invalid state of d8FUctAbsHpTdet to no_HP_change :	2011-06-09  Cecil Wilson
+// commented out the d8FUctRcuAbsHpEn due to ER49502			:   2011-06-23  Cecil Wilson
+// added hi:d8FUctToghpHpEn for accessible manually				:   2011-06-23  Cecil Wilson
+// removed comments for d8FUctRcuAbsHpEn as ER49502 is fixed	:   2011-08-04  Cecil Wilson
+// Added isvalid checks before setting valid controls			:   2011-11-22  Cecil Wilson
+// Reusing Accessible manually functions						:   2011-12-20  Cecil Wilson
+// Removed commented codes										:   2012-02-15  Cecil Wilson
+// Peer review comments implemented								:   2012-06-19  Cecil Wilson
+// *********************************************CODE FREEZE*******************************************************  
+// ******SIFIT7.2_PEERREVIEWED: 					  :  2013-07-30   Jenny, Judith
+// updated println statement for debugging.											: 2014-01-10 Jenny
+// Sifit7.3 Peer review	: Deleted AutoPhoneEn_Set_HPx_OFF since it was commented out and not in use. : 2014-04-15 Jenny, Judith
+// Code cleanup: Updated printlines.												: 2014-10-09 Jenny
+// AutoPhoneEn_Set_HPx: added check for autocoil cap before setting autophone.		: 2014-10-23 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+
+namespace shs_sat 
+{
+	using shs_sat.*;
+
+	package  Lib BasicLibrary_AutoPhone
+	{
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description:  Compares the HI settings & returns -1 if NOT selected & 0,1,2,3,4,5  if HP1,2,3..6 is selected
+		/*-----------------------------------------------------------------------------------------------------------------$*/		
+        public function int AutoPhoneEn_Get_HPx()
+        {
+			println ('[HAL]BLIB.BasicLibrary_AutoPhone.AutoPhoneEn_Get_HPx');
+			         	
+			if(hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.HP1)
+			{
+				return 0;
+			}
+			else if(hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.HP2)
+			{
+				return 1;
+			}
+			else if(hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.HP3)
+			{
+				return 2;
+			}
+			else if(hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.HP4)
+			{
+				return 3;
+			}
+			else if(hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.HP5)
+			{
+				return 4;
+			}
+			else if(hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.HP6)
+			{
+				return 5;
+			}
+			else
+			{
+//			 (hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.not_valid ||
+//				hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.no_HP_change){
+
+				println('[HAL]BLIB.BasicLibrary_AutoPhone.AutoPhoneEn_Get_HPx >> not_valid/no_HP_change, return -1');
+				return -1;
+			}
+        }
+
+		/*$---------------------------------------------------------------------------------------------------------------
+		   Description: Enables/Checks Autophone for a HearingProgram  (0 for HP1 and 1 for HP2 and ....5 for HP6)
+		-----------------------------------------------------------------------------------------------------------------$*/ 
+        public function void AutoPhoneEn_Set_HPx(int HP, int CxxPos)
+        {
+			
+			
+			if(cap:AutocoilAvailable == AutocoilAvailable.exists)
+			{
+				println ('[HAL]BLIB.BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx');
+	        	if (CxxPos == 1)
+	        	{ 
+	        		// *********** pos = 1 ************
+	        		switch (HP)
+	        		{
+	        		   	case 0:{
+			        		if(isValid(d8FUctAbsHpTdet.HP1))
+			        		{
+								hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.HP1;
+			        		}
+			        		else
+			        		{
+			        			assertion(false,"[MacroError]BLIB.BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx >> Tdet for HP1 is not available, Error in Etemplate valid control");
+			        		}                     		
+			        	}
+			        	case 1:
+			        	{
+			        		if(isValid(d8FUctAbsHpTdet.HP2))
+			        		{
+			        			hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.HP2;
+			        		}
+			        		else
+			        		{
+			        			assertion(false,"[MacroError]BLIB.BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx >> Tdet for HP2 is not available, Error in Etemplate valid control");
+			        		}                     		        		                     		
+			        	}
+			        	case 2:
+			        	{
+			        		if(isValid(d8FUctAbsHpTdet.HP3))
+			        		{
+			        			hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.HP3 ;
+			        		}
+			        		else
+			        		{
+			        			assertion(false,"[MacroError]BLIB.BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx >> Tdet for HP3 is not available, Error in Etemplate valid control");
+			        		}
+			        	}
+			        	case 3:{
+							if(isValid(d8FUctAbsHpTdet.HP4))
+							{
+			        			hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.HP4;
+			        		}
+			        		else
+			        		{
+			        			assertion(false,"[MacroError]BLIB.BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx >> Tdet for HP4 is not available, Error in Etemplate valid control");
+			        		}                     		        		
+			        	}
+			        	case 4:
+			        	{
+			        		if(isValid(d8FUctAbsHpTdet.HP5))
+			        		{
+			        			hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.HP5;
+			        		}
+			        		else
+			        		{
+			        			assertion(false,"[MacroError]BLIB.BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx >> Tdet for HP5 is not available, Error in Etemplate valid control");
+			        		}                     		        		                     		
+			        	}
+			        	case 5:
+			        	{
+							if(isValid(d8FUctAbsHpTdet.HP6))
+							{
+			        			hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.HP6;
+			        		}
+			        		else
+			        		{
+			        			assertion(false,"[MacroError]BLIB.BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx >> Tdet for HP6 is not available, Error in Etemplate valid control");
+			        		}                     		        		                     		
+			        	}
+			        	default:
+			        	{
+			        		if(isValid(d8FUctAbsHpTdet.no_HP_change))
+			        		{
+			        			hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.no_HP_change;
+			        		}
+			        		else
+			        		{
+			        			assertion(false,"[MacroError]BLIB.BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx >> Tdet for no_HP_change is not available, Error in Etemplate valid control");
+			        		}                     		        		                     		        		
+			        	}
+		        	}
+	    		}
+	    		else
+	    		{
+	    			// *********** pos = 0 ************
+					// if Autophone was previously enabled then disable it
+					switch (HP)
+					{ 
+						case 0:
+						{
+							if (hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.HP1)
+							{ 
+	 			       			hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.no_HP_change;
+			                }	
+						}
+						case 1:{
+							if (hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.HP2)
+							{
+	 			       			hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.no_HP_change;
+	 			       		}
+						}
+						case 2:
+						{
+							if (hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.HP3)
+							{
+	 			       			hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.no_HP_change;
+	 			       		}
+						}
+						case 3:
+						{
+							if (hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.HP4)
+							{
+	 			       			hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.no_HP_change;
+	 			       		}
+						}
+						case 4:
+						{
+							if (hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.HP5)
+							{
+	 			       			hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.no_HP_change;
+	 			       		}
+						}
+						case 5:
+						{
+							if (hi:d8FUctAbsHpTdet == d8FUctAbsHpTdet.HP6)
+							{
+	 			       			hi:d8FUctAbsHpTdet = d8FUctAbsHpTdet.no_HP_change;
+	 			       		}
+						}
+						default:
+						{
+						     println('[HAL]BLIB.BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx >> already OFF for all HPs');	
+						}
+					}
+				}
+    		}
+    		else
+    		{
+    			println ('[HAL]BLIB.BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx >>> NOT RUN SINCE NO AUTOCOIL CAPABILITY');
+    		}
+	  	}
+	}
+}

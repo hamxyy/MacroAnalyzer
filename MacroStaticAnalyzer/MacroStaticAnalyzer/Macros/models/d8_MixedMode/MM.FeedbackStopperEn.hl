@@ -1,0 +1,76 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Feedback Stopper checkbox
+// Initial Version                								: 2011-02-24   Ma Mie Mie Thein
+// Added Tinnitus greyout										: 2011-03-23   Cecil Wilson 
+// Modified the Setpos function to manage 
+// OpenOptimizer/Adaptive Gain Reduction/DirMic activation 		: 2011-05-06   Cecil Wilson
+// Added comments												: 2011-07-29   Jenny Lin
+// Add println for MPV testing									: 2011-09-22   Jenny Lin
+// Macro code Cleanup											: 2012-02-14   Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Updated based on peer review									: 2012-06-25	Mang Yew
+*****************************************CODE FREEZE***************************************************
+// Updated IsEnabled, GetPos, SetPos due to CR61635				: 2013-05-22	Mang Yew
+// Implementation for CR61635 (Disable FBC and WNC if input mode is non-mic input),
+// ER61121 (To deactivate FBC in pure Tinnitus mode             : 2012-05-30 Mang Yew  
+// 7.3 Peer Review: Replace Mic_Mode_Is_Enabled with IsTinnitusPureandMicModeEnabled	: 2014-04-14 Raymond
+// Sifit 7.3 Peer Review update									: 2014-05-05 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode FeedbackStopperEn
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MM - FeedbackStopperEn - IsVisible = TRUE');
+			return true;
+		}
+		application function bool IsEnabled ()
+		{
+			int hp = env:Prog;
+			// Greyout if tinnitus
+			if (BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled())
+			{
+				println ('[HAL]MM - FeedbackStopperEn - IsEnabled = TRUE in HP=' + hp);
+				return true;
+			}
+			else
+			{
+				println ('[HAL]MM - FeedbackStopperEn - IsEnabled = FALSE in HP=' + hp);
+				return false;
+			}
+		}
+		application function int MaxPos ()
+		{
+			println ('[HAL]MM - FeedbackStopperEn - MaxPos = 1');
+			return 1;
+		}
+		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MM - FeedbackStopperEn - IsEnabledPos = TRUE');
+			return true;
+		}
+		application function int GetPos ()
+		{
+			int hp = env:Prog;
+			if (High_Level_Library_FeedbackStopper.FeedbackStopperEN_GetPos () == true)
+			{
+				println ('[HAL]MM - FeedbackStopperEn - GetPos = 1 in HP=' + hp);
+				return 1;
+			}
+			else
+			{
+				println ('[HAL]MM - FeedbackStopperEn - GetPos = 0 in HP=' + hp);
+				return 0;
+			}
+		}
+		application function void SetPos (int pos)
+		{
+			int hp = env:Prog;
+			println ('[HAL]MM - FeedbackStopperEn - SetPos = ' + pos + ' in HP=' + hp);
+			High_Level_Library_FeedbackStopper.FeedbackStopperEn_Set (pos);
+		}
+	} //package MixedMode.FeedbackStopperEn
+
+} //namespace shs.sat

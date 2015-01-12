@@ -1,0 +1,48 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                             MID LEVEL LIBRARY : HI Category
+// Initial version. Added new function Check_Hi_Category() to check the HI Category		: 2012-10-30	Mang Yew
+-----------------------------------------------------------------------------------------------------------------
+*/
+
+namespace shs_sat {
+	using shs_sat.*;
+	package Lib Mid_Level_Library_Hi_Category{
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Basic Level LIBRARY Function: Check_UserControl_For_Ite
+//   Input		:  <none>
+//   Ouput      :  <string> The HICategory type 
+//   Description:  This function checks the HICategory for a particular devices. BTE,ITE,RIC,LIFE.
+-----------------------------------------------------------------------------------------------------------------$*/ 			
+
+		public function string Check_Hi_Category(){
+			string category = "";
+			switch(cap:HICategory)
+			{
+				case HICategory.ITE:
+				{
+					category = "ITE";
+				}
+				case HICategory.BTE:
+				{
+					category = "BTE";
+				}
+				case HICategory.RIC:
+				{
+					category = "RIC";
+				}
+				case HICategory.LIFE:
+				{
+					category = "LIFE";
+				}
+				default:
+				{
+					category = "Error!!";
+				}
+			}
+			println('[HAL] MLIB.Check_UserControl_For_Ite    return >>' + category);
+			return category;
+		}// Close Mid_Level_Library_Hi_Category.Check_Hi_Category()	
+	}// package Mid_Level_Library_Mic_Mode
+}// namespace shs.sat
+//************************************ END Of Mic Level Library Hi_Category ****************************************

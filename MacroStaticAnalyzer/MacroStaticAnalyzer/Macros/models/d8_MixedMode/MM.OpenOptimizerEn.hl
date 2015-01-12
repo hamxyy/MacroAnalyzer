@@ -1,0 +1,84 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                  			OpenOptimizer Checkbox
+// Initial version  	                										:  2011-03-14  Cecil Wilson
+// Added Tinnitus greyout														:  2011-03-23  Cecil Wilson  
+// Updated IsEnable/IsVisible function calls									:  2011-05-06  Cecil Wilson	 
+// Added comments																:  2011-08-01  Jenny Lin
+// Add println for MPV testing													:  2011-09-22  Jenny Lin
+// Macro code Cleanup														    :  2012-02-14  Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Updated based on peer review									: 2012-06-25	Mang Yew
+*****************************************CODE FREEZE***************************************************
+//Updated SetPos to call HLib                                                   : 2012-12-27 Sonia Stasiak
+// FR59240: OpenOptimizer to be disabled for devices >=Gmax 75					: 2013-01-25 Frauke
+// Sifit 7.3 Peer Review update									: 2014-05-05 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat {
+    using shs_sat.*;                  
+	package MixedMode OpenOptimizerEn{
+	
+	/*
+	 * Please note that there is NO OpenOptimizer checkbox in Cxx
+	 * This MixedMode marco is NOT needed. Cxx does not call this macro
+	 * BUT I will keep it in. It makes it easier to test the OpenOptimizer.
+	 */
+
+	application function bool IsVisible(){
+		bool retval = Mid_Level_Library_FeedbackStopper.OpenOptimizerEn_IsVisible();
+		// Visibility is determined based on the Device/PP
+		if(retval == true)	{
+			println('[HAL]MM - OpenOptimizerEn - IsVisible = TRUE');
+		}
+		else {
+			println('[HAL]MM - OpenOptimizerEn - IsVisible = FALSE');
+		}							
+		return retval;
+	}//	Closes OpenOptimizerEn.IsVisible
+		
+	application function bool IsEnabled() {
+		bool retval = Mid_Level_Library_FeedbackStopper.OpenOptimizerEn_IsEnabled();
+		// Grey out status is determined based on the PP and Feedback Stopper En Checkbox state 
+		// Greyout if tinnitus
+		int hp = env:Prog;
+		if (retval == true ){ println('[HAL]MM - OpenOptimizerEn - IsEnabled = TRUE in HP='+hp);	}
+		else				{ println('[HAL]MM - OpenOptimizerEn - IsEnabled = FALSE in HP='+hp);	}
+
+		return retval;
+	}//	Closes OpenOptimizerEn.IsEnabled
+
+	application function int MaxPos() {
+ 		println('[HAL]MM - OpenOptimizerEn - MaxPos = 1');
+
+		return 1;
+	}//	Closes OpenOptimizerEn.MaxPos
+	 		
+ 	application function bool IsEnabledPos(int pos) {
+ 		println('[HAL]MM - OpenOptimizerEn - IsEnabledPos = TRUE');
+ 		
+ 		return true;
+	}//	Closes OpenOptimizerEn.IsEnabledPos
+
+ 	application function int GetPos() {
+ 		int retval = -1; 		
+		
+		if(BasicLibrary_FeedbackStopper.OpenOptimizerEn_Get_Sw() == true){
+			retval = 1;
+		}
+		else{
+			retval = 0;
+		}	
+ 		int hp = env:Prog;
+ 		println('[HAL]MM - OpenOptimizerEn - GetPos = '+ retval + ' in HP='+hp);
+ 					
+		return retval;	
+	}//	Closes OpenOptimizerEn.GetPos
+ 		
+	application function void SetPos(int pos) {
+		int hp = env:Prog;
+ 		println('[HAL]MM - OpenOptimizerEn - SetPos = ' + pos + ' in HP='+hp);		
+
+		High_Level_Library_FeedbackStopper.OpenOptimizerEn_SetHWSW(pos);
+		
+		}//	Closes OpenOptimizerEn.SetPos
+	}// package MixedMode.OpenOptimizerEn
+}//namespace shs.sat

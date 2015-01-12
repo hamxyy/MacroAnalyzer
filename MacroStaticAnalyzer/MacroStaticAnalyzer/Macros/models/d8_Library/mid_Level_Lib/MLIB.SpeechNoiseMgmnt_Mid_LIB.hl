@@ -1,0 +1,499 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            MID LEVEL PRICEPOINT LIBRARY : Speech and Noise Management
+// Initial Version                                          					: 2011-02-23 Meike Doose and Frauke Schall
+// include zero based counting													: 2011-02-28 Meike Doose
+// include Cap PricePoint and HIIdentifier										: 2011-02-28 Meike Doose
+// Updated Function structure with single Remapping Funct   					: 2011-03-02 Meike Doose
+// include DefaultPos function													: 2011-03-02 Meike Doose
+// Removed Package LIB workaround 												: 2011-03-03 Cecil Wilson
+// include workaround for HiIdentifier and PricePoint							: 2011-03-16 Meike Doose
+// change of default values 													: 2011-03-22 Meike Doose
+// coment "hi indefier" because of warnings                 					: 2011-04-01 Nadine Seubert
+// cap:PricePoint added															: 2011-07-06 Nadia Neugeborn
+// Added new function SpeechInNoiseEn_DefaultPos								: 2011-07-20 Nadia Neugeborn
+// Added new functin SpeechNoiseMgmntSL_ProgramSelectionPos 					: 2011-09-15 Chuah LayYuan
+// Removed SpeechNoiseMgmntSL_ProgramSelectionPos           					: 2011-11-09 Chuah LayYuan
+// Added new function SpeechNoiseMgmntSL_MedPos             					: 2011-12-13 Chuah LayYuan
+// Changed reval to 0 for 302 and  102 in SpeechNoiseMgmntSL_DefaultPos			: 2012-01-17 Ma Mie Mie Thein
+// Added SpeechNoiseMgmntRb_IsVisible: only for PP700 - PP100 (MRSv1.6)			: 2012-02-01 Jenny Lin
+// clean comments																: 2012-02-13 Meike Steinbuss
+// Updated descriptions															: 2012-03-05 Jenny Lin
+// Renamed DefaultPos() slider function to MinPos()								: 2012-04-12 Nadia Neugeborn
+// Checking for GMax in SpeechInNoiseEn_DefaultPos(), not HiIdentifier			: 2012-04-17 Nadia Neugeborn
+// Added SpeechNoiseMgmntDd_DefaultPos for drop down menus						: 2012-04-17 Nadia Neugeborn	
+// *********************************************CODE FREEZE*******************************************************
+// FR59582: SpeechNoiseMgmntSL_Remapping(int pos) altered. For Pp100 and 300, 
+//         	slider position 0 is now equivalent to position 0 of Pp500. 
+//			(Previously, it was equivalent to position 2 of Pp500).             : 2013-01-08 Al
+// FR59582: Added new function SpeechNoiseMgmntDD_MaxPos()                      : 2013-01-11 Al
+// FR59582: Added new function SpeechNsMgmntDD_IsVisblePhysPos(int physicalPos) : 2013-01-11 Al
+// FR59582: Added new function SpeechNoiseMgmntDD_Remapping(int pos)            : 2013-01-11 Al
+// Added new functions 'SpeechNoiseMgmntDD_IsVisible()' and 
+// 'SpeechNoiseMgmntSL_IsVisible()' 											: 2013-02-28 Al
+// Added new PP75 code to SpeechNoiseMgmntSL_Remapping()                        : 2013-03-05 Al
+// Added new PP75 code to SpeechNoiseMgmntSL_Max/Med/MinPos()               	: 2013-03-05 Al
+// Sifit 7.3 Peer Review Update													: 2014-04-23 Mang Yew
+// FR67585 SnM Pp300 and Pp100 to set default to Med						 	: 2014-05-28 Mang Yew
+// Clean up code.Remove RB and Dd menu for PP100. Shall not be visible for PP100: 2014-10-09 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	package Lib Mid_Level_Library_SpeechNoiseMgmnt
+	{
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  remapping  Slider positions;  Price point and Family resolving function.
+//   /* Example REMAPPING  Table   
+	     * Please update this REMAPPING table when there is a change in the code <when optimization based requests>  
+	     * Current Mapping POS  1   2  3  4  5  6  7
+	     * A=10,B=20,C=30,D=40,E=50,F=60,G=70 -> The parameter set reference number known to the Basic Function
+	     * Slider  POS          0	1   2	3	4	5	6  
+	     * PP 700               A	B	C	D	E	F	G
+	     * PP 500               A	B	C	E	G   
+	     * PP 300               A	E	G
+	     * PP 100               A	E	G
+	     * PP 75                A	  
+/*-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntSL_Remapping (int pos)
+		{
+			int remapped_pos = -1;
+			switch (cap:PricePoint)
+			{ // Switch to the cases based on the Pricepoints and not on Max slider position
+			// RISK: Assumption  slider position for 700 price point is always the same	
+				case PricePoint.PP700:{
+					switch (pos)
+					{
+						case 0:{
+							remapped_pos = 10; // "1-5" - pos=0 w.r.t. PP700
+						}
+						case 1:{
+							remapped_pos = 20; // "4-5" - pos=1 w.r.t. PP700
+						}
+						case 2:{
+							remapped_pos = 30; // "5-8" - pos=2 w.r.t. PP700
+						}
+						case 3:{
+							remapped_pos = 40; // "6-12" - pos=3 w.r.t. PP700
+						}
+						case 4:{
+							remapped_pos = 50; // "8-15" - pos=4 w.r.t. PP700
+						}
+						case 5:{
+							remapped_pos = 60; // "9-16" - pos=5 w.r.t. PP700
+						}
+						case 6:{
+							remapped_pos = 70; // "12-24" - pos=6 w.r.t. PP700
+						}
+						default:{
+							remapped_pos = -1;
+						}
+					}
+				}
+				case PricePoint.PP500:{
+					switch (pos)
+					{
+						case 0:{
+							remapped_pos = 10; // "1-5" - pos=0 w.r.t. PP700
+						}
+						case 1:{
+							remapped_pos = 20; // "4-5" - pos=1 w.r.t. PP700
+						}
+						case 2:{
+							remapped_pos = 30; // "5-8" - pos=2 w.r.t. PP700
+						}
+						case 3:{
+							remapped_pos = 50; // "8-15" - pos=4 w.r.t. PP700
+						}
+						case 4:{
+							remapped_pos = 70; // "12-24" - pos=6 w.r.t. PP700
+						}
+						default:{
+							remapped_pos = -1;
+						}
+					}
+				}
+				case PricePoint.PP300:{
+					switch (pos)
+					{
+						case 0:{
+							remapped_pos = 10; // "1-5" - pos=0 w.r.t. PP700
+						}
+						case 1:{
+							remapped_pos = 50; // "8-15" - pos=4 w.r.t. PP700
+						}
+						case 2:{
+							remapped_pos = 70; // "12-24" - pos=6 w.r.t. PP700
+						}
+						default:{
+							remapped_pos = -1;
+						}
+					}
+				}
+				case PricePoint.PP100:{
+					switch (pos)
+					{
+						case 0:{
+							remapped_pos = 10; // "1-5" - pos=0 w.r.t. PP700
+						}
+						case 1:{
+							remapped_pos = 50; // "8-15" - pos=4 w.r.t. PP700
+						}
+						case 2:{
+							remapped_pos = 70; // "12-24" - pos=6 w.r.t. PP700
+						}
+						default:{
+							remapped_pos = -1;
+						}
+					}
+				}
+				case PricePoint.PP75:{
+					switch (pos)
+					{
+						case 0:{
+							remapped_pos = 10; // "1-5" - pos=0 w.r.t. PP700
+						}
+						default:{
+							remapped_pos = -1;
+						}
+					}
+				}
+				default:{
+					remapped_pos = -1;
+				}
+			}
+			return remapped_pos;
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:   Maxmimum Position of the Slider for SpeechNoiseMgmnt Slider
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntSL_MaxPos ()
+		{
+			int retval = -1;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{ // For 700 price point max slider step is 7
+					retval = 6;
+				}
+				case PricePoint.PP500:{ // For 500 price point max slider step is 5
+					retval = 4;
+				}
+				case PricePoint.PP300:{ // For 300 price point max slider step is 3
+					retval = 2;
+				}
+				case PricePoint.PP100:{ // For 100 price point max slider step is 3
+					retval = 2;
+				}
+				case PricePoint.PP75:{ // Slider not visible for PP75, but 'background'
+					retval = 0; // strength corresponds to slider step 0.
+				} 
+				default:{
+					retval = -1;
+				}
+			}
+			return retval;
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:   Med Position of the Slider for SpeechNoiseMgmnt Slider
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntSL_MedPos ()
+		{
+			int retval = -1;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{ // For 700 price point max slider step is 7
+					retval = 4;
+				}
+				case PricePoint.PP500:{ // For 500 price point max slider step is 5
+					retval = 3;
+				}
+				case PricePoint.PP300:{ // For 300 price point max slider step is 3
+					retval = 1;
+				}
+				case PricePoint.PP100:{ // For 100 price point max slider step is 3
+					retval = 1;
+				}
+				case PricePoint.PP75:{ // Slider not visible for PP75, but 'background'
+					retval = 0; // strength corresponds to slider step 0.
+				} 
+				default:{
+					retval = -1;
+				}
+			}
+			return retval;
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:   Min Position of the Slider for SpeechNoiseMgmnt Slider 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntSL_MinPos ()
+		{
+			int retval = -1;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{ // For 700 price point max slider step is 7
+					retval = 2;
+				}
+				case PricePoint.PP500:{ // For 500 price point max slider step is 5
+					retval = 2;
+				}
+				case PricePoint.PP300:{ // For 300 price point max slider step is 3
+					retval = 0;
+				}
+				case PricePoint.PP100:{ // For 100 price point max slider step is 3
+					retval = 0;
+				}
+				case PricePoint.PP75:{ // Slider not visible for PP75, but 'background'
+					retval = 0; // strength corresponds to slider step 0.
+				} 
+				default:{
+					retval = -1;
+				}
+
+			}
+			return retval;
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  returns the default position of the slider based on PricePoint.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntSL_DefaultPos ()
+		{
+			if (cap:PricePoint == PricePoint.PP300 ||
+					cap:PricePoint == PricePoint.PP100)
+			{
+			// FR67585 SnM Pp300 and Pp100 to set default to Med
+				return Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_MedPos ();
+			}
+			else
+			{
+				return Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_MinPos ();
+			}
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Note: this should correspond to the default slider pos for broadband
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntDd_DefaultPos ()
+		{
+			return 1;
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Physical positions 1 and 3 (min,max) of Dd menus are NOT visible for PP300.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SpeechNsMgmntDD_IsVisblePhysPos (int physicalPos)
+		{
+			bool retval = true;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{
+					switch (physicalPos)
+					{
+						case 0:{
+							retval = true;
+						}
+						case 1:{
+							retval = true;
+						}
+						case 2:{
+							retval = true;
+						}
+						case 3:{
+							retval = true;
+						}
+					}
+				}
+				case PricePoint.PP500:{
+					switch (physicalPos)
+					{
+						case 0:{
+							retval = true;
+						}
+						case 1:{
+							retval = true;
+						}
+						case 2:{
+							retval = true;
+						}
+						case 3:{
+							retval = true;
+						}
+					}
+				}
+				case PricePoint.PP300:{
+					switch (physicalPos)
+					{
+						case 0:{
+							retval = true;
+						}
+						case 1:{
+							retval = false;
+						}
+						case 2:{
+							retval = true;
+						}
+						case 3:{
+							retval = false;
+						}
+					}
+				}
+			}
+			return retval;
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Remapped position is pricepoint dependent: 'min' and 'max' DD positions are not visible for PPs 300.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntDD_Remapping (int pos)
+		{
+			int remapped_pos = -1;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{
+					switch (pos)
+					{
+						case 0:{
+							remapped_pos = 10;
+						}
+						case 1:{
+							remapped_pos = 20;
+						}
+						case 2:{
+							remapped_pos = 30;
+						}
+						case 3:{
+							remapped_pos = 40;
+						}
+					}
+				}
+				case PricePoint.PP500:{
+					switch (pos)
+					{
+						case 0:{
+							remapped_pos = 10;
+						}
+						case 1:{
+							remapped_pos = 20;
+						}
+						case 2:{
+							remapped_pos = 30;
+						}
+						case 3:{
+							remapped_pos = 40;
+						}
+					}
+				}
+				case PricePoint.PP300:{
+					switch (pos)
+					{
+						case 0:{
+							remapped_pos = 10;
+						}
+						case 1:{
+							remapped_pos = 30;
+						}
+					}
+				}
+			}
+			return remapped_pos;
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:   Maxmimum no of DD menu positions available for Current Device
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntDD_MaxPos ()
+		{
+			int retval = -1;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{ // For 700 price point max no of DD menu positions is 4
+					retval = 3;
+				}
+				case PricePoint.PP500:{ // For 500 price point max no of DD menu positions is 4
+					retval = 3;
+				}
+				case PricePoint.PP300:{ // For 300 price point max no of DD menu positions is 2
+					retval = 1;
+				}
+				default:{
+					retval = -1;
+				}
+			}
+			return retval;
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Off for all devices, except for Nitro 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechInNoiseEn_DefaultPos ()
+		{
+			int retVal = 0;
+			
+			if (cap:GMax >= 80)
+			{
+				retVal = 1;
+			}
+			return retVal;
+		}
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description: Snm radiobutton visible for all PPs between 700-300. (Not visible for PP75).
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SpeechNoiseMgmntRb_IsVisible ()
+		{
+			if (cap:PricePoint == PricePoint.PP700 ||
+					cap:PricePoint == PricePoint.PP500 ||
+					cap:PricePoint == PricePoint.PP300)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description: Snm slider visible for all PPs between 700-100. (Not visible for PP75).
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SpeechNoiseMgmntSL_IsVisible ()
+		{
+			if (cap:PricePoint == PricePoint.PP700 ||
+					cap:PricePoint == PricePoint.PP500 ||
+					cap:PricePoint == PricePoint.PP300 ||
+					cap:PricePoint == PricePoint.PP100)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description: Snm DD menus are visible for all PPs greater or equal to PP300
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SpeechNoiseMgmntDD_IsVisible ()
+		{
+			if (cap:PricePoint == PricePoint.PP700 ||
+					cap:PricePoint == PricePoint.PP500 ||
+					cap:PricePoint == PricePoint.PP300)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Middle Level PP LIBRARY    Speech Noise Mgmnt 
+-----------------------------------------------------------------------------------------------------------------*/
+	}
+
+}
+		

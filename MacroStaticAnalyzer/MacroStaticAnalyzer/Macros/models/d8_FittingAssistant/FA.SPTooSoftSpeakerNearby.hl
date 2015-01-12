@@ -1,0 +1,97 @@
+// First Draft based on FA.AATemplateFitAss.hl 											:2013-04-18 Raymond
+// Updated Package Name																	:2013-05-06 Judith
+// Updated builtin functions name														:2013-05-14 Raymond
+// Added SelectProposal2 and ApplyProposal2 for there is no code completion             :2013-05-21 Judith
+// Update setApply2IsVisible to true													:2013-05-30 Raymond
+// Update due to CR62325																:2013-07-02 Judith
+//FR62273: FIAS - Display propsal cannot be applied text for Tinnitus ear side          :2013-07-05 Judith
+// update due to optimization                                                           :2013-07-22 Judith
+// Added missing ApplyProposal2 statement												:2013-07-23 Raymond
+//---------------------------------------------------------7.3------------------------------------------------------
+// Clean up comments and refractor method argument										:2013-12-13 Raymond
+// Comment out proposal related to binaural feature										:2014-08-19	Mang Yew
+/*------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package FittingAssistent SPTooSoftSpeakerNearby
+	{
+		application function bool IsVisible ()
+		{
+			return true;
+		} //closing SPTooSoftSpeakerNearby.IsVisible
+		
+		application function bool IsEnabled ()
+		{
+			return true;
+		} //closing SPTooSoftSpeakerNearby.IsEnabled
+		
+		application function void SelectProposal1 ()
+		{
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure ())
+			{
+				setApply1IsVisible (false);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_P_Tinnitus");
+			}
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_IncGain"))
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (true);
+				setProposalTextID1 ("FA_P_IncGain");
+			}
+			else
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_N_IncGain");
+			}
+		} //closing SPTooSoftSpeakerNearby.SelectProposal1
+		
+		application function void ApplyProposal1 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID1 ());
+		} //closing SPTooSoftSpeakerNearby.ApplyProposal1
+		
+		application function void SelectProposal2 ()
+		{
+			//Hide it for Sifit7.4 as Binaural Proposal will not be available. Will be used again in Sifit7.5
+//			if (BasicLibrary_Noiser.Noiser_IsOnAndPure ())
+//			{
+//				setApply2IsVisible (false);
+//				setApply2IsEnabled (false);
+//				setProposalTextID2 ("FA_P_Tinnitus");
+//			}
+//			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_MicDir"))
+//			{
+//				setApply2IsVisible (true);
+//				setApply2IsEnabled (true);
+//				setProposalTextID2 ("FA_P_MicDir");
+//			}
+//			else if ((cap:PricePoint == PricePoint.PP75) ||
+//				cap:DirMicAvailable == DirMicAvailable.omni)
+//			{
+//				setApply2IsVisible (true);
+//				setApply2IsEnabled (false);
+//				setProposalTextID2 ("FA_X_MicDir");
+//			}
+//			else
+//			{
+//				setApply2IsVisible (true);
+//				setApply2IsEnabled (false);
+//				setProposalTextID2 ("FA_N_MicDir");
+//			}
+			// added for 7.4 workaround. This shall be removed once Binaural proposal is available to work for Fitting assistant.
+			setApply2IsVisible (false);
+			setApply2IsEnabled (false);
+			setProposalTextID2 ("");	
+		} //closing SPTooSoftSpeakerNearby.SelectProposal2
+		
+		application function void ApplyProposal2 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID2 ());
+		} // closing SPTooSoftSpeakerNearby.ApplyProposal2
+
+	} //package FitAss SPTooSoftSpeakerNearby
+
+} //namespace shs_sat

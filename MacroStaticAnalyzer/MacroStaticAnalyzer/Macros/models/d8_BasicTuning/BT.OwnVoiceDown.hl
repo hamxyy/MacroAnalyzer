@@ -1,0 +1,68 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Basic Tuning: BasicTuning_OwnVoiceDownBu
+// Initial Version                						     						:2011-08-18 Chuah LayYuan
+// Updated SetPos and IsEnable														:2011-11-21 Frauke Schall
+// Updated SetPos (3dB broadband, partial: for test purposes)						:2012-01-13 Frauke Schall
+// Updated SetPos (if possible, apply LevLow first, else try LevMed first)			:2012-01-31 Frauke Schall
+// Updated SetPos																	:2012-02-01 Frauke Schall
+// Updated IsEnabled (grey out if curve cannot be applied)							:2012-02-01 Frauke Schall
+// Added println in IsEnabled														:2012-02-10	Frauke Schall
+// *********************************************CODE FREEZE*******************************************************
+// ER58296: BATU - Express Tuning Offsets for Speech and Own Voice lead to "dead ends" : 2012-10-08 Nadine Seubert
+// ER63134: Set IsVisible = false for GMax >= 80, and true for all other devices   :2013-08-30 Al
+// FR68941 to disable Basic Tuning Button when tinnitus is ON and Pure				:2014-09-02 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat {
+	using shs_sat.*;
+
+	package MixedMode BasicTuning_OwnVoiceDownBu{	
+		application function bool IsVisible(){
+		  if (cap:GMax >= 80)
+		   {
+		   println('[HAL]: BT.BasicTuning_OwnVoiceDownBu-IsVisible FALSE');
+		   return false;
+		   }
+		  else
+		   {
+		   println('[HAL]: BT.BasicTuning_OwnVoiceDownBu-IsVisible TRUE');
+		   return true;
+		   }
+		}
+		
+		application function bool IsEnabled()
+		{
+			bool retVal = false;
+			retVal = High_Level_Library_BasicTuning.OwnVoiceDownBuIsEnabled();
+			println('[HAL]: BT.BasicTuning_OwnVoiceDownBu-IsEnabled = ' + retVal);
+			return retVal;
+		}
+		
+		application function int MaxPos(){	
+			return 1;    	
+		}
+		
+	 	application function bool IsEnabledPos(int pos){	
+	 		return true;
+	 	}
+	 	
+	 	application function int GetPos(){
+			return 1;	//Always return 1	 
+	 	}
+	 	
+		application function void SetPos(int pos){		
+			//Call CurveLibrary when button is pressed
+			println('[HAL]: BT.BasicTuning_OwnVoiceDownBu-SetPos');
+
+			 if (BasicLibrary_Curves.VentOutisOpen() == true){
+				CL_CurveLibrary.ApplyMultipleOffsets_MedAndHigh_Partial("BT_OwnVoiceOpen_MedHighLevDown","BT_OwnVoiceOpen_MedHighLevDown");
+				println('[HAL] BasicTuning: Own Voice curve OPEN applied ');
+			 }
+			 else{
+			 	CL_CurveLibrary.ApplyOffset_LevAll_Partial("BT_OwnVoiceClosed_Down");
+				println('[HAL] BasicTuning: Own Voice curve CLOSED applied ');
+			 }
+		}
+		
+	}// closes MixedMode BasicTuning_OwnVoiceDownBu
+}//namespace shs.sat
+// end of file

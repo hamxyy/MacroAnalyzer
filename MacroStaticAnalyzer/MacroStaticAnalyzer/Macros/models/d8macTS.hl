@@ -1,0 +1,41 @@
+
+namespace shs_sat {
+	
+
+	package Lib TS{
+		//----- TestSetting dialog
+		//		ActivateCouplerInsitu():called to activate CouplerInsitu testsetting.
+		//								will temporarily store adaptive parameters.
+		//								will initally call DeactivateTestSetting(), if a testsetting is active
+		function void ActivateCouplerInsitu(){
+		}
+
+		//		ActivateDirectMode():	called to activate DirectMode testsetting.
+		//								will temporarily store adaptive parameters.
+		//								will initally call DeactivateTestSetting(), if a testsetting is active
+		function void ActivateDirectMode(){
+		}
+
+		//		Deactivate(): 			deactivates the active test setting, which may be CouplerInsitu or DirectMode
+		function void Deactivate(){
+		}
+
+		//----- Simulation dialog: RemLink, HitLink
+		//		AdaptiveSystemInitial():called to set the adaptive system to "inital"
+		function void AdaptiveSystemInitial(){
+		}
+
+		//		AdaptiveSystemOff():	called to set the adaptive system to "off"
+		function void AdaptiveSystemOff(){
+		}
+
+		//		MicrophoneSystemDirectional():called to set the Microphone System to "directional"
+		function void MicrophoneSystemDirectional(){
+		}
+
+		//		MicrophoneSystemOmni():	called to set the Microphone System to "omni"
+		function void MicrophoneSystemOmni(){
+		}
+		
+	}	//package TestSettings
+}	//namespace shs.sat

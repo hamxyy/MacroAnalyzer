@@ -1,0 +1,68 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        SoundBriliance Slider
+// Initial Version                						                          :  2011-02-16   Nadine Seubert
+// add price point dependencies                                                   :  2011-03-25   Nadine Seubert
+// Change Sl into SL in package name					                          :  2011-05-13   Meike Doose
+// Add println for easy debugging                                                 :  2011-06-27   Chuah LayYuan
+// Change calling function of IsEnabled from HLIB to MLIB                         :  2011-06-29   Chuah LayYuan
+// Add println for MPV testing													  :  2011-09-22  Jenny Lin
+// updated comments in the macros												  :  2011-11-22  Jenny Lin
+// update the IsEnabled to check the SoundBrilianceEn_GetHwOnly					  :  2011-11-29  Jenny Lin
+// updated IsEnabled to check for integer value.								  :  2012-02-14  Jenny Lin
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// rework SoundBriliance/ new Inpute from j.Lauer                               : 2012-06-15 Nadine / Frauke
+// *********************************************CODE FREEZE*******************************************************
+// ******SIFIT7.2_PEERREVIEWED: 					  :  2013-07-30   Jenny, Judith
+// refractor: Optimize code									: 2013-12-02 Jenny
+// Sifit7.3 Peer review																: 2014-04-14 Jenny, Judith
+// ****** SIFIT7.4 ******
+// Updated SetPos to PrintEnvSettings to test SideSelection macro.  				:  2014-08-25   Jenny
+// Code cleanup: Updated printlines.												: 2014-10-09 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode SoundBrilianceSL
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MixedMode.SoundBrilianceSL.IsVisible'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+
+			bool retVal = Mid_Level_Library_SoundBriliance.SoundBriliance_IsVisible ();
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.SoundBrilianceSL.IsEnabled');
+
+			bool retVal = (Mid_Level_Library_SoundBriliance.SoundBriliance_Is_Enabled() == true &&
+					BasicLibrary_SoundBriliance.SoundBrilianceEn_GetHwOnly() >= 30);
+					
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.SoundBrilianceSL.MaxPos');
+
+			int retVal = 2; // 3 step slider
+			return retVal;
+		}
+
+		application function int GetPos ()
+		{
+			println ('[HAL]MixedMode.SoundBrilianceSL.GetPos');
+
+			int retVal = High_Level_Library_SoundBriliance.SoundBriliance_Slider_Get();
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.SoundBrilianceSL.SetPos'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+			
+			High_Level_Library_SoundBriliance.SoundBrilianceSL_Set (pos);
+		}
+	}
+}

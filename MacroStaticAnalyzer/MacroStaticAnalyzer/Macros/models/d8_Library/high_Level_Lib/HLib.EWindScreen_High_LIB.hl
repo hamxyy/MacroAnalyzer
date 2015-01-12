@@ -1,0 +1,339 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                                 HIGH LEVEL LIBRARY EWindScreen 
+// Initial Version                						     					:  2011-02-16 Meike Doose
+// Renamed Library Package name					             					:  2011-02-21 Cecil Wilson
+// Made Slider positions zero based						     					:  2011-02-24 Cecil Wilson
+// Updated Function structure with single Remapping Funct    					:  2011-03-02 Meike Doose
+// Removed Package LIB workaround & fixed bug in
+// EWindScreenSL_Get :replaced while condition'<=' with '<'  					:  2011-03-03 Cecil Wilson
+// Adjust function name Basic...Get_Strength and Basic...Set_Strength 			:  2011-03-14 Meike Doose
+// Renamed(removed SL) and updated Default after First fit function 			:  2011-06-09 Cecil Wilson 
+// Add EWindScreen_Set_ProgramSelection function			                    :  2011-09-13 Chuah LayYuan
+// Updated Program selection ID													:  2011-11-09 Chuah LayYuan
+// Updated Program Selection: Privacy eWindscreen settings						:  2011-11-14 Jenny Lin
+// Checks the visibility of the control before setting.							:  2011-11-14 Jenny Lin
+// Updated Setting for miniTekTelecoil Program									:  2011-11-14 Chuah LayYuan
+// Remove visibility checks for PS. Already done at the start PS library.		:  2011-11-14 Jenny Lin
+// Updated PS:Phone acoustically settings										:  2011-11-14 Cecil Wilson
+// Updated PS:Outdoor/Sports settings   										:  2011-11-14 Ma Mie Mie Thein
+// Updated PS:TV settings														:  2011-11-16 Nadia Neugeborn
+// Added eWindScreenEn_Get & eWindScreenEn_Set, updated EWindScreen_Set_Default for after FirstFit to 
+// set the sliders to med and checkbox to On. Updated Ps to call HLIB setpos	:  2012-04-11 Jenny Lin
+// Fixed Ewindscreen Slider for Phone acoustically								:  2012-04-16 Cecil Wilson
+// Updated EWindScreen_Set_Default() for FirstFit								:  2012-04-16 Nadia Neugeborn			
+// Updated the Setpos to take care of DualOmni case								:  2012-05-02 Cecil Wilson
+// Updated the eWindScreenEn_Set to check for both 70/90						:  2012-05-03 Cecil Wilson/Jenny
+// eWindScreenEn_Set() chanced because of the microphone mode dual/single omni  :  2012-06-14 Judith/ Cecil
+// Peer review changes															:  2012-06-15 Judith, Nadine and Frauke
+// Updated based on peer review (ProgramSelection)								:  2012-06-27 Frauke, Jenny and co
+// FirstFit peer review															:  2012-07-17 Nadia & Judith
+// *********************************************CODE FREEZE*******************************************************
+// Updated the omnidirectional to (remapped_pos >= 90)							:  2012-11-19 Jenny
+// Updated library with SWINE implementation									:  2012-12-10 Mang Yew
+// Peer review changes															:  2013-01-02 Mang Yew
+ *********************************************CODE FREEZE For 7.1*******************************************************
+// Update High_Level_Library_EWindScreen.EWindScreen_Set_ProgramSelection due to FR59453
+// WNC will be set to universal when Telecoil and Induction Loop Program is selected    :  2013-05-14 Mang Yew 
+// Partial implementation for CR61635 (Disable FBC and WNC if input mode is non-mic input)
+// is commented out.															: 2012-05-16 Mang Yew
+// Implementation for CR61635 (Disable FBC and WNC if input mode is non-mic input)      : 2012-05-27 Mang Yew
+// ******SIFIT7.2_PEERREVIEWED >> Only reviewed EWindScreenEn_Set_For_Microphone 	: 2013-07-30 Jenny & Judith
+// Update ID number in Set_ProgramSelection function									:	2013-10-29 Sonia Stasiak
+// Updated comments	for Set_ProgramSelection D9, added new Programs in set_PS			:	2013-11-01 Sonia Stasiak
+// ****************************************************** 7.3 ******************************************************
+// Updated eWindScreenSL_IsEnabled to check for BWNC 									:	2013-12-02 Raymond 
+// In eWindScreenEn_Set_Hw (int pos), replaced D8 function call 'High_Level_Library_Mic_Mode.MicMode_Set_MPVPos_from_String ('Omni')'...
+// ... with D9 function call 'Mid_Level_Library_Mic_Mode.MicMode_Set("Omni_mode")'       : 2013-12-04 Al
+// Swap SW and HW setter method call position in eWindScreenEn_Set_EntrySw				:	2013-12-17 Raymond
+// Updated Set_Program Selection with d9SwMacroProgramIdHp control instead of ID		:	2013-12-17 Sonia Stasiak
+// CR64439: FITU: EWindscreen on in background for Sirion when changing inputmode to mic. To check the visibility
+// of EWindScreen before setting it to ON.					: 2013-12-18 Jenny
+// Remove BWNC checks for eWindScreenSL_IsEnabled										: 	2013-12-27 Raymond
+// eWindScreenSL_Set (int pos) now also sets the SW control, by calling...
+// ... BasicLibrary_EWindScreen.EWindScreenSL_Set_EntrySw(pos)                          :   2014-01-07 Al
+// Restructure eWindScreenEn_Set_Hw														:	2014-02-05 Mie Mie
+// Change from calling 'MicMode_set' to 'MicMode_DetermineAndSet' under 
+// 'WncEn_Set_MicModeIsOmni' function													: 2014-02-05 Mie Mie
+// In 'WncEn_Set_SlforBinaural' function, added to set eWindScreen slider to previous 
+// position when ewindscreen checkbox is ticked											: 2014-02-07 Mie Mie
+// change MicMode_DetermineAndSet("Omni_mode") to Mid_Level_Library_Mic_Mode.Dir_LogicRouteForOff()
+// in WncEn_Set_MicModeIsOmni function													: 2014-02-07 Mie Mie
+// Rewrite EWindScreenSL_Get function to check SwMacroVariable instead of HW control 	: 2014-02-10 Mie Mie
+// Comment update for Program Selection													: 2014-02-24 Sonia
+// In WncEn_Set_SlforBinaural(), replaced MicMode_DetermineAndSet() with calls to OmniMicModeProc()...
+// and ResetOmniForIzWncOo().                              : 2013-03-18     Al
+// Shifted Hlib WncEn_Set_SlforBinaural(pos) and Hlib WncEn_Set_MicModeIsOmni() to eWindScreenEn_Set_Hw (int pos): 2014-04-10 Mie Mie
+// 7.3 Peer Review: Replace Mic_Mode_Is_Enabled with IsTinnitusNotPureandMicModeEnabled		: 2014-04-14 Raymond
+// PEER REVIEW CXX 7.3																		:	2014-05-06 Sonia, Mie Mie, Jenny
+// ER67301: Set BWNC to off when WNC checkbox pos = 0										: 2014-05-14 Raymond
+// ****************************************************** 7.4 ******************************************************
+// In WncEn_Set_SlforBinaural, added call to SetFBCforOmni() directly underneath call to ResetOmniForIzWncOo()  :2014-07-02 Al            
+// In WncEn_Set_SlforBinaural, updated call to OmniMicModeProc with string input.           : 2014-07-24 Al
+// Re-write Set_ProgramSelection to call BLib.Is<program>									: 2014-09-16 Sonia
+// Cxx 7.4 Peer Review for Program Selection (only)											: 2014-11-19 Sonia, Jenny, Niklas
+/*----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_EWindScreen
+	{
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    eWindScreenSL_IsEnabled
+//   Input      :  None
+//   Ouput      :  <bool>
+//   Description:  Returns bool status of eWindScreen slider IsEnabled   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool eWindScreenSL_IsEnabled() // 7.3 Reviewed
+		{
+			return (eWindScreenEn_Get() == 1 &&
+					BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled());
+		} // Closing High_Level_Library_EWindScreen.eWindScreenSL_IsEnabled
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    eWindScreenSL_Set
+//   Input      :  <int> Slider position from Cxx
+//   Ouput      :  <int> Actual slider position
+//   Description:  set eWindScreen strength based on slider positions   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int eWindScreenSL_Set (int pos) // 7.3 Reviewed
+		{
+		// Set the SW control settings according to the slider position
+		    BasicLibrary_EWindScreen.EWindScreenSL_Set_EntrySw(pos);				
+		// Set the HW control settings using basic library and Mid library functions	
+			int pos_wrt_basic_fcn = Mid_Level_Library_EWindScreen.EWindScreenSL_Set_Remapped_Pos (pos);
+			return BasicLibrary_EWindScreen.EWindScreenSL_Set_Strength (pos_wrt_basic_fcn);
+		} // Closing High_Level_Library_EWindScreen.eWindScreenSL_Set
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    eWindScreenSL_Get
+//   Input      :  None
+//   Ouput      :  <int> Actual slider position with respect to Current Device 
+//   Description:  BACKMAPING  Slider positions;   Reverse of Price point and Family resolving function.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int EWindScreenSL_Get () // 7.3 Reviewed
+		{
+			int pos = -1;
+
+			pos = BasicLibrary_EWindScreen.EWindScreenSL_Get_Strength ();
+
+			return pos;
+		} //Closing High_Level_Library_EWindScreen.EWindScreenSL_Get
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    eWindScreenEn_Set
+//   Input      :  <int> checkbox position from Cxx
+//   Ouput      :  <void>
+//   Description:  calling BLIB to set the current position of eWindScreen checkbox based on capability (DirMicAvailable).
+* 				   If originally in omniDirectional mode, reset to the appropriate mic mode
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void eWindScreenEn_Set (int pos) // 7.3 Reviewed
+		{
+			BasicLibrary_EWindScreen.EWindScreenEn_Set_EntrySw (pos);
+			High_Level_Library_EWindScreen.eWindScreenEn_Set_Hw (pos);
+
+			//ER67301: Set BWNC to Off if Pos = 0 and revert to last user set position for BWNC
+			if (Mid_Level_Library_BWNC.BWNCEn_IsVisible()) 
+			{
+				if (pos == 0)
+				{
+					BasicLibrary_BWNC.BWNCEn_Set_Entry(0);
+				}
+				if (pos == 1 && BasicLibrary_BWNC.BWNCEn_Get_EntrySw())
+				{
+					BasicLibrary_BWNC.BWNCEn_Set_Entry(1);
+				}
+			}
+		} // Closing High_Level_Library_EWindScreen.eWindScreenEn_Set				
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    eWindScreenEn_Set_Hw
+//   Input      :  <int> checkbox position from Cxx
+//   Ouput      :  <void>
+//   Description:  calling BLIB to set the current position of eWindScreen checkbox based on capability (DirMicAvailable).
+* 				   If originally in omniDirectional mode, reset to the appropriate mic mode
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void eWindScreenEn_Set_Hw (int pos) // 7.3 Reviewed
+		{
+			int pos_wrt_basic_fcn = Mid_Level_Library_EWindScreen.EWindScreenEn_Set_Remapped_Pos (pos);
+		
+			BasicLibrary_EWindScreen.EWindScreenEn_Set_Entry (pos_wrt_basic_fcn);
+
+			High_Level_Library_EWindScreen.WncEn_Set_SlforBinaural (pos);
+			High_Level_Library_EWindScreen.WncEn_Set_MicModeIsOmni ();
+			
+		} // Closing High_Level_Library_EWindScreen.eWindScreenEn_Set_Hw		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    eWindScreenEn_Get
+//   Input      :  None
+//   Ouput      :  <int> Actual checkbox position
+//   Description:  calling BLIB to check the current position of checkbox    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int eWindScreenEn_Get () // 7.3 Reviewed
+		{
+			int retval = -1;
+			if (BasicLibrary_EWindScreen.EWindScreenEn_Get_Entry () == true ||
+					BasicLibrary_EWindScreen.EWindScreenEn_Get_EntrySw () == true)
+			{
+				retval = 1;
+			}
+			else
+			{
+				retval = 0;
+			}
+			return retval;
+		} // Closing High_Level_Library_EWindScreen.eWindScreenEn_Get
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    EWindScreen_Set_Default
+//   Input      :  none
+//   Ouput      :  none
+//   Description:  Sets the slider position and CheckBox to the default after FF position    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void EWindScreen_Set_Default () // 7.3 Reviewed
+		{
+
+		// Get the default checkbox position from Mid Level Library	
+			int BoxPos = Mid_Level_Library_EWindScreen.EWindScreenEn_DefaultPos ();
+			// Get the default slider position from Mid Level Library
+			int SLpos = Mid_Level_Library_EWindScreen.EWindScreenSL_DefaultPos ();
+
+			// Set Checkbox to ON (if not PP75)
+			High_Level_Library_EWindScreen.eWindScreenEn_Set (BoxPos);
+			// Set Slider to MED
+			High_Level_Library_EWindScreen.eWindScreenSL_Set (SLpos);
+		} // Closing High_Level_Library_EWindScreen.EWindScreen_Set_Default
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    EWindScreenEn_Set_For_Microphone
+//   Input      :  <int> none
+//   Ouput      :  <int> none
+//   Description:  Set WNC for Input Mode Mixed with Microphone.
+// ******SIFIT7.2_PEERREVIEWED
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void EWindScreenEn_Set_For_Microphone (int WncPos) // 7.3 Reviewed
+		{
+			if(Mid_Level_Library_EWindScreen.EWindScreenEn_IsVisible()){
+				if (WncPos == 1 &&
+						BasicLibrary_MicrophoneMix.MixMicrophoneEn_Get_Mode() == 0)
+				{
+				// if Input mode not microphone, set both WNC HW OFF and SW to ON.
+					BasicLibrary_EWindScreen.EWindScreenEn_Set_EntrySw (1);
+					High_Level_Library_EWindScreen.eWindScreenEn_Set_Hw (0);
+				}
+				else
+				{
+					High_Level_Library_EWindScreen.eWindScreenEn_Set (WncPos);
+				}
+			}
+		} // High_Level_Library_EWindScreen.EWindScreenEn_Set_For_Microphone
+
+/*---------------------------------------------------------------------------------------------------------*
+//	HIGH LEVEL LIBRARY - EWindScreen_Set_ProgramSelection
+//	Description	:	Function is setting eWindScreen for all listening situation. 
+/*---------------------------------------------------------------------------------------------------------*/
+		public function void EWindScreen_Set_ProgramSelection ()
+		{
+			if (Mid_Level_Library_EWindScreen.EWindScreenEn_IsVisible ())
+			{
+				println ('[HAL]HLIB.EWindScreen_Set_ProgramSelection in HP ' + BasicLibrary_CommUtil.CurrentProg ());
+				
+				if (BasicLibrary_ProgramSelection.IsNoisyEnv() == true ||
+					BasicLibrary_ProgramSelection.IsPhoneAcoustically() == true || // Stroll applicable only for PP700 and PP500
+					BasicLibrary_ProgramSelection.IsStroll() == true) 	
+				// eWindScreen set to ON, slider (if available) set to MED
+				{ 
+					High_Level_Library_EWindScreen.EWindScreenEn_Set_For_Microphone (1);
+						
+					if (Mid_Level_Library_EWindScreen.EWindScreenSL_IsVisible ()) 
+					{
+						High_Level_Library_EWindScreen.eWindScreenSL_Set (1);
+					}
+				}
+				
+				else if (BasicLibrary_ProgramSelection.IsBluetoothPhone() == true ||
+						 BasicLibrary_ProgramSelection.IsMusic() == true ||
+						 BasicLibrary_ProgramSelection.IsTV() == true ||
+						 BasicLibrary_ProgramSelection.IsPrivacy() == true ||
+						 BasicLibrary_ProgramSelection.IsAudioInput() == true ||
+						 BasicLibrary_ProgramSelection.IsStreamingAudio() == true ||
+						 BasicLibrary_ProgramSelection.IsEasyTekFM() == true)		 	
+				// eWindScreen set to OFF
+				{ 
+					High_Level_Library_EWindScreen.EWindScreenEn_Set_For_Microphone (0);
+				}
+				
+				
+				else if (BasicLibrary_ProgramSelection.IsOutdoorSport() == true)
+				// eWindScreen set to ON, slider (if available) set to MAX
+				{ 
+					High_Level_Library_EWindScreen.EWindScreenEn_Set_For_Microphone (1);
+
+					if (Mid_Level_Library_EWindScreen.EWindScreenSL_IsVisible ())
+					{
+							High_Level_Library_EWindScreen.eWindScreenSL_Set (2);
+					}
+				}
+				
+				else // (all other programs) 
+				// eWindScreen same as Universal (do nothing)
+				{
+				
+				// For ID10 (Tinnitus) and ID11 (Induction Loop) WNC to follow Universal due to FR59453 [SiFit 7.2]	
+				}
+			}
+		} // closes High_Level_Library_EWindScreen.EWindScreen_Set_ProgramSelection
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    WncEn_Set_SlforBinaural
+//   Input      :  <int> checkbox position from Cxx
+//   Ouput      :  <void>
+//   Description:  Set eWindScreen slider to off if ewindscreen checkbox is unticked and mic mode is binaural mode.
+				Set eWindScreen slider to previous position if ewindscreen checkbox is ticked and mic mode is binaural mode.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void WncEn_Set_SlforBinaural (int pos) // 7.3 Reviewed
+		{	
+			if(pos == 0 && Mid_Level_Library_Mic_Mode.MicModeIsBinauralmode() == true)
+			{ // dependency of wnc sl on binaural microphone modes
+				BasicLibrary_EWindScreen.EWindScreenSL_Set_Strength(0);
+			}
+			   
+			if(pos == 1 && hi:d8MWncStart == 0)
+			{
+				// Set Ewinscreen slider to previous position based on saved SW control setting 
+				if(hi:d9SwMacroWncSlHp == 0)  // Slider position 0
+		        {
+		               High_Level_Library_EWindScreen.eWindScreenSL_Set(0);
+		        }
+		        else if(hi:d9SwMacroWncSlHp == 1) // Slider position 1
+		        {
+		               High_Level_Library_EWindScreen.eWindScreenSL_Set(1);
+		        }
+		        else if(hi:d9SwMacroWncSlHp == 2) // Slider position 2
+		        {
+		               High_Level_Library_EWindScreen.eWindScreenSL_Set(2);
+		        }
+			}
+		} // Closing High_Level_Library_EWindScreen.WncEn_Set_SlforBinaural	
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    WncEn_Set_SlforBinaural
+//   Input      :  none
+//   Ouput      :  <void>
+//   Description:  If originally in omniDirectional mode, reset to the appropriate mic mode
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void WncEn_Set_MicModeIsOmni () // 7.3 Reviewed
+		{	
+			if (Mid_Level_Library_Mic_Mode.MicModeIsOmni() == true)
+			{
+			// Yes this is a OmniDirection Radiobutton selection in the MPV/Cxx
+			// Reset the Microphone Mode based on the lastest BEST Omnidirectional setting						
+				Mid_Level_Library_Mic_Mode.OmniMicModeProc("Omni_mode"); 
+				string ctrlvalue_set = Mid_Level_Library_Mic_Mode.ResetOmniForIzWncOo();
+				Mid_Level_Library_Mic_Mode.SetFBCforOmni(ctrlvalue_set); 				
+			}
+		} // Closing High_Level_Library_EWindScreen.WncEn_Set_SlforBinaural			
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of High Level LIBRARY EWindScreen    
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package High_Level_Library_EWindScreen
+
+} //namespace shs.sat

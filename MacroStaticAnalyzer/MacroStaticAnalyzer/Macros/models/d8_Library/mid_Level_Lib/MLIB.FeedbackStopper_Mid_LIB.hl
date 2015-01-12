@@ -1,0 +1,239 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            MID LEVEL PRICEPOINT LIBRARY : FeedbackStopper 
+// Initial version                                                                      : 2011-03-10 Cecil Wilson
+// Added Remapping, DefaultPos and Adaptive gain reduction IsVisible Functions  		: 2011-03-11 Cecil Wilson    
+// Update for adaptiveDirMicEn_IsVisble                                                 : 2011-05-05 Nadine Seubert
+// Added and updated openoptimizer functions from Mid Library							: 2011-05-06 Cecil Wilson
+// add adaptive Dir mic is enabled                                                      : 2011-05-12 Nadine Seubert
+// Removed cap: workarounds																: 2011-05-20 Cecil Wilson
+// Removed cap: workarounds, commented out VentOutisOpen for now						: 2011-06-21 Nadia Neugeborn
+// Updated functions for FBC													        : 2011-06-22 Nadia Neugeborn 
+// Turbo & WhistleScreen not in use, removed the lib() 				 	 				: 2011-07-28 Jenny Lin
+// Updated FBC and OpenOptimizer default settings for CxxFit							: 2012-03-23 Nadia Neugeborn
+// Updated OpenOpt default setting for CxxFit											: 2012-04-04 Nadia Neugeborn
+// Updated OpenOpt and AdaptiveDirMicEn functions 
+// to be suited for PP700, PP500 & PP300							                 	: 2012-04-10 Leong Mang Yew
+// Updated default FBC, updated comments & added PP75 &  added Is_Visible_Physical_Pos	: 2012-04-24 Nadia
+// Updated OpenOptimizerEn_DefaultPos()													: 2012-04-26 Nadia
+// Removed SLOW settings, commented out PP75 temporary.									: 2012-04-30 Leong Mang Yew
+*****************************************CODE FREEZE***************************************************
+// Updated OpenOptimizer default pos function due to Omni and ITE should not have
+// OpenOptimizer set to On																: 2012-11-20 Leong Mang Yew
+// Added assertion message																: 2012-12-14 Jenny Lin
+// Peer review (Changed comments for FBC from 'slow' to 'standard' as it state in MRS)  : 2013-01-04 Sonia Stasiak
+// FR59240: OpenOptimizer to be disabled for devices >=Gmax 75							: 2013-01-25 Frauke
+*****************************************SIFIT7.2***************************************************
+// Added FirstFit default for Nitro & PP75 to ON (Standard).							: 2013-03-01 Jenny
+// Added FeedbackStopperRB_IsVisible(), which returns true for all PPs except PP75.     : 2013-03-04 Al
+// Altered OpenOptimizerEn_IsVisible() so it returns 'false' for PP75.                  : 2013-03-04 Al
+// Updated FirstFit default for Nitro with SuperPowerHI capability						: 2013-04-08 Sonia
+// Updated FirstFit default - Nitro from standard changed to behave like other devices  : 2013-04-11 Sonia
+// Updated FeedbackStopperRB_IsVisible()closing statement for use of 
+// fixing FR59453: PRHD - keep FBC setting from program 1 for telecoil and induction 
+// Loop Program.																		: 2013-05-16 Mang Yew
+// Partial implementation for CR61635. Changes are commented out.						: 2013-05-16 Mang Yew
+// Implementation for CR61635 (Disable FBC and WNC if input mode is non-mic input),
+// ER61121 (To deactivate FBC in pure Tinnitus mode          						    : 2012-05-30 Mang Yew
+// FR61938 Change rational of FBC selection between slow/turbo for micon Custom. 
+// Changes done on FBC default position.												: 2013-07-17 Mang Yew
+// 7.3 Peer Review: Updated Mic_Mode_Is_Enabled with IsTinnitusPureandMicModeEnabled	: 2014-04-14 Raymond
+// Sifit 7.3 Peer Review Update. Rework function for return statement					: 2014-05-05 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib Mid_Level_Library_FeedbackStopper
+	{
+
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    FeedbackStopperRB_IsVisible
+//   Input		:  none
+//   Ouput      :  <bool> Returns True if visible; False if Not Visible 
+//   Description:  decides the visibility of the OpenOptimizer Checkbox. Visible for all PPs except PP75. 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool FeedbackStopperRB_IsVisible ()
+		{
+			bool retval = false;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{
+					retval = true;
+				}
+				case PricePoint.PP500:{
+					retval = true;
+				}
+				case PricePoint.PP300:{
+					retval = true;
+				}
+				case PricePoint.PP100:{
+					retval = true;
+				}
+				default:{
+					retval = false; // Not visible for PP75
+
+				}
+			} //	Closes switch-statement
+			return retval;
+		} //Closes Mid_Level_Library_FeedbackStopper.FeedbackStopperRB_IsVisible()	
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    FeedbackStopperRB_Is_Visible_Physical_Pos
+//   Input		:  none
+//   Ouput      :  <bool> Returns True if visible; False if Not Visible 
+//   Description:  decides the visibility of the FeedbackStopper Radio Button
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool FeedbackStopperRB_Is_Visible_Physical_Pos (int pos)
+		{
+			bool retval = true;
+			println ('[HAL]MLIB:FeedbackStopperRB_Is_Visible_Physical_Pos >> Checking for all PPs');
+			switch (pos)
+			{
+				case 0:{ //  standard
+					retval = true;
+				}
+				case 1:{ //  turbo
+					retval = true;
+				}
+				default:{
+					retval = false;
+					println ('[HAL]MLIB:FeedbackStopperRB_Is_Visible_Physical_Pos >> Error! Invalid pos=' + pos);
+				}
+			} //closes switch(pos)
+			assertion (retval == true, "[MacroError] Undefined state of Feedbackstopper radiobutton!");
+			return retval;
+		} //Closes Mid_Level_Library_FeedbackStopper.FeedbackStopperRB_Is_Visible_Physical_Pos(int pos)
+
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    FeedbackStopperRB_DefaultPos
+//   Input		:  none
+//   Ouput      :  <int> Default FBC setting after FirstFit
+//   Description:  Default FBC setting is selected based on PP, venting and OLG reserve  
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int FeedbackStopperRB_DefaultPos ()
+		{
+			int retval = 0; // For all PPs default FBC setting is MED (Standard)
+			if (cap:PricePoint == PricePoint.PP75)
+			{
+				retval = 0; // For PP75 devices, default to Standard
+
+			}
+			else
+			{ // PP700/PP500/PP300/PP100
+				if (cap:HICategory == HICategory.ITE)
+				{
+					if (BasicLibrary_Curves.OLG_reserve () <= 1)
+					{
+						retval = 1; // Critical conditions FBC setting is FAST
+
+					}
+				}
+				else
+				{
+					if (BasicLibrary_Curves.VentOutisOpen () == true &&
+							BasicLibrary_Curves.OLG_reserve () <= 1)
+					{
+						retval = 1; // For open vents and critical conditions FBC setting is FAST
+
+					}
+				}
+			}
+			if (retval == 0)
+			{
+				println ('[HAL]MLIB-FBC = ' + retval + ' = STANDARD');
+			}
+			else
+			{
+				println ('[HAL]MLIB-FBC = ' + retval + ' = TURBO');
+			}
+			return retval;
+		} //Closes Mid_Level_Library_FeedbackStopper.FeedbackStopperRB_DefaultPos()		
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    OpenOptimizerEn_IsVisible
+//   Input		:  none
+//   Ouput      :  <bool> Returns True if visible; False if Not Visible 
+//   Description:  decides the visibility of the OpenOptimizer Checkbox
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool OpenOptimizerEn_IsVisible ()
+		{
+		/*
+	 * Please note that there is NO OpenOptimizer checkbox in Cxx
+	 * This MixedMode marco is NOT needed. Cxx does not call this macro
+	 * BUT I will keep it in. It makes it easier to test the OpenOptimizer.
+	 */
+			bool retval = false;
+			switch (cap:PricePoint)
+			{
+				case PricePoint.PP700:{
+					retval = true;
+				}
+				case PricePoint.PP500:{
+					retval = true;
+				}
+				case PricePoint.PP300:{
+					retval = true;
+				}
+				default:{
+					retval = false; // Not visible for PP100/75
+
+				}
+			} //	Closes switch-statement
+			return retval;
+		} //Closes Mid_Level_Library_FeedbackStopper.OpenOptimizerEn_IsVisible()
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    OpenOptimizerEn_DefaultPos
+//   Input		:  none
+//   Ouput      :  <int> Returns 1 if enabled; 0 if disabled 
+//   Description:  defines the default position after First Fit based on vent, critical conditions and PPs
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int OpenOptimizerEn_DefaultPos ()
+		{
+			if (cap:HICategory != HICategory.ITE &&
+					cap:DirMicAvailable == DirMicAvailable.dir &&
+					cap:PricePoint > PricePoint.PP100 &&
+					cap:GMax < 75 &&
+					BasicLibrary_Curves.VentOutisOpen () == true &&
+					BasicLibrary_Curves.OLG_reserve () == 0)
+			{
+				println ('[HAL]MLIB-OPEN OPTIMIZER = 1 = ON');
+				return 1; // Enable Open Optimizer for open vents and critical cases
+			}
+			else
+			{
+				println ('[HAL]MLIB-OPEN OPTIMIZER = 0 = OFF');
+				return 0; // Disable Open Optimizer
+			}
+		} //Closes Mid_Level_Library_FeedbackStopper.OpenOptimizerEn_DefaultPos()
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    OpenOptimizerEn_IsEnabled
+//   Input		:  none
+//   Ouput      :  <bool> Returns True if enabled; False if disabled
+//   Description:  decides the Greyout Status of the OpenOptimizer Checkbox
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool OpenOptimizerEn_IsEnabled ()
+		{
+		/*
+	 * Please note that there is NO OpenOptimizer checkbox in Cxx
+	 * This MixedMode marco is NOT needed. Cxx does not call this macro
+	 * BUT I will keep it in. It makes it easier to test the OpenOptimizer.
+	 */
+			bool retval = true;
+			if (cap:DirMicAvailable == DirMicAvailable.omni || // Grey out if no DIR mic				
+					BasicLibrary_Curves.VentOutisOpen () == false || // Grey out if Closed conditions
+					BasicLibrary_Noiser.Noiser_IsOnAndPure () == true || // Tinnitus greyout	
+					BasicLibrary_FeedbackStopper.FeedbackStopperEn_Get () == false)
+			{ // Grey out if FBC checkbox unticked
+				retval = false;
+			}
+			return retval;
+		} //Closes Mid_Level_Library_FeedbackStopper.OpenOptimizerEn_IsEnabled()	
+
+		/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Middle Level LIBRARY    FeedbackStopper 
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package Mid_Level_Library_FeedbackStopper
+
+} //namespace shs.sat

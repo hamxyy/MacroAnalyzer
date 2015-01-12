@@ -1,0 +1,159 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// 												Common/general utility functions
+// Initial version																		: 2014-02-11 Raymond
+// Added BinFeatures_MinPossReqmts()                                        			: 2014-02-17 Al
+// reworked BinFeatures_MinPossReqmts() to use return command               			: 2014-02-26 Al
+// Added IsTinnitusPureandMicModeEnabled												: 2014-04-14 Raymond
+// Revert IsTinnitusNotPureandMicModeNotEnabled behaviour								: 2014-04-15 Raymond
+// Added binaural comments for BinFeatures_MinPossReqmts								: 2014-04-30 Raymond
+/*---------------------------------------------------------------------------------------------------------------*/
+
+/*---------------------------------------------------v7.4--------------------------------------------------------*/
+// Added IsWirelessCapableOnBothSides as it can be reused in many places				: 2014-06-26 Sultan
+// Added IsWirelessCapable as it can be reused 
+//in many places																		: 2014-06-26 Sultan
+// Added IsMonoAuralFitForDirectionalMic 												: 2014-06-26 Sultan
+// Added IsMonoAuralFitForDirectionalMicForPP500AndAbove								: 2014-06-26 Sultan
+// BinFeatures_MinPossReqmts renamed to BinFeaturesForDirectionalDevices_MinPossReqmts  : 2014-07-15 Al
+// added println for PrintEnvHiDriverWorkMode, PrintEnvCurrentSides, 
+// PrintEnvDetectedSide, PrintEnvOneSide												: 2014-08-01 Jenny
+// added println for PrintEnvSettings.													: 2014-08-22 Jenny
+// added println for PrintCurrentProg.													: 2014-08-25 Jenny
+// move all println for debugging to BasicLibrary_DebugPrint.							: 2014-08-25 Jenny
+// Added IsBinaurallyFitting and clean up the closing remarks for functions.			: 2014-10-16 Jenny
+// removed and moved BinFeaturesForDirectionalDevices_MinPossReqmts to 						
+// Mid_Level_Library_Mic_Mode															: 2014-10-17 Sultan
+// FR69523-->Renamed IsMonoAuralFitForDirMicWithWirelessForPP500AndAbove() 
+// to IsMonoAuralFitForDirMicWithWirelessForPP300AndAbove to check for all pp above pp300: 2014-10-16 Sultan   
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using builtins.*;
+	using shs_sat.*;
+	
+	package Lib BasicLibrary_CommUtil
+	{
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Return the current selected program or listening situation    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int CurrentProg ()
+		{
+			println ('[HAL]BLIB.BasicLibrary_CommUtil.CurrentProg');
+			
+			// ****** to clean up since >> PrintCurrentProg returning string is able to show the env:Prog.
+			return env:Prog;
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Conditions for checking if the Microphone Mode is Binaurally compatible
+		                 Note : BinauralDirMicCompatibleMicType.UsableTogether implicitly means that it is a binaural fitting session, 
+		                 		therefore not required to add checks for env:DetHi=BothSides  	
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsBinaurallyCompatibleMic ()
+		{ 
+			println ('[HAL]BLIB.BasicLibrary_CommUtil.IsBinaurallyCompatibleMic');
+			
+			bool retVal = env:BinauralDirMicCompatibleMicType == BinauralDirMicCompatibleMicType.UsableTogether;
+			return retVal;
+		}
+				
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Conditions for support of MonoAural fitting
+		   * To be Monoaural fitting
+		   * * Should support Directional Microphone
+		   * * Should not have two HI
+		   * * Has Wireless Capability
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsMonoAuralFitForDirMicWithWireless()
+		{ 
+			println ('[HAL]BLIB.BasicLibrary_CommUtil.IsMonoAuralFitForDirMicWithWireless');
+			
+			bool retVal = (cap:DirMicAvailable == DirMicAvailable.dir &&
+						   env:DetHi != DetHi.BothSides &&
+					 	   IsWirelessCapable()); 
+			return retVal;
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Conditions for support of MonoAural fitting
+		   * To be Monoaural fitting
+		   * * Should support Directional Microphone
+		   * * Should not have two HI
+		   * * Has Wireless Capability
+		   * * Has minimum pp300
+		-----------------------------------------------------------------------------------------------------------------*/							 
+		public function bool IsMonoAuralFitForDirMicWithWirelessForPP300AndAbove()
+		{ 
+			println ('[HAL]BLIB.BasicLibrary_CommUtil.IsMonoAuralFitForDirMicWithWirelessForPP500AndAbove');
+			
+			bool retVal = IsMonoAuralFitForDirMicWithWireless() && cap:PricePoint >= PricePoint.PP300; 
+			return retVal;
+		}						
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Return true if Noiser is pure and is in Microphone mode    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsTinnitusNotPureandMicModeNotEnabled ()
+		{
+			println ('[HAL]BLIB.BasicLibrary_CommUtil.IsTinnitusNotPureandMicModeNotEnabled');
+			
+			bool is_enabled = true;
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure () == true ||
+					BasicLibrary_MicrophoneMix.MixMicrophoneEn_Get_Mode () == 0)
+			{
+				is_enabled = false;
+			}
+			else
+			{
+				is_enabled = true;
+			}
+			return is_enabled;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Checks to see if wireless is capable on both sides of the HI    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsWirelessCapableOnBothSides()
+		{	
+			println ('[HAL]BLIB.BasicLibrary_CommUtil.IsWirelessCapableOnBothSides');
+			
+			bool retVal = IsWirelessCapable() && IsWirelessCapableOnOppositeSide();						 
+			return retVal;
+		} 
+	
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Checks to see if wireless is capable on one sides of the HI    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsWirelessCapable()
+		{	
+			println ('[HAL]BLIB.BasicLibrary_CommUtil.IsWirelessCapable');
+			
+			bool retVal= (cap:WlsUserControl == WlsUserControl.e2e || cap:WlsUserControl == WlsUserControl.e2eRCU);						 
+			return retVal;
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Checks to see if wireless is capable on the other side of the HI    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsWirelessCapableOnOppositeSide()
+		{	
+			println ('[HAL]BLIB.BasicLibrary_CommUtil.IsWirelessCapableOnOppositeSide');
+			
+			bool retVal= opp (cap:WlsUserControl) == WlsUserControl.e2e || opp (cap:WlsUserControl) == WlsUserControl.e2eRCU;						 
+			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description: To check if it is binaural fitting
+	   -----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsBinaurallyFitting ()
+		{ 
+			println ('[HAL]BLIB.BasicLibrary_CommUtil.IsBinaurallyFitting');
+			
+			bool retVal = env:DetHi == DetHi.BothSides;
+			return retVal;
+		}
+						
+	}
+}

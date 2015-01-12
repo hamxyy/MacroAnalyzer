@@ -1,0 +1,64 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Noise Reduction View
+Initial Version																	: 2013-11-05 Mang Yew
+Sifit 7.3 Peer Reviewed															: 2014-04-22 Mang Yew
+Sifit7.4 Peer Reviewed															: 2014-11-13 Mang Yew	
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{	
+    using shs_sat.*;  
+    package MixedMode NoiseReductionView
+    {
+		application function bool IsVisible()
+		{
+			println('[HAL]MixedMode.NoiseReductionView.IsVisible = TRUE');
+			
+			return true;
+		}
+				
+		application function bool IsEnabled()
+		{
+			println('[HAL]MixedMode.NoiseReductionView.IsEnabled: TRUE');
+			
+			return true;
+		}
+				
+		application function int MaxPos()
+		{
+	 		println('[HAL]MixedMode.NoiseReductionView.MaxPos = 1');
+	 		
+			return 1;
+		}
+		
+		application function bool IsEnabledPos(int pos)
+		{
+	 		println('[HAL]MixedMode.NoiseReductionView.IsEnabledPos = TRUE');
+	 					
+			return true;
+		}
+				
+		application function int GetPos()
+		{
+			int hp=env:Prog;		
+			if ( BasicLibrary_NoiseReduction.NoiseReductionView_Get() == true)
+			{
+	 			println('[HAL]MixedMode.NoiseReductionView.GetPos = 0 in HP='+hp);
+	 			return 0;
+	 		}
+			else
+			{
+				println('[HAL]MixedMode.NoiseReductionView.GetPos = 1 in HP='+hp);
+				return 1;
+			} 		 
+
+		}
+				
+		application function void SetPos(int pos)
+		{
+			int hp=env:Prog;
+	 		println('[HAL]MixedMode.NoiseReductionView.SetPos = ' + pos + ' in HP='+hp);	 		
+	 		High_Level_Library_NoiseReduction.NoiseReductionView_Set(pos); 
+		}
+
+	}	//package MixedMode.NoiseReductionView
+}	//namespace shs.sat

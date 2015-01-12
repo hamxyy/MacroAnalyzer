@@ -1,0 +1,114 @@
+/*---------------------------------------------------------------------------------------------------------------*/
+//                            MID LEVEL PRICEPOINT LIBRARY : Spass
+// Initial Version                                          		: 2011-03-17 Frauke Schall
+// Update IsVisible and IsEnabled dependecies						: 2011-03-22 Frauke Schall
+// coment "hi-indifier" because of warnings                  		: 2011-04-01 Nadine Seubert	
+// set to is visible a bool variable to return only one statemant 	: 2011-04-01 Nadine Seubert
+// cap:PricePoint introduced									  	: 2011-07-06 Nadia Neugeborn
+// Default pos for SPASS after FirstFit is Min						: 2011-12-14 Nadia Neugeborn
+// SPASS not visible for single mic devices							: 2012-04-13 Nadia Neugeborn
+// Added SpassEn_DefaultPos() function								: 2012-04-19 Nadia
+// SpassEn_IsVisible: only visible for PP700 && dir mic devices		: 2012-04-19 Meike Steinbuss and Frauke Schall
+// Peer review changes												: 2012-06-14 Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Sifit 7.3 Updates												: 2013-11-29 Mang Yew
+// Sifit 7.3 Peer Review Update												:2014-04-23 Mang Yew
+/*---------------------------------------------7.4---------------------------------------------------------------*/
+// SpassEn_IsVisible: modified to make Spass checkbox available for Single Dir Mic fittings.  :2014-07-22 Al
+// Added 'using shs_sat.*' command at the top of this macro page.                    :2014-07-22 Al
+// Removed unused functions											: 2014-08-04 Mang Yew
+// Sifit 7.4 Peer Review Code clean up								: 2014-11-14 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package  Lib Mid_Level_Library_Spass
+	{
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Check for SPASS visibility and sets SPASS.
+-----------------------------------------------------------------------------------------------------------------*/	
+		public function int SpassEn_DefaultPos()
+		{
+			if (Mid_Level_Library_Spass.SpassEn_IsVisible() == true)
+			{
+				return 1;				
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  DefaultPosition of the Slider for Spass when the user enables it for the first time.
+-----------------------------------------------------------------------------------------------------------------*/ 	
+		
+		public function int SpassSL_DefaultPos()
+		{
+			return 0;
+		}	
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  decides the visibility of the SpassEn 
+-----------------------------------------------------------------------------------------------------------------*/ 	
+		public function bool SpassEn_IsVisible()
+		{
+			bool retval = true;
+			
+			switch (cap:PricePoint){
+			case PricePoint.PP700:{ //Spass is only available for price point 700
+			 	     	if(cap:DirMicAvailable == DirMicAvailable.dir || Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable() == true)
+			 	     	{
+							retval = true;
+						}
+						else
+						{
+							retval = false;//no SPASS available for PP700 single mic devices
+						}
+			 	     }
+			case PricePoint.PP500:{ //SIFIT 7.3 Spass is available for price point 500
+			 	     	if(cap:DirMicAvailable == DirMicAvailable.dir)
+			 	     	{	//AND if DirMic available
+							retval = true;
+						}
+						else
+						{
+							retval = false;//no SPASS available for PP500 single mic devices
+						}
+			 	     }
+			default :{
+				     retval = false;	//Default is to not have Spass
+				     }
+			}
+			return retval;
+		} 
+
+//-----------------------------------------------Sifit 7.3---------------------------------------------------------
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  decides the visibility of the SpassEn 
+-----------------------------------------------------------------------------------------------------------------*/ 	
+		public function bool SpassSL_IsVisible()
+		{
+			if (cap:PricePoint == PricePoint.PP700)//SpassSL is available for price point 700 Only
+			{
+				if(cap:DirMicAvailable == DirMicAvailable.dir)
+			 	{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else
+			{
+				return false;
+			}
+			
+		}
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Middle Level PP LIBRARY    Spass
+-----------------------------------------------------------------------------------------------------------------*/	
+	}
+}

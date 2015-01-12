@@ -1,0 +1,387 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY FeedbackStopper 
+// Initial Version                                        					 	 : 	2011-02-24 Ma Mie Mie Thein
+// Update FBC controls															 : 	2011-03-01 Ma Mie Mie Thein
+// Removed Package LIB workaround 												 :  2011-03-03 Cecil Wilson
+// Added Radiobutton functions and AdaptGain Reduction							 :	2011-03-10 Cecil Wilson
+// Added OpenOptimizer functions and fixed return values						 :  2011-03-14 Cecil Wilson
+// Added AdaptiveDirMicEn function for get and set                               :  2011-05-05 Nadine Seubert
+// Added..._for_FBC functions and modified OpenOptimizer functions to new concept:  2011-05-06 Cecil Wilson
+// rework set: slow and med Settings for FBC with new setting                    :  2011-05-06 Nadine Seubert
+// rework of macroVar's to actual variable names								 :	2011-06-16 Meike Doose	
+// rework all FBC and Open Optimizer settings to Sebastian's values				 :  2011-06-20 Meike Doose
+// Updated functions for FBC												     :  2011-06-22 Nadia Neugeborn
+// add last two controls to settings											 :  2011-06-19 Meike Doose 
+// Incorporate Turbo & WhistleScreen in RB & removed the lib() not in use	 	 :	2011-07-28 Jenny Lin
+// FeedbackStopperEn_Get checks for d8PFbcPshFsEn.on (needed for Fitnesse)		 :  2011-08-23 Nadia Neugeborn
+// Update the RB settings according to Sebastian's email. p_fbc_fs_en_inc (off - slow, med. On-Fast). 
+// p_fbc_fs_en should be On for all settings (in eTemplate)						 :  2011-09-13 Jenny Lin
+// Uncomment OpenOptimizerEn_Set to set the sw combined control due to branching.:	2011-11-08 Jenny Lin 
+// Additional controls set for posfit due to the activation of FOG Test Settings at BestFit,
+// d8PFbcFsEn.on, d8PFbcFsSbfEn.on & d8PFbcSbfEn.on.							 :	2012-03-19 Jenny Lin
+// Removed SLOW settings, Changed and added new controls						 :	2012-04-30 Leong Mang Yew
+// Removed AdaptiveDirMicEn_Set_for_FBC as d8FFbcDmaEn is not needed. 
+// d8FFbcDmaEn will always be off.												 :  2012-05-25 Leong Mang Yew
+// Removed extra FBC controls.													 :	2012-05-25 Leong Mang Yew
+// Added FBCStartUpCtrl_Set() as a generic function for d8FFbcStartupCtrl
+// due to ER56215.																 :  2012-07-30 Mang Yew
+// split OpenOptimizer_Set to OpenOptimizer_Set_for_FBC & OpenOptimizer_Set_Sw   :  2013-01-02 Sonia Stasiak
+*****************************************CODE FREEZE***************************************************
+// CR for Turbo mode: CR55706: p_fbc_ss_lim_thr set to extremely_sensitive(7) 
+// from high(5) and p_fbc_Lz_mode from _0dB_at_2500Hz(3) to _0dB_at_1500Hz(1)
+// CR56304: added OpenOptimizerEn_GetHw, to be called from Mid_Level_Library_Mic_Mode.Mic_Mode_Omnidirectional		: 2012-07-21	Frauke
+// CR56926: added new controls to slow and turbo settings. Changed settings in turbo.	:2012-08-13 Mang Yew
+// Added assertion message																: 2012-12-14 Jenny Lin
+// Peer review (Changed comments for FBC from 'slow' to 'standard' as it state in MRS)  : 2013-01-04 Sonia Stasiak
+// FR55137 The FBC needs to be switched to dual/single mode depending on the mic-mode 	: 2013-01-09 Judith
+// FR59240: OpenOptimizer to be disabled for devices >=Gmax 75							: 2013-01-25
+// Implementation for CR61635 (Disable FBC and WNC if input mode is non-mic input)      : 2013-05-27 Mang Yew
+// FR61260 Updated FBC and FS Splitbandfilter control to set ON and OFF based on FBC settings   : 2013-06-20 Mang Yew
+// Updated d8SwMacroVar3Hp to d8SwMacroWncEnHp due to FR61692.						: 2013-06-25 Mang Yew
+// Sifit 7.2 Peer Review																: 2013-07-31 Raymond
+//------------------------------------------------------------ 7.3 -----------------------------------------------
+// Removed d8FFbcStartupCtrl and d8PFbcSsLimMode (not available in IT41).				: 2013-10-24 Jenny
+// Added hi:d9PhlFbcStrength to FBCRb getter function										: 2013-11-06 Mang Yew
+// Refractor for 7.3																	: 2013-11-11 Raymond
+// Added hi:d9PhlFbcStrength to FBCRb setter function. FBC will not fully work for IT41
+// due to the fact that the fix for ER64009 only in IT42.								: 2013-11-28 Mang Yew
+// Removed commented out control of d8FFbcStartupCtrl and d8PFbcSsLimMode ER64009		: 2013-12-13 Mang Yew
+// Added FBCSwitchdepMicMode_Get                                                        : 2014-01-07 Al
+// Update FBCStartUpCtrl_Set check for BeepPowerOnOffEn_Get_Entry to int instead of bool.	: 2014-01-15 Jenny
+// Default for Power On/Off is set to ON via Power On Delay, no longer through beeps	: 2014-04-25 Frauke
+// Sifit 7.3 Peer Review Update. Rework setpos function and update description			: 2014-05-05 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------$$*/
+
+/*---------------------------------------------------7.4----------------------------------------------------------$$*/
+// Replaced High_Level_Library_Noiser.Noiser_IsOnAndPure() to 
+//BasicLibrary_Noiser.Noiser_IsOnAndPure () in 	OpenOptimizerEn_IsEnabled				: 2014-08-07 Sultan
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using builtins.*;
+	using shs_sat.*;
+	package Lib BasicLibrary_FeedbackStopper
+	{
+	// All the functions we need can be added in here
+
+	/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FeedbackStopperEn_GetSw
+//   Input      :  none 
+//   Ouput      :  <bool> Current State of checkbox 
+//   Description:  Check whether Feedback Stopper software control is enable or not    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool FeedbackStopperEn_GetSw ()
+		{
+			if (hi:d8SwMacroFbcEnHp == d8SwMacroFbcEnHp.on)
+			{
+				println ('[HAL]BLIB-FeedbackStopperEn_GetSw FbcEn = ON');
+				return true;
+			}
+			else
+			{
+				println ('[HAL]BLIB-FeedbackStopperEn_GetSw FbcEn = OFF');
+				return false;
+			}
+		} // close BasicLibrary_FeedbackStopper.FeedbackStopperEn_GetSw
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FeedbackStopperEn_Get
+//   Input      :  none 
+//   Ouput      :  <bool> Current State of checkbox 
+//   Description:  Check whether Feedback Stopper is enable or not    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool FeedbackStopperEn_Get ()
+		{
+			if (hi:d8PFbcEn == d8PFbcEn.on &&
+					hi:d8PFbcPshFsEn == d8PFbcPshFsEn.on)
+			{
+				println ('[HAL]BLIB-FeedbackStopperEn_Get FbcEn = ON');
+				return true;
+			}
+			else
+			{
+				println ('[HAL]BLIB-FeedbackStopperEn_Get FbcEn = OFF');
+				return false;
+			}
+		} // close BasicLibrary_FeedbackStopper.FeedbackStopperEn_Get
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FeedbackStopperEn_Set
+//   Input      :  <int> Desired State of checkbox 
+//   Ouput      :  none 
+//   Description:  Set the Feedback Stopper controls if the checkbox is enabled.    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FeedbackStopperEn_Set (int pos)
+		{
+			if (pos == 1)
+			{
+				hi:d8PFbcEn = d8PFbcEn.on;
+				hi:d8PFbcPshFsEn = d8PFbcPshFsEn.on;
+				hi:d8PFbcFsSbfEn = d8PFbcFsSbfEn.on;
+				hi:d8PFbcSbfEn = d8PFbcSbfEn.on;
+				println ('[HAL]BLIB-FeedbackStopperEn_Set FbcEn = ON    pos=' + pos);
+			}
+			else
+			{
+				hi:d8PFbcEn = d8PFbcEn.off;
+				hi:d8PFbcPshFsEn = d8PFbcPshFsEn.off;
+				hi:d8PFbcFsSbfEn = d8PFbcFsSbfEn.off;
+				hi:d8PFbcSbfEn = d8PFbcSbfEn.off;
+				println ('[HAL]BLIB-FeedbackStopperEn_Set FbcEn = OFF    pos=' + pos);
+			}
+
+			// Additional controls d8PFbcFsEn set for posfit due to the activation of FOG Test Settings at BestFit will be
+			//	activated through PhlFbcStrength control in FBC RB settings
+
+		} // Closes	BasicLibrary_FeedbackStopper.FeedbackStopperEn_Set
+
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FeedbackStopperEn_SetSw
+//   Input      :  <int> Desired State of checkbox 
+//   Ouput      :  none 
+//   Description:  Set the FeedbackStopper software controls if the checkbox is enabled.    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FeedbackStopperEn_SetSw (int pos)
+		{
+			if (pos == 1)
+			{
+				hi:d8SwMacroFbcEnHp = d8SwMacroFbcEnHp.on;
+				println ('[HAL]BLIB-FeedbackStopperEn_SetSw FbcEn = ON    pos=' + pos);
+			}
+			else
+			{
+				hi:d8SwMacroFbcEnHp = d8SwMacroFbcEnHp.off;
+				println ('[HAL]BLIB-FeedbackStopperEn_SetSw FbcEn = OFF    pos=' + pos);
+			}
+		} // Closes	BasicLibrary_FeedbackStopper.FeedbackStopperEn_SetSw
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FeedbackStopperRB_Get_Strength
+//   Input      :  none  
+//   Ouput      :  <int> Strength number (after remapping)
+//   Description:  Gets the FeedbackStopper Strength number with respect to Basic function    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int FeedbackStopperRB_Get_Strength ()
+		{
+			if ( // Default standard
+					hi:d9PhlFbcStrength == d9PhlFbcStrength.slow)
+			{
+				println ('[HAL]BLIB-FeedbackStopperRB_Get_Strength retval=0 STANDARD');
+				return 0;
+			}
+			else if ( // Default TURBO
+				hi:d9PhlFbcStrength == d9PhlFbcStrength.turbo)
+			{
+				println ('[HAL]BLIB-FeedbackStopperRB_Get_Strength retval=1 TURBO');
+				return 1;
+			}
+			else
+			{
+				println ('[HAL]BLIB-FeedbackStopperRB_Get_Strength retval=-1 ERROR!!!');
+				assertion (false, "[MacroError] Undefined state of Feedbackstopper radiobutton!");
+				return -1;
+			} //	Closes if-statement
+
+		} // Closes	BasicLibrary_FeedbackStopper.FeedbackStopperRB_Get_Strength
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FeedbackStopperRB_Set_Strength
+//   Input      :  <int> Strength number
+//   Ouput      :   none
+//   Description:  Sets the FeedbackStopper Strength number with respect to Basic function
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FeedbackStopperRB_Set_Strength (int pos)
+		{
+			switch (pos)
+			{
+				case 0:{ // Default Standard
+					hi:d9PhlFbcStrength = d9PhlFbcStrength.slow;
+
+					println ('[HAL]BLIB-FeedbackStopperRB_Set_Strength retval= 0  STANDARD');
+				} //	Closes Case for Standard
+				case 1:{ // Default Turbo
+					hi:d9PhlFbcStrength = d9PhlFbcStrength.turbo;
+
+					println ('[HAL]BLIB-FeedbackStopperRB_Set_Strength retval= 1 TURBO');
+				} //	Closes Case for Turbo
+				default:{
+					println ('[HAL]BLIB-FeedbackStopperRB_Set_Strength ERROR!!!');
+					assertion (false, "[MacroError] Undefined state of Feedbackstopper radiobutton!");
+				} //	Closes default (ERROR)
+
+			} // Closes switch-statement
+		} // Closes	BasicLibrary_FeedbackStopper.FeedbackStopperRB_Set_Strength
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    OpenOptimizerEn_Set_Hw
+//   Input      :  <int> Desired State of checkbox 
+//   Ouput      :  none 
+//   Description:  Set the OpenOptimizer controls if the checkbox is disabled unchecked (functionality is disabled in HI).    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void OpenOptimizerEn_Set_Hw (int pos)
+		{
+			if (pos == 1)
+			{ 
+				hi:d8SwOpenOptEn = d8SwOpenOptEn.On;
+				println ('[HAL]BLIB-OpenOptimizerEn_Set_for_FBC  ON  pos=' + pos);
+			}
+			else
+			{
+				hi:d8SwOpenOptEn = d8SwOpenOptEn.Off;
+				println ('[HAL]BLIB-OpenOptimizerEn_Set_for_FBC  OFF  pos=' + pos);
+			}
+		} // Closes	BasicLibrary_FeedbackStopper.OpenOptimizerEn_Set_Hw
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    OpenOptimizerEn_Set_Sw
+//   Input      :  <int> Desired State of checkbox 
+//   Ouput      :  none  
+//   Description:  Set the OpenOptimizer controls if the checkbox is enabled.    
+//				   d8SwMacroOpenOptimizer - is a sw macro variable to hold the status of the control in MPV.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void OpenOptimizerEn_Set_Sw (int pos)
+		{
+			if (pos == 1)
+			{ // Checked
+				hi:d8SwMacroOpenOptimizer = d8SwMacroOpenOptimizer.on;
+				println ('[HAL]BLIB-OpenOptimizerEn_Set_Sw  ON  pos=' + pos);
+			}
+			else
+			{ // Unchecked
+				hi:d8SwMacroOpenOptimizer = d8SwMacroOpenOptimizer.off;
+				println ('[HAL]BLIB-OpenOptimizerEn_Set_Sw  OFF  pos=' + pos);
+			}
+		} // Closes	BasicLibrary_FeedbackStopper.OpenOptimizerEn_Set_Sw
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    OpenOptimizerEn_Get_Sw
+//   Input      :  none 
+//   Ouput      :  <bool> Status of OpenOptimizer Checkbox  true if Checked/Ticked/Enabled
+//   Description:  Get the checkbox is enabled status based on OpenOptimizer  Hi Vars .    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool OpenOptimizerEn_Get_Sw ()
+		{
+		// OpenOptimizer get function is purely based on the HI VARiable
+			if (hi:d8SwMacroOpenOptimizer == d8SwMacroOpenOptimizer.on)
+			{
+				println ('[HAL]BLIB-OpenOptimizerEn_Get  ON');
+				return true;
+			}
+			else
+			{
+				println ('[HAL]BLIB-OpenOptimizerEn_Get  OFF');
+				return false;
+			}
+		} // close BasicLibrary_FeedbackStopper.OpenOptimizerEn_Get_Sw		
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    OpenOptimizerEn_Get_Hw
+//   Input      :  none 
+//   Ouput      :  <bool> Status of OpenOptimizer based on actual hardware control:  true if active
+//   Description:  Get the checkbox is enabled status based on OpenOptimizer  Hi Vars .    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool OpenOptimizerEn_Get_Hw ()
+		{
+		// OpenOptimizer get function is purely based on the HI VARiable
+			if (hi:d8SwOpenOptEn == d8SwOpenOptEn.On)
+			{
+				println ('[HAL]BLIB-OpenOptimizerEn_GetHw  ON');
+				return true;
+			}
+			else
+			{
+				println ('[HAL]BLIB-OpenOptimizerEn_GetHw  OFF');
+				return false;
+			}
+		} // close BasicLibrary_FeedbackStopper.OpenOptimizerEn_Get_Hw			
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FBCStartUpCtrl_Set
+//   Input      :  none
+//   Ouput      :  none
+//   Description:  Get the checkbox is enabled status based on OpenOptimizer  Hi Vars .    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FBCStartUpCtrl_Set () // REVIEWED 7.2
+
+		{
+			if (hi:d8FUctPonDelay == d8FUctPonDelay._6_s)
+			{
+				hi:d8FFbcStartupCtrl = d8FFbcStartupCtrl.set5;
+				println ('[HAL]FBCStartUpCtrl set to set5');
+			}
+			else if (hi:d8FUctPonDelay == d8FUctPonDelay._12_s)
+			{
+				hi:d8FFbcStartupCtrl = d8FFbcStartupCtrl.set6;
+				println ('[HAL]FBCStartUpCtrl set to set6');
+			}
+			else if (hi:d8FUctPonDelay == d8FUctPonDelay._18_s)
+			{
+				hi:d8FFbcStartupCtrl = d8FFbcStartupCtrl.set7;
+				println ('[HAL]FBCStartUpCtrl set to set7');
+			}
+			else if (hi:d8FUctPonDelay == d8FUctPonDelay.off)
+			{
+				//Beep Power On/Off is OFF
+				hi:d8FFbcStartupCtrl = d8FFbcStartupCtrl.set1;
+				println ('[HAL]FBCStartUpCtrl set to set1');
+			}
+		} // close BasicLibrary_FeedbackStopper.FBCStartUpCtrl_Set
+
+/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FBCSwitchdepMicMode_Set
+//   Input      :  <int> Position of the Fbc controls
+//   Ouput      :  none
+//                 d8FbcDualEn.frontMic and d8PFbcSsLimMode.front_mic_only. For all other devices  
+//                 d8FbcDualEn.front_mic_only and d8PFbcSsLimMode.maxfrontrear
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FBCSwitchdepMicMode_Set (int FbcSwitch)
+		{
+			if (FbcSwitch == 0)
+			{
+				hi:d8PFbcDualEn = d8PFbcDualEn.frontMmic;
+				hi:d8PFbcSsLimMode = d8PFbcSsLimMode.front_mic_only;
+				println ('[HAL]FBC set d8PFbcDualEn.frontMmic and d8PFbcSsLimMode.front_mic_only');
+			}
+			else
+			{
+				hi:d8PFbcDualEn = d8PFbcDualEn.both_microphones;
+				hi:d8PFbcSsLimMode = d8PFbcSsLimMode.maxfrontrear;
+				println ('[HAL]FBC set d8PFbcDualEn.both_microphones and d8PFbcSsLimMode.maxfrontrear ');
+			}
+		} // close BasicLibrary_FeedbackStopper.FBCSwitchdepMicMode_Set
+		
+/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FBCSwitchdepMicMode_Get
+//   Input      :  none
+//   Ouput      :  <int> Performs the inverse operation of FBCSwitchdepMicMode_Set
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int FBCSwitchdepMicMode_Get ()
+		{
+			if (hi:d8PFbcDualEn == d8PFbcDualEn.frontMmic &&
+				hi:d8PFbcSsLimMode == d8PFbcSsLimMode.front_mic_only)
+			{
+			  	return 0;    
+			}
+				
+			else if (hi:d8PFbcDualEn == d8PFbcDualEn.both_microphones &&
+				hi:d8PFbcSsLimMode == d8PFbcSsLimMode.maxfrontrear)	
+			{
+			  	return 1;
+			}
+			else
+			{
+				assertion (false, "[MacroError] Undefined state of Feedbackstopper HW controls!");
+				return -1;
+			 // do nothing > Error has occured.
+			}		
+			
+		} // close BasicLibrary_FeedbackStopper.FBCSwitchdepMicMode_Get
+		
+
+		/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY  Feedback Stopper
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package BasicLibrary_FeedbackStopper
+
+} //namespace shs.sat

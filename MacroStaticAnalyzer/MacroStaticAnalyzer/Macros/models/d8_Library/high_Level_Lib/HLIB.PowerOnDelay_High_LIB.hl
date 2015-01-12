@@ -1,0 +1,55 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                           HIGH LEVEL PRICEPOINT LIBRARY   : POWER ON DELAY
+// Initial Version                						                     : 2012-04-19 Nadia Neugeborn
+// Sifit 7.2 Peer Review									     : 2013-07-31 Jenny, Judith, Raymond
+// Default for Power On/Off is set to ON via Power On Delay, no longer through beeps: 2014-04-24 Frauke
+/*---------------------------------------------------------------------------------------------------------------*/
+// Change powerondelay from off to on and from 12s to 6s according to MRS 2.0: 2013-01-15 Ma Mie Mie Thein 
+// Power on/off beeps no longer are represented via UI and are now "married" to Power On Delay: 2014-04-24 Frauke
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_PowerOnDelay
+	{
+
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   High Level PP LIBRARY Function:    PowerOnDelay_SetDefault()
+//   Input		:  none
+//   Ouput      :  none
+//   Description:  Set thedefault for Power On delay controls
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void PowerOnDelay_SetDefault ()
+		{ // Reviewed 7.2
+
+		//Note: it is important to set the dropdown menu first and then set the checkbox to on because both share the same ctrl
+			BasicLibrary_PowerOnDelay.PowerOnDelayDD_Set_Entry (0); // Set the DropDown menu (6s) according to Sifit MRS 2.0	
+			High_Level_Library_PowerOnDelay.PowerOnDelay_Set(1); // Set the checkbox to on according to Sifit MRS 2.0
+		} // High_Level_Library_PowerOnDelay.PowerOnDelay_SetDefault()
+
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   High Level PP LIBRARY Function:    PowerOnDelay_Set()
+//   Input		:  pos
+//   Ouput      :  none
+//   Description:  Set the Power On delay controls
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void PowerOnDelay_Set (int pos)
+		{
+			// Set Power On/Off Beep to on or off according to PowerOnDelay:
+			// Power on/off system sound always enabled if power-on delay is activated -> no checkbox “power on/off” for binax in system sound section any more
+			BasicLibrary_Beep.BeepPowerOnOffEn_Set_Entry(pos);
+			// important to set Power on/off beeps first as it is queried later in "BasicLibrary_PowerOnDelay.PowerOnDelayEn_Set_Entry (pos);"
+			// Set the Checkbox to pos
+			BasicLibrary_PowerOnDelay.PowerOnDelayEn_Set_Entry (pos);
+
+		} // High_Level_Library_PowerOnDelay.PowerOnDelay_Set(pos)
+
+
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Higher Level LIBRARY   POWER ON DELAY
+-----------------------------------------------------------------------------------------------------------------*/
+	} // package High_Level_Library_PowerOnDelay
+
+} // namespace shs.sat	
+		
+

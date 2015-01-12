@@ -1,0 +1,64 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Speech and Noise Management Broadband RadioButton
+// Initial Version                						   							: 2011-05-04 Meike Doose
+// Change "SpeechNoiseMgmntBroadbandRB" to SpeechNoiseMgmntBroadBandRB" 
+// to be same as MPV name															: 2011-06-21 Mie Mie Thein 
+// Add println for MPV testing														: 2011-09-22 Jenny Lin
+// Updated the IsVisible() calling the MLIB											: 2012-02-01 Jenny Lin
+// Deleted comments above application functions that descibe what the functions do  : 2012-06-05 Alastair Manders  
+// *********************************************CODE FREEZE*******************************************************
+// Update IsEnabled Function to check SwMacro for SnmEn    							: 2014-03-17 Mang Yew
+// Clean up																			: 2014-10-10 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{	
+    using shs_sat.*;
+    
+	package MixedMode SpeechNoiseMgmntBroadBandRB
+	{
+		application function bool IsVisible()
+		{
+			bool retVal = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntRb_IsVisible ();
+			println('[HAL]MixedMode.SpeechNoiseMgmntBroadBandRB.IsVisible = ' + retVal);
+						
+			return retVal;
+		}
+				
+		application function bool IsEnabled()
+		{	
+			bool retVal = High_Level_Library_SpeechNoiseMgmnt.IsSnmSliderDdRbEnabled ();			
+			println('[HAL]MixedMode.SpeechNoiseMgmntBroadBandRB.IsEnabled = '+retVal + BasicLibrary_DebugPrint.PrintCurrentProg ());
+			
+			return retVal;
+		}
+		
+		application function int MaxPos()
+		{
+	 		println('[HAL]MixedMode.SpeechNoiseMgmntBroadBandRB.MaxPos = 1');
+			
+			return 1;
+		}
+				
+		application function bool IsEnabledPos(int pos)
+		{
+	 		println('[HAL]MixedMode.SpeechNoiseMgmntBroadBandRB.IsEnabledPos = TRUE');
+	 					
+			return true;
+		}
+						
+		application function int GetPos()
+		{
+			int retVal = High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntBroadbandRB_Get ();// sifit 7.3
+			println('[HAL]MixedMode.SpeechNoiseMgmntBroadBandRB.GetPos = ' + retVal);
+			
+			return retVal;
+		}
+						
+		application function void SetPos(int pos)
+		{
+			println('[HAL]MixedMode.SpeechNoiseMgmntBroadBandRB.SetPos = '+ pos + BasicLibrary_DebugPrint.PrintCurrentProg ()); 					
+			High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntBroadbandRB_Set (pos); // Sifit 7.3
+		}
+
+	}
+}

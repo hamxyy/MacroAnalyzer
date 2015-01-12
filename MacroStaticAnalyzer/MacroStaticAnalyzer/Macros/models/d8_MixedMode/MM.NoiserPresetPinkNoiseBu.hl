@@ -1,0 +1,59 @@
+/*---------------------------------------------------------------------------------------------------------------*							
+// CXX UI:                        Tinnitus Pink Noise preset button
+// Initial draft																:  2011-08-24 Ma Mie Mie Thein
+// Add println for MPV testing													:  2011-09-22  Jenny Lin
+// Call HLIB under setpos instead of using Tinnitus applyoffset directly in this MixedMode: 2011-11-02 Ma Mie Mie Thein
+// Updated IsVisible function to call MLIB to check cap:TinMaskerAvailable			:  2012-05-03  Jenny Lin
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Peer review comments implemented													:  2012-06-19 MieMie/Cecil/Nadia
+// *********************************************CODE FREEZE*******************************************************  
+// CR59420: IsVisible() now calls the function Mid_Level_Library_Noiser.Noiser_PresetVisibility()  : 2013-01-22 Al
+// Sifit 7.2 Peer Review																: 2013-08-01 Alastair, Raymond
+// ------------------------------------------------ SIFIT7.3 ------------------------------------------------
+// updated for Sifit7.3.									: 2014-01-16 Jenny
+// Sifit7.3 Peer review																: 2014-04-14 Jenny, Sonia
+/*---------------------------------------------------------------------------------------------------------------*/
+// ------------------------------------------------ SIFIT7.4 ------------------------------------------------
+// updated for Sifit7.4
+// Always visible and always enabled --> dependencies to other tin features will be done by Cxx		: 2014-06-05 Meike
+// include HighLevelLib for Setter because of Modulated Noise to  be turned off						: 2014-07-28 Meike
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode NoiserPresetPinkNoiseBu
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MM - NoiserPresetPinkNoiseBu - IsVisible = TRUE');
+			return true;
+		} // Closes NoiserPresetPinkNoiseBu.IsVisible
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MM - NoiserPresetPinkNoiseBu - IsEnabled = TRUE');
+			return true;
+		}// Closes NoiserPresetPinkNoiseBu.IsEnabled
+		application function int MaxPos ()
+		{
+			println ('[HAL]MM - NoiserPresetPinkNoiseBu - MaxPos = 1 ');
+			return 1;
+		}// Closes NoiserPresetPinkNoiseBu.MaxPos
+		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MM - NoiserPresetPinkNoiseBu - IsEnabledPos = TRUE for pos=' + pos);
+			return true;
+		}// Closes NoiserPresetPinkNoiseBu.IsEnabledPos
+		application function int GetPos ()
+		{
+		// as preset buttons/entry are stateless button, it will have only 1 state, which is 0.			
+			println ('[HAL]MM - NoiserPresetPinkNoiseBu - GetPos = 0 (stateless button)');
+			return 0;
+		}// Closes NoiserPresetPinkNoiseBu.GetPos
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MM - NoiserPresetPinkNoiseBu - SetPos = ' + pos);
+			High_Level_Library_Noiser.NoiserPreset_PinkNoise ();
+		}// Closes NoiserPresetPinkNoiseBu.SetPos
+	} //package MixedMode.NoiserPresetPinkNoiseBu
+
+} //namespace shs.sat

@@ -1,0 +1,44 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                           HIGH LEVEL PRICEPOINT LIBRARY   : MPO
+// Initial Version                						                    : 2011-11-23 Cecil Wilson
+// Added MPO setting for CxxFit (waiting for CR54021)						: 2012-03-19 Nadia Neugeborn
+// Macro peer review														: 2012-06-21 Nadia/Frauke
+// FirstFit peer review updates												: 2012-07-20 Nadia & Judith
+// ************************************************CODE FREEZE****************************************************
+// CR51742: Fix of logChanCount - replace workarounds						: 2012-08-20 Nadia Neugeborn
+//  FR57390: Channel MPO for open fittings                                  : 2012-09-17 Nadine Seubert
+// ER58011: MPO Setting wrong 												:   2012-09-21 Nadine Seubert
+// ******SIFIT7.2_PEERREVIEWED: 					  :  2013-07-31   Jenny, Judith, Alastair, Raymond
+//------------------------------------------------7.3----------------------------------------------------------------
+// FR64944: Remove all broadband MPO related code							:2014-02-24 Raymond
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_MPO
+	{
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    Special_Mpo_Setting_for_HP_Receiver_702()
+//   Input      : <none>
+// 	 Output		: <int> Returns the Connexx pos based on HI control
+//   Description:  Gets the MPO radiobutton state    
+// ******SIFIT7.2_PEERREVIEWED
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void Special_Mpo_Setting_for_HP_Receiver_702 ()
+		{
+			if (cap:ReceiverType == ReceiverType.RIC_HP &&
+					cap:PricePoint == PricePoint.PP700)
+			{
+				BasicLibrary_MPO.MPOChannelSet ();
+			}
+		} // Closing High_Level_Library_MPO.Special_Mpo_Setting_for_HP_Receiver_702()
+
+		/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Higher Level LIBRARY   MPO
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package  High_Level_Library_MPO
+
+} //namespace shs.sat	
+		
+

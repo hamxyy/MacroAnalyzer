@@ -1,0 +1,61 @@
+/*-----------------------------------------------------------------------------------------------------------------
+// CXX UI:                        Activation Threshold Drop Down Menu
+//-----------------------------------------------------------------------------------------------------------------
+// Initial Version                						    				 			: 2011-03-25 Nadine Seubert
+// rework Set void function 							                                : 2011-04-01 Nadine Seubert
+// Add println for MPV testing								 							: 2011-09-22 Jenny Lin
+// Add HLIB under setpos in order to handle remapping for all HI						: 2011-10-10 Ma Mie Mie Thein
+// Deleted comments above application functions that descibe what the functions do  	: 2012-06-05 Al 
+// Peer review changes									   	 							: 2012-06-20 Nadine and Frauke
+// IsVisible now calls MicActivationThresholdDD_IsVisible(), as not visible for PP75.   : 2013-03-14 Al
+// *********************************************CODE FREEZE*******************************************************
+// ----------------------------------------------------- 7.3 -----------------------------------------------------
+// Refractor for 7.3																	: 2013-11-11 Raymond
+// Removed commented-out code                                   						: 2014-02-26 Al
+/*----------------------------------------------------------v7.4-------------------------------------------------
+// Chores																				: 2014-06-30 Sultan 
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{	
+	using shs_sat.*;
+	
+	package MixedMode ActivationThresholdDD
+	{	
+		application function bool IsVisible() 
+		{			
+			bool retval = Mid_Level_Library_ActivationThresholdDD.MicActivationThresholdDD_IsVisible();
+			println('[HAL]MM - ActivationThresholdDD.IsVisible = ' + retval);								    	
+			return retval;		
+		}
+		
+		application function int MaxPos() 
+		{
+			int retVal = 2;		
+			println('[HAL]MM - ActivationThresholdDD.MaxPos = '+ retVal);
+			return retVal;
+		}
+							
+		application function bool IsEnabled() 
+		{			
+			bool retVal = High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Is_Enabled();			
+			println('[HAL]MM - ActivationThresholdDD.IsEnabled = ' + retVal + ' in' + BasicLibrary_DebugPrint.PrintCurrentProg());
+			return retVal;
+		}
+			 	 
+	 	application function int GetPos() 
+	 	{	 
+			int retVal = BasicLibrary_ActivationThresholdDD.ActivationThresholdDD_Get();	 		
+	 		println('[HAL]MM - ActivationThresholdDD.GetPos = ' + retVal + ' in' + BasicLibrary_DebugPrint.PrintCurrentProg());						
+			return retVal; 		 
+	 	}
+	 		 		 	 					
+		application function void SetPos(int pos) 
+		{
+			println('[HAL]MM - ActivationThresholdDD.SetPos = ' + pos + ' in' + BasicLibrary_DebugPrint.PrintCurrentProg());			
+			High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_Set(pos);		
+		}
+		
+	}	
+}
+

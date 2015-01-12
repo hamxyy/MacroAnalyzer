@@ -1,0 +1,57 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Beep Loudness DropDown Menue
+// Initial Version          without isEnabled      						     :  2011-04-19 Meike Doose
+// Add println for MPV testing												 :  2011-09-22  Jenny Lin
+// Updated to call HLIB instead of BLIB										 :  2012-04-20  Jenny Lin
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Delete int hp=env:Prog and removed unecessary println					 :	2012-06-08  Mang Yew
+// *********************************************CODE FREEZE*******************************************************
+// Sifit7.3 Peer review														: 2014-04-28 Jenny, Jeline
+// Sifit7.4 Peer review													    : 2014-11-17 MieMie/Sultan/Jeline	
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{	
+	using shs_sat.*;
+	
+	package MixedMode BeepLoudnessDD
+	{		
+		application function bool IsVisible() 
+		{			
+			println('[HAL]MM - BeepLoudnessDD - IsVisible = TRUE');
+			// Visibility of BeepLoudness --> always visible
+			return true;
+		}
+		
+		application function int MaxPos() 
+		{
+			println('[HAL]MM - BeepLoudnessDD - MaxPos = 3');						
+			return 3;
+		}
+		
+		application function bool IsEnabled() 
+		{
+			println('[HAL]MM - BeepLoudnessDD - IsEnabled = TRUE');
+			return true;
+		}
+		
+		application function bool IsEnabledPos(int pos) 
+		{
+	 		println('[HAL]MM - BeepLoudnessDD - IsEnabledPos = TRUE');			
+	 		return true;		
+	 	}
+	 	
+	 	application function int GetPos() 
+	 	{
+			println('[HAL]MM - BeepLoudnessDD - GetPos');
+			return High_Level_Library_Beep.BeepLoudnessDD_Get();
+	 	}
+	 		 	
+		application function void SetPos(int pos) 
+		{
+	 		println('[HAL]MM - BeepLoudnessDD - SetPos = ' + pos);		
+			High_Level_Library_Beep.BeepLoudnessDD_Set(pos);
+		}
+	}
+		
+}

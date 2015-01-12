@@ -1,0 +1,102 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Input Mode Drop Down Menu
+// Initial Version(in work) 				                						    :  2011-02-21   Cecil Wilson
+// Updated all functions															    :  2011-02-28   Cecil Wilson
+// Added Tinnitus greyout														        :  2011-03-23   Cecil Wilson  
+// Updated header and added println													    :  2011-06-27   Cecil Wilson	
+// Added Workaround for ComboBox/ DropDown menu issue								    :  2011-07-07   Cecil Wilson
+// Removed workaround for the DropDown menu issue & added the new application function	:  2011-07-27	Jenny Lin 	
+// Add println for MPV testing												 			:  2011-09-22   Jenny Lin
+// Removed MaxPhysicalPos application funciton due to  ER53490							:  2012-02-09   Cecil Wilson
+// Macro code Cleanup																	:  2012-02-14   Cecil Wilson
+// Updated Getpos to allow return of -1 from macros										:  2012-03-23   Cecil Wilson	 
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Peer review comments implemented														:  2012-06-19   Cecil/Jenny/MangYew
+// *********************************************CODE FREEZE*******************************************************  
+// SIFIT7.2_PEERREVIEWED: 
+// 1) Call MLIB.InputModeDD_IsVisiblePhysicalPos instead of HLIB.						:  2013-07-30 Jenny & Judith
+// refractor: Optimize code									: 2013-12-02 Jenny
+// Updated IsEnabledPhysicalPos to IsEnabledPos. Updated the IsEnabled for Hicoss.		: 2013-12-10 Jenny
+// updated println statement for debugging.											: 2014-01-15 Jenny
+// Updated IsEnabled to call High_Level_Library_InputMode.InputModeDD_IsEnabled.		: 2014-04-09 Jenny 
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// ****** SIFIT7.4 ******
+// Updated SetPos to PrintEnvSettings to test SideSelection macro.  				:  2014-08-25   Jenny
+// Change InputModeDD SetPos, GetPos, MaxPos, IsVisiblePhysicalPos & IsEnabledPos to use direct PhysicalPos instead
+// of remapped_pos (used only in HICOSS now).										: 2014-09-05 Jenny
+// Code cleanup: Updated printlines.												: 2014-10-09 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode InputModeDD
+	{
+	/* Default The List box entries are in the following order for D9 CXX. For Hicoss, depend on the HW capability.
+	     * 0 -> Microphone 
+	     * 1 -> Telecoil
+	     * 2 -> Streaming Audio
+	     * 3 -> Bluetooth Phone
+	     * 4 -> EasyTek FM
+	     * 5 -> Direct Audio Input(FM)
+	     */
+
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MixedMode.InputModeDD.IsVisible'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+
+			bool retVal = true; 
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.InputModeDD.IsEnabled');
+			
+			// For monoaural fitting: only depends on the Tinnitus pure-noiser activated, IsEnabled = FALSE;
+			// For binaural fitting: requires both HI have Tinnitus pure-noiser activated, IsEnabled = FALSE;
+			// Else, IsEnabled = TRUE 
+
+			bool retVal = High_Level_Library_InputMode.InputModeDD_IsEnabled();
+			return retVal;
+		}
+		
+ 		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.InputModeDD.MaxPos');
+
+			int retVal = Mid_Level_Library_InputMode.InputModeDD_MaxPos ();
+			return retVal;
+		}
+				
+ 		application function bool IsVisiblePhysicalPos (int physicalPos)
+		{
+			println ('[HAL]MixedMode.InputModeDD.IsVisiblePhysicalPos');
+
+			bool retVal = Mid_Level_Library_InputMode.InputModeDD_IsVisiblePhysicalPos (physicalPos);
+			return retVal;
+		}
+		
+ 		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MixedMode.InputModeDD.IsEnabledPos');
+
+			bool retVal = High_Level_Library_InputMode.InputModeDD_IsEnabledPos (pos);
+			return retVal;
+		}
+
+ 		application function int GetPos ()
+		{
+			println ('[HAL]MixedMode.InputModeDD.GetPos');
+
+			int retVal = High_Level_Library_InputMode.InputModeDD_Get ();
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.InputModeDD.SetPos');
+
+			High_Level_Library_InputMode.InputModeDD_Set (pos);
+		}
+	}
+}

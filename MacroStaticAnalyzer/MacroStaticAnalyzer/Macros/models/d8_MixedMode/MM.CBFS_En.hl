@@ -1,0 +1,55 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                          		 CBFS checkbox
+// Initial Version 																		: 2012-08-13 Nadia Neugeborn
+// CR57156 - CBFS to off for HP2-HP6 (added println for HP dependencies)         		: 2012-08-22 Nadia Neugeborn 
+// Sifit 7.2 PEER REVIEW														: 2013-07-31 Jenny, Judith, Raymond
+// Sifit 7.3 PEER REVIEW														: 2014-04-14 MieMie, Mang Yew 
+// Sifit 7.4 PEER REVIEW														: 2014-11-12 Jenny, Niklas 
+*/
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode CBFS_En
+	{ 
+		application function bool IsVisible ()
+		{
+			bool retval = Mid_Level_Library_CBFS.CbfsEn_IsVisible ();
+			println ('[HAL]MixedMode.CBFS_En.IsVisible = ' + retval);
+
+			return retval;
+		}
+
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.CBFS_En.IsEnabled =  TRUE');
+			return true;
+		}
+
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.CBFS_En.MaxPos = 1');
+			return 1; // Total number of checkbox states (0 and 1)			
+		}
+
+		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MixedMode.CBFS_En.IsEnabledPos (pos=' + pos + ') >> TRUE');
+			return true; // CheckBox has always IsEnabledPos True
+		}
+
+		application function int GetPos ()
+		{
+			int hp = env:Prog;
+			int retval = High_Level_Library_CBFS.CBFS_Get ();
+			println ('[HAL]MixedMode.CBFS_En.GetPos = ' + retval + ' in HP= ' + hp);
+			return retval;
+		}
+		application function void SetPos (int pos)
+		{
+			int hp = env:Prog;
+			println ('[HAL]MixedMode.CBFS_En.SetPos = ' + pos + ' in HP= ' + hp);
+			High_Level_Library_CBFS.CBFS_Set (pos);
+		}
+	}
+}

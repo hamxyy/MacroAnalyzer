@@ -1,0 +1,81 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									PROGRAM SELECTION - Privacy
+
+// Initial Version		         															: 2011-08-22 Chuah LayYuan
+// Update the SoundManagement settings (after preliminary discussion)						: 2011-11-14 Jenny Lin
+// Added SoundBrilliance setting.															: 2011-11-14 Jenny Lin
+// Added THI Weight setting in Apply Function                           					: 2011-11-22 Chuah LayYuan
+// Added GetOrderNumber() and IsSingleUse() function.										: 2012-03-19 Jenny Lin
+// Updated GetID from 8 to 9 due to Universal = 1.											: 2012-03-22 Jenny Lin
+// Replaced InputMode SetPos to non-adaptive (no update of WNC/SoundBrilliance)				: 2012-03-27 Cecil Wilson	
+// Updated IsVisible function 																: 2012-04-04 Cecil Wilson
+// Updated to call HLIB.MicMode_Set_ProgramSelection to set the MicMode.					: 2012-04-09 Jenny Lin
+// Removed print lines from Apply app. function to make code neater             			: 2012-07-18 Al
+// Updated based on PeerReview																: 2012-07-19 Jenny, MieMie
+// Call the HLIB for Program Selection for all programs.									: 2012-07-20 Cecil, Jenny
+// *********************************************CODE FREEZE*******************************************************
+// CR57156 - Set CBFS to off for HP2-HP6													: 2012-08-22 Nadia Neugeborn
+// Peer Review Changes 7.2.                                                     			: 2013-08-15 Raymond, MangYew, Judith
+// D8 Program Selection code cleaning, apply function to call H_Lib							: 2013-10-24 Sonia Stasiak
+// Updated IsEnabled to call Mid_Level_Library												: 2013-11-01 Sonia Stasiak
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Updated Apply function with d9SwMacroProgramIdHp, code tuning							: 2013-12-17 Sonia Stasiak
+// PEER REVIEW CXX 7.3																		: 2014-05-06 Sonia, Mie Mie, Jenny
+/*--------------------------------------------- Cxx 7.4 -----------------------------------------------------------*
+// Change Apply function to call BLib.Set<program> to set d9SwmacroProgramIdHp				: 2014-09-16 Sonia
+// Code clean up																			: 2014-09-17 Sonia
+/*-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package ProgramSelection Privacy
+	{
+		application function int GetID ()
+		{
+			int retVal = 9;
+			println ('[HAL]PS - Privacy.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "Privacy";
+			println ('[HAL]PS - Privacy.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 9; // Privacy
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - Privacy.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 9; // Privacy
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - Privacy.IsEnabled = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetPrivacy();
+			
+			println ('[HAL]PS - Privacy.Apply started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - Privacy.Apply done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function int GetOrderNumber ()
+		{
+			int retVal = 11;
+			println ('[HAL]PS - Privacy.GetOrderNumber = ' + retVal);
+			return retVal;
+		}
+	}
+}
+//--------------------------------------- END of PROGRAM SELECTION - Privacy --------------------------------------*/

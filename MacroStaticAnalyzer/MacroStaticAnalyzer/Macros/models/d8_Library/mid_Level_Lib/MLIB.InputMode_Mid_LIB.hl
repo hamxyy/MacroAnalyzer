@@ -1,0 +1,636 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            MID LEVEL PRICEPOINT LIBRARY : InputMode
+// Initial draft                                                                      :  2011-02-25   Cecil Wilson
+// Added MaxPos function															  :  2011-02-28   Cecil Wilson	
+// Removed Package LIB workaround													  :  2011-03-03   Cecil Wilson
+// Changed HI controls in the conditions for Is_available functions	  	    		  :  2011-03-10   Cecil Wilson
+// Updated Remapping and MaxPos function to automatically update based on CAP		  :  2011-03-22   Cecil Wilson
+// Added workarounds for all CAPs & ENV												  :  2011-03-24	  Cecil Wilson	 
+// Removed CAP: workarounds															  :  2011-05-16   Cecil Wilson	
+// Removed env:Prog workarounds														  :  2011-06-24   Cecil Wilson
+// Fixed the DAI availibilty in the Hearing program 1 								  :	 2011-06-28   Cecil Wilson
+// Added Hicoss and Connexx dependent availabilities 								  :  2011-07-04   Cecil Wilson
+// Added workaround for ComboBox issue												  :  2011-07-08   Cecil Wilson	
+// Removed workaround for ComboBox issue		 									  :  2011-07-27	  Jenny Lin
+// Removed workaround for Hicoss IsEnable											  :  2011-08-15   Cecil Wilson
+// Telecoil is made Available for all HPs for Hicoss and Cxx 						  :  2011-12-16   Cecil Wilson								
+// Updated SINGLE use inputmode functions 											  :  2011-12-20   Cecil Wilson	
+// Replaced Cap:PP dependencies with cap:WlsAudio for better reusability			  :  2012-01-16   Cecil Wilson
+// Moved InputModeDD_IsVisiblePhysicalPos from Hlib due to cap dependence and reuse	  :  2012-03-28   Cecil Wilson
+// Peer review comments implemented													  :  2012-06-19   Cecil/Jenny/MangYew
+// FirstFit peer review updates: InputModeDD_DefaultPos								  :  2012-07-19	  Nadia & Judith
+**************************************************CODE FREEZE*****************************************************
+// Fixed FR57384: MACRO: please remove T-Coil functionality from P1					  :  2012-09-18   Cecil Wilson
+// Fixed FR52090: Multiple assignment of Tek/miniTek(Audio/TV)-program with miniTek   :  2012-11-19	  Mie Mie Thein
+// Fixed ER58937: MMinitek Audiosources can be activated multible times				  :  2012-11-26	  Mie Mie Thein
+// For FR52090, Undo restriction of Multiple assignment of Tek/miniTek-program with Tek :2012-11-19   Mie Mie Thein
+// Fixed ER56719 & ER59785: Remove env:Prog==0 for checks in Wireless input mode, so that it can be shown in 
+// program selection that the wireless programs are selectable when not already in use.:  2013-07-11  Jenny
+// ******SIFIT7.2_PEERREVIEWED: 					 								:  2013-07-30   Jenny, Judith
+// Added Is_Telecoil_Input_Mode(), Is_Wireless_Input_Mode(), Is_DAI_Input_Mode()	: 2013-11-04 Jenny
+// refractor: Optimize code															: 2013-12-02 Jenny
+// added Is_Wireless_Input_Mode_basedon_PhysicalPos.								: 2013-12-20 Jenny
+// updated printline statement.														: 2014-03-03 Jenny
+// Updated the physicalpos for Streaming audio(from 7 to 2), easytek FM (from 8 to 4), DAI (from 6 to 5) for
+// InputModeDD_Remapping, InputModeDD_MaxPos, 
+// Is_Wireless_Input_Mode_basedon_PhysicalPos, InputModeDD_IsVisiblePhysicalPos.	: 2014-04-07 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// Sifit 7.4 Include Is_Wireless_withoutFM_Input_Mode since Nele is not part of EasyTekFM: 2014-07-07 Meike
+// rewrite InputModeDD_MaxPos(), InputModeDD_IsVisiblePhysicalPos - In CXX (directlt use the CXXPos),
+// Hicoss (checks for RemappedPos).													: 2014-09-05 Jenny
+// InputModeDD_Remapping & InputModeDD_HicossIsVisiblePhysicalPos : call BLIB PhysicalPos_of_XXX_Input_Mode 
+// instead of calling setting the physicalPos directly. Code cleanup: Updated printlines.	: 2014-10-20 Jenny
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib Mid_Level_Library_InputMode
+	{
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		//   Description:  remapping for Input Mode Menu positions 
+			 Default The List box entries are in the following order D9_Platform 
+		     * 0 -> Microphone
+		     * 1 -> Telecoil
+		     * 2 -> Streaming Audio
+		     * 3 -> Bluetooth Phone
+		     * 4 -> EasyTek FM
+		     * 5 -> Direct Audio Input(FM)
+
+			Different cases of Input mode Lists are as below
+			  * Case ID      Mic  	 	 Tcoil		   Wireless		    DAI
+		      * 	1		available     NA 			 NA					NA
+		      * 	2		available     NA 			 NA					available
+		      * 	3		available     NA 			 available			NA
+		      * 	4		available     NA 			 available			available
+		      * 	5		available     available      NA					NA
+		      * 	6		available     available      NA					available
+		      * 	7		available     available      available			NA
+		      * 	8		available     available      available			available 
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int InputModeDD_Remapping (int pos)
+		{
+			println ('[HAL]MLIB.Mid_Level_Library_InputMode.InputModeDD_Remapping');
+
+			int physicalPos = 0;
+			int caseID = 1; // Microphone alone exist is case ID = 1
+
+			if (cap:TelecoilAvailable == TelecoilAvailable.exists)
+			{
+				// Telecoil CaseIDs start from 5
+				caseID += 4;  
+			}
+			if (cap:WlsAudio == WlsAudio.exists)
+			{
+				caseID += 2;
+			}
+			if (cap:AudioshoeAvailable == AudioshoeAvailable.exists)
+			{
+				caseID += 1;
+			}
+			
+			switch (caseID)
+			{
+				case 1:
+				{ 
+					// Mic only available
+					physicalPos = BasicLibrary_InputMode.PhysicalPos_of_Microphone_Input_Mode();
+				}
+				case 2:
+				{ 
+					// Mic and DAI available
+					if (pos == 0)
+					{
+						physicalPos = BasicLibrary_InputMode.PhysicalPos_of_Microphone_Input_Mode();
+					}
+					else
+					{
+						physicalPos = BasicLibrary_InputMode.PhysicalPos_of_DAI_Input_Mode();
+					}
+				}
+				case 3:
+				{ 
+					// Mic and Wireless available
+					switch (pos)
+					{
+						case 0:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_Microphone_Input_Mode();
+						}
+						case 1:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_StreamingAudio_Input_Mode();
+						}
+						case 2:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_BluetoothPhone_Input_Mode();
+						}
+						case 3:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_EasyTekFM_Input_Mode();
+						}
+					}
+				}
+				case 4:
+				{ 
+					// Mic ,Wireless and DAI available
+					switch (pos)
+					{
+						case 0:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_Microphone_Input_Mode();
+						}
+						case 1:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_StreamingAudio_Input_Mode();
+						}
+						case 2:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_BluetoothPhone_Input_Mode();
+						}
+						case 3:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_EasyTekFM_Input_Mode();
+						}
+						case 4:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_DAI_Input_Mode();
+						}
+					}
+				}
+				case 5:
+				{ 
+					// Mic and Tcoil available
+					switch (pos)
+					{
+						case 0:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_Microphone_Input_Mode();
+						}
+						case 1:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_Telecoil_Input_Mode();
+						}
+					}
+				}
+				case 6:
+				{ 
+					// Mic ,Tcoil and DAI available
+					switch (pos)
+					{
+						case 0:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_Microphone_Input_Mode();
+						}
+						case 1:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_Telecoil_Input_Mode();
+						}
+						case 2:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_DAI_Input_Mode();
+						}
+					}
+				}
+				case 7:
+				{ 
+					// Mic ,Tcoil and Wireless available
+					switch (pos)
+					{
+						case 0:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_Microphone_Input_Mode();
+						}
+						case 1:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_Telecoil_Input_Mode();
+						}
+						case 2:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_StreamingAudio_Input_Mode();
+						}
+						case 3:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_BluetoothPhone_Input_Mode();
+						}
+						case 4:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_EasyTekFM_Input_Mode();
+						}
+					}
+				}
+				case 8:
+				{ 
+					// Mic ,Tcoil ,Wireless and DAI available		     	  
+					switch (pos)
+					{
+						case 0:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_Microphone_Input_Mode();
+						}
+						case 1:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_Telecoil_Input_Mode();
+						}
+						case 2:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_StreamingAudio_Input_Mode();
+						}
+						case 3:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_BluetoothPhone_Input_Mode();
+						}
+						case 4:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_EasyTekFM_Input_Mode();
+						}
+						case 5:
+						{
+							physicalPos = BasicLibrary_InputMode.PhysicalPos_of_DAI_Input_Mode();
+						}
+					}
+				}
+			}
+			println('[HAL]MLIB.Mid_Level_Library_InputMode.InputModeDD_Remapping >> CaseID=' + caseID + '  CxxPos=' + pos + '   physicalPos=' + physicalPos + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+			return physicalPos;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		//   Description:   Maximum no of input modes available for Current Device based on HW capability.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int InputModeDD_HicossMaxPos ()
+		{
+			println ('[HAL]MLIB.Mid_Level_Library_InputMode.InputModeDD_HicossMaxPos');
+
+			int retval = 0; // Microphone is always available
+			
+			if (cap:TelecoilAvailable == TelecoilAvailable.exists)
+			{
+				// Telecoil adds one more entry to the input mode drop down list/menu
+				retval += 1; 
+			}
+			if (cap:WlsAudio == WlsAudio.exists)
+			{
+				// Wireless Audio i.e. Streaming Audio and easyTek FM only, adds 2 more entry to the input mode drop down list/menu
+				retval += 2; 
+			}
+			if (cap:WlsPhone == WlsPhone.exists)
+			{
+				// Wireless Phone i.e. Bluetooth Phone adds 1 more entry to the input mode drop down list/menu
+				retval += 1; 
+			}
+			if (cap:AudioshoeAvailable == AudioshoeAvailable.exists)
+			{
+				// DAI adds one more entry to the input mode drop down list/menu
+				retval += 1; 
+			}
+
+			return retval;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		//   Description:   Maximum no of input modes available for Current Device
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int InputModeDD_MaxPos ()
+		{
+			println ('[HAL]MLIB.Mid_Level_Library_InputMode.InputModeDD_MaxPos');
+			
+			int retval = 0;
+			
+			if(env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+			{
+				// In CXX, always return 5 for all the input modes are valid.
+				retval = 5;
+			}
+			else
+			{
+				// In Hicoss, check the HW capability to return the "remapped" MaxPos.
+				retval = InputModeDD_HicossMaxPos();
+			}
+
+			return retval;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		//   Description:  DefaultPosition of the Menu for InputMode 
+		//              :  This position should be used in case there is invalid Menu position found in macro
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int InputModeDD_DefaultPos ()
+		{
+			println ('[HAL]MLIB.Mid_Level_Library_InputMode.InputModeDD_DefaultPos');
+			
+			// physicalPos = 0 ; Microphone InputMode
+			return 0; 
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Is wireless input set based on physicalpos.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool Is_Wireless_Input_Mode_basedon_PhysicalPos (int physicalPos)
+		{
+			println ('[HAL]MLIB.Mid_Level_Library_InputMode.Is_Wireless_Input_Mode_basedon_PhysicalPos');
+			
+			// not equal to Microphone (0), Telecoil (1) and DAI (5)
+			bool retVal = (physicalPos != 0 && physicalPos != 1 && physicalPos != 5);
+			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Checks if the Streaming Audio Feature is available and if yes it is enabled as inputmode
+		// **** Use by MixedMode InputMode.IsEnabled() and Program Selection : Streaming Audio.
+		// In Fitting mode, it shall be enabled :
+		//    1) In only ONE hearing program.
+		//    2) easyTek is connected.
+		//    3) Not in Universal program.
+		// In Service mode, it shall be enabled when easyTek is connected.
+		* -----------------------------------------------------------------------------------------------------------------*/
+		public function bool Is_available_Inputmode_StreamingAudio ()
+		{
+			println ('[HAL]MLIB.Mid_Level_Library_InputMode.Is_available_Inputmode_StreamingAudio');
+			
+			bool retval = false;
+			
+			if (cap:WlsAudio == WlsAudio.exists)
+			{
+				if (env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+				{ 
+					// Connexx case 
+					if (BasicLibrary_UserControl.IsEasyTekConnected() &&
+							(BasicLibrary_InputMode.Is_TekdMTek_in_Use () == env:Prog || // If already selected in Current HP					    	    
+								BasicLibrary_InputMode.Is_TekdMTek_in_Use () == -1) // If  -1 Not selected in any of the HPs so it is available here
+						)
+					{
+						retval = true;
+					}
+					else
+					{
+						println('[HAL]MLIB.Mid_Level_Library_InputMode.Is_available_Inputmode_StreamingAudio >> FALSE >> IsEasyTekConnected NOT connected / Streaming Audio in-use');
+					}
+				}
+				else
+				{ 
+					// HICOSS case 		
+					if (BasicLibrary_UserControl.IsEasyTekConnected())
+					{
+						retval = true;
+					}
+					else{
+						println('[HAL]MLIB.Mid_Level_Library_InputMode.Is_available_Inputmode_StreamingAudio >> FALSE >> IsEasyTekConnected NOT connected');
+					}
+				}
+			}
+			
+			return retval;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Checks if the BluetoothPhone Feature is available and if yes it is enable as inputmode
+		// **** Use by MixedMode InputMode.IsEnabled() and Program Selection : Bluetooth Phone.
+		// In Fitting mode, it shall be enabled :
+		//    1) In only ONE hearing program.
+		//    2) easyTek has to be connected.
+		//    3) Not in Universal program.
+		// In Service mode, it shall be enabled when easyTek is connected.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool Is_available_Inputmode_BluetoothPhone ()
+		{
+			println ('[HAL]MLIB.Mid_Level_Library_InputMode.Is_available_Inputmode_BluetoothPhone');
+
+			bool retval = false;
+			
+			if (cap:WlsPhone == WlsPhone.exists)
+			{
+				if (env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+				{ 
+					// Connexx case 
+					if ((BasicLibrary_UserControl.IsEasyTekConnected()) &&
+						(BasicLibrary_InputMode.Is_BluetoothPhone_in_Use () == env:Prog || // If already selected in Current HP
+							BasicLibrary_InputMode.Is_BluetoothPhone_in_Use () == -1) // If  -1 Not selected in any of the HPs so it is available here
+					)
+					{
+						retval = true;
+					}
+					else
+					{
+						println('[HAL]MLIB.Mid_Level_Library_InputMode.Is_available_Inputmode_BluetoothPhone >> TRUE >> IsEasyTekConnected NOT connected / BluetoothPhone in-use');
+					}
+				}
+				else
+				{ 
+					// HICOSS case 		
+					if (BasicLibrary_UserControl.IsEasyTekConnected())
+					{
+						retval = true;
+					}
+					else
+					{
+						println('[HAL]MLIB.Mid_Level_Library_InputMode.Is_available_Inputmode_BluetoothPhone >> FALSE >> IsEasyTekConnected NOT connected');
+					}
+				}
+			}
+			return retval;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		// **** Use by MixedMode InputMode.IsEnabled() and Program Selection : easyTek FM.
+		// In Fitting mode, it shall be enabled :
+		//    1) In only ONE hearing program.
+		//    2) easyTek has to be connected.
+		//    3) Not in Universal program.
+		// In Service mode, it shall be enabled when easyTek is connected.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool Is_available_Inputmode_EasyTekFM ()
+		{
+			println ('[HAL]MLIB.Mid_Level_Library_InputMode.Is_available_Inputmode_EasyTekFM');
+
+			bool retval = false;
+			if (cap:WlsAudio == WlsAudio.exists)
+			{
+				if (env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+				{ 
+					// Connexx case 
+					if (BasicLibrary_UserControl.IsEasyTekConnected() &&
+						(BasicLibrary_InputMode.Is_EasyTek_FM_in_Use () == env:Prog || // If already selected in Current HP
+							BasicLibrary_InputMode.Is_EasyTek_FM_in_Use () == -1)) // If  -1 Not selected in any of the HPs so it is available here	    	       							    										    							    	
+
+					{
+						retval = true;
+					}
+					else
+					{
+						println('[HAL]MLIB.Mid_Level_Library_InputMode.Is_available_Inputmode_EasyTekFM >> FALSE >> IsEasyTekConnected NOT connected / easyTekFM in-use');
+					}
+				}
+				else
+				{ 
+					// HICOSS case 		
+					if (BasicLibrary_UserControl.IsEasyTekConnected())
+					{
+						retval = true;
+					}
+					else
+					{
+						println('[HAL]MLIB.Mid_Level_Library_InputMode.Is_available_Inputmode_EasyTekFM >> FALSE >> IsEasyTekConnected NOT connected');
+					}
+				}
+			}
+			return retval;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Decides the visibility of the individual entries in the list as shown below
+		//	Input Mode	:	0 = Microphone		3 = Bluetooth Phone
+		//	PhysicalPos	:	1 = Telecoil		4 = EasyTek FM
+		//				:	2 = Streaming Audio	5 = Audio Shoe (DAI)
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool InputModeDD_IsVisiblePhysicalPos (int physicalPos)
+		{
+			println ('[HAL]MLIB.Mid_Level_Library_InputMode.InputModeDD_IsVisiblePhysicalPos');
+
+			bool retval = false;
+			
+			if(env:HiDriverWorkMode != HiDriverWorkMode.Fitting)
+			{
+				// In Hicoss, check capability to show visibility
+				retval = InputModeDD_HicossIsVisiblePhysicalPos(physicalPos);
+			}
+			else
+			{
+				// In CXX, all position "visible". No restriction.
+				retval = true;
+			}
+			
+			return retval;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Decides the visibility of the individual entries in the list as shown below
+		//	Input Mode	:	0 = Microphone		3 = Bluetooth Phone
+		//	PhysicalPos	:	1 = Telecoil		4 = EasyTek FM
+		//				:	2 = Streaming Audio	5 = Audio Shoe (DAI)
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool InputModeDD_HicossIsVisiblePhysicalPos (int physicalPos)
+		{
+			println ('[HAL]MLIB.Mid_Level_Library_InputMode.InputModeDD_HicossIsVisiblePhysicalPos');
+
+			bool retval = false;
+			
+//			switch (physicalPos)
+//			{
+//				case 0:{ // Microphone 
+//					retval = true;
+//				}
+//				case 1:{ // Telecoil
+//					if (cap:TelecoilAvailable == TelecoilAvailable.exists)
+//					{
+//						retval = true;
+//					}
+//				}
+//				case 2:{ // Streaming Audio
+//					if (cap:WlsAudio == WlsAudio.exists)
+//					{
+//						retval = true;
+//					}
+//				}
+//				case 3:{ // Bluetooth Phone
+//					if (cap:WlsPhone == WlsPhone.exists)
+//					{
+//						retval = true;
+//					}
+//				}
+//				case 4:{ // easyTek FM
+//					if (cap:WlsAudio == WlsAudio.exists)
+//					{
+//						retval = true;
+//					}
+//				}
+//				case 5:{ // Direct Audio Input
+//					if (cap:AudioshoeAvailable == AudioshoeAvailable.exists)
+//					{
+//						retval = true;
+//					}
+//				}
+//				default:{ // Default, it is not necessary. but anything other than in the above list will not be Enabled
+//					retval = false;
+//				}
+//			}
+			
+			// updated to use BLIB PhysicalPos.
+			if(physicalPos == BasicLibrary_InputMode.PhysicalPos_of_Microphone_Input_Mode())
+			{
+				retval = true;
+			}
+			else if(physicalPos == BasicLibrary_InputMode.PhysicalPos_of_Telecoil_Input_Mode())
+			{
+				retval = (cap:TelecoilAvailable == TelecoilAvailable.exists);
+			}
+			else if(physicalPos == BasicLibrary_InputMode.PhysicalPos_of_StreamingAudio_Input_Mode() ||
+				physicalPos == BasicLibrary_InputMode.PhysicalPos_of_EasyTekFM_Input_Mode() )
+			{
+				retval = (cap:WlsAudio == WlsAudio.exists);
+			}
+			else if(physicalPos == BasicLibrary_InputMode.PhysicalPos_of_BluetoothPhone_Input_Mode())
+			{
+				retval = (cap:WlsPhone == WlsPhone.exists);
+			}
+			else if(physicalPos == BasicLibrary_InputMode.PhysicalPos_of_DAI_Input_Mode())
+			{
+				retval = (cap:AudioshoeAvailable == AudioshoeAvailable.exists);
+			}
+			else
+			{
+				assertion (false, "[MacroError]MLIB.Mid_Level_Library_InputMode.InputModeDD_HicossIsVisiblePhysicalPos >> No valid InputMode physicalPos entered!");
+			}
+
+			return retval;
+		}
+
+// ***** NOT REQUIRED ***** Waiting for Frauke's review.
+//		/*$---------------------------------------------------------------------------------------------------------------*
+//		//   Description:  Decides the visibility of the individual entries in the list as shown below
+//		-----------------------------------------------------------------------------------------------------------------$*/
+//		public function bool Is_InputMode_Valid_InCxx ()
+//		{
+//			println ('[HAL]MLIB.Mid_Level_Library_InputMode.Is_InputMode_Valid_InCxx');
+//			
+//			bool retVal = false; // initialise to false. If HI cap not exists, shall return false.
+//			
+//			if(BasicLibrary_ProgramSelection.IsTelecoilProgramSetInCurrentSide())
+//			{
+//				retVal = BasicLibrary_InputMode.Is_Telecoil_Input_Mode();
+//			}
+//			else if(BasicLibrary_ProgramSelection.IsWirelessProgramSetInCurrentSide())
+//			{
+//				retVal = BasicLibrary_InputMode.Is_Wireless_Input_Mode();
+//			}
+//			else if(BasicLibrary_ProgramSelection.IsAudioInput())
+//			{
+//				retVal = BasicLibrary_InputMode.Is_DAI_Input_Mode();
+//			}
+//			else if(BasicLibrary_ProgramSelection.IsPrivacy())
+//			{
+//				// for Privacy program in current side, it is possible to have HW programs in opp side.
+//				if(BasicLibrary_ProgramSelection.IsTelecoilProgramSetInOppSide())
+//				{
+//					retVal = BasicLibrary_InputMode.IsOpp_Telecoil_Input_Mode();
+//				}
+//				else if(BasicLibrary_ProgramSelection.IsOppAudioInput())
+//				{
+//					retVal = BasicLibrary_InputMode.IsOpp_DAI_Input_Mode();
+//				}
+//				else
+//				{
+//					retVal = BasicLibrary_InputMode.IsOpp_Microphone_Input_Mode();
+//				}
+//			}
+//			else
+//			{
+//				// for non-HW programs in current side
+//				retVal = BasicLibrary_InputMode.Is_Microphone_Input_Mode();
+//			}
+//			
+//			return retVal;
+//		}
+
+	}
+}

@@ -1,0 +1,204 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                                 HIGH LEVEL LIBRARY :  AutoPhone Enable
+// Initial Version                						    						    :  2011-03-08 Cecil Wilson
+// Added  env_Prog workaround															:  2011-03-24 Cecil Wilson
+// Removed env:Prog workaround															:  2011-06-09 Cecil Wilson
+// Added println for debug																:  2011-06-23 Cecil Wilson
+// Added Accessible Manually BLIB reuse													:  2011-12-20 Cecil Wilson
+// Added valid program check 															:  2011-12-21 Cecil Wilson
+// Added capability check before Enabling autophone										:  2012-04-13 Cecil Wilson
+// Added the peer review comments														:  2012-06-21 Cecil Wilson
+// ******SIFIT7.2_PEERREVIEWED: 					  									:  2013-07-30 Jenny, Judith
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SIFIT7.3 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Added AutoPhoneEn_For_InputModeDD()													: 2013-11-04 Jenny
+// Sifit7.3 Peer review																	: 2014-04-15 Jenny, Judith
+// Added AutophoneSelection_IsVisible and AutophoneSelection_Get and updated printlines.	: 2014-10-09 Jenny
+// Updated AutophoneSelection_IsVisible: call Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible_In_CXX_Binaural
+// instead of checking for current & opp side visible in CXX. Updated AutophoneSelection_Get: to check env:Sides 
+// so that proper information can be sent to CXX.										: 2014-10-23 Jenny
+// Updated AutophoneSelection_IsVisible: Synchronize with Autophone checkbox IsVisible.		: 2014-11-06 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_AutoPhone
+	{
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  Resolves the Hearing Program dependencies and sets Autophone. Only 
+		                one HP can have AutoPhone Enabled at any one time.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void AutoPhoneEn_For_InputModeDD(int Autophone_CxxPos)
+		{
+			println ('[HAL]HLIB.High_Level_Library_AutoPhone.AutoPhoneEn_For_InputModeDD');
+			
+			if (Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible () == true)
+			{
+				// If Autophone is visible, sets Autophone to the requested position.
+				High_Level_Library_AutoPhone.AutoPhoneEn_Set (Autophone_CxxPos);
+			}
+			else
+			{
+				// If Autophone is not visible, sets it to OFF.
+				High_Level_Library_AutoPhone.AutoPhoneEn_Set (0); // default off
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  Resolves the Hearing Program dependencies and sets Autophone. Only 
+		                one HP can have AutoPhone Enabled at any one time.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function void AutoPhoneEn_Set (int pos)
+		{
+			println ('[HAL]HLIB.High_Level_Library_AutoPhone.AutoPhoneEn_Set');
+			
+			int env_pgm = env:Prog;
+			//  Get the Hearing Program for which the Autophone is enabled currently (if at all it is Enabled)
+			int Previous_AutophoneEnabled_HP = BasicLibrary_AutoPhone.AutoPhoneEn_Get_HPx ();
+
+			// Autophone can only be enable (Switched ON) if that feature is Available for current HP/InputMode/pricepoint	
+			if (pos == 1)
+			{ 
+				// Needs to enable Autophone for Current HP and disable if already selected for other programs
+				if (Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible ())
+				{
+					if (Previous_AutophoneEnabled_HP >= 0 &&
+							Previous_AutophoneEnabled_HP < 6)
+					{ 
+						// Must be a valid HP
+						// Disable autophone for Previous_AutophoneEnabled_HP  (this restores the Accessable manually for that HP)
+						BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx (Previous_AutophoneEnabled_HP, 0);
+						
+						// Enabled Accessable Manually by RCU & Pushbutton for Previous HP						  
+						BasicLibrary_AccessibleManually.AccessibleManuallyEn_Set_HPx (Previous_AutophoneEnabled_HP, 1);
+					}
+					// Enable autophone for Current HP
+					BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx (env:Prog, 1);
+				}
+			}
+			else
+			{
+				// pos==0
+			 	// Disable Autophone for Current HP if already selected, Inputmode/hp/pricepoint does not matter for Switching Off autophone							
+				BasicLibrary_AutoPhone.AutoPhoneEn_Set_HPx (env:Prog, 0);
+				// Enabled Accessable Manually by RCU & Pushbutton for Current HP
+				BasicLibrary_AccessibleManually.AccessibleManuallyEn_Set_HPx (env:Prog, 1);
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  Checks if the Autophone is enabled for the Current hearing program and returns 1 if enabled.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int AutoPhoneEn_Get()
+		{
+			println ('[HAL]HLIB.High_Level_Library_AutoPhone.AutoPhoneEn_Get');
+			
+			//  Get the Hearing Program for which the Autophone is enabled currently (if at all it is Enabled)			
+			// If the autophone is enabled for the current HP then return the status 'Checked/ticked/enabled' ie 1
+			if (BasicLibrary_AutoPhone.AutoPhoneEn_Get_HPx () == env:Prog)
+			{ 
+				// env_Prog counts from 0 not from 1 ie HP1 == env_Prog=0
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description:  In CXX: Visible when current side is DAI programs (for monaural fitting), and either side is DAI programs (for binaural fitting).
+					    In Hicoss: Visible when current side is DAI input mode.
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool AutophoneSelection_IsVisible ()
+		{
+			println ('[HAL]HLIB.High_Level_Library_AutoPhone.AutophoneSelection_IsVisible');
+			
+			bool retVal = false;
+			
+			// Synchronize with Autophone checkbox IsVisible.
+			if(env:HiDriverWorkMode == HiDriverWorkMode.Fitting &&
+				Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible_In_CXX() )
+			{
+				retVal = true;
+			}
+			
+			println ('[HAL]HLIB.High_Level_Library_AutoPhone.AutophoneSelection_IsVisible >> ' + retVal);
+			
+			return retVal;
+		}
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+		  Description :  returns panel to show for the DAI side selection panel.   
+				 Panel to be shown for DAI Side Selection 
+			     * 0 -> None 
+			     * 1 -> Both
+			     * 2 -> Right Only
+			     * 3 -> Left Only   
+		-----------------------------------------------------------------------------------------------------------------$*/
+		public function int AutophoneSelection_Get ()
+		{
+			println ('[HAL]HLIB.High_Level_Library_AutoPhone.AutophoneSelection_Get');
+
+			int retVal = 0;	// default to none
+
+			// Only valid in CXX for binaural fitting, check if Autocoil is available in HIs
+			if(env:DetHi == DetHi.BothSides)
+			{
+				if(cap:AutocoilAvailable == AutocoilAvailable.exists)
+				{
+					if(BasicLibrary_ProgramSelection.IsPhoneAcoustically())
+					{
+						if(opp(cap:AutocoilAvailable) == AutocoilAvailable.exists)
+						{
+							retVal = 1; // both
+						}
+						else if(env:Sides == Sides.RightSide)
+						{
+							retVal = 2; // right only
+						}
+						else if(env:Sides == Sides.LeftSide)
+						{
+							retVal = 3; // left only
+						}
+					}
+					else if(BasicLibrary_ProgramSelection.IsPhoneTelecoilProgramSetInCurrentSide())
+					{
+						if(opp(cap:AutocoilAvailable) == AutocoilAvailable.exists && 
+							BasicLibrary_ProgramSelection.IsPhoneTelecoilProgramSetInOppSide() )
+						{
+							retVal = 1; // both
+						}
+						else if(env:Sides == Sides.RightSide)
+						{
+							retVal = 2; // right only
+						}
+						else if(env:Sides == Sides.LeftSide)
+						{
+							retVal = 3; // left only
+						}
+					}
+				}
+				else if(opp(cap:AutocoilAvailable) == AutocoilAvailable.exists)
+				{
+					if(BasicLibrary_ProgramSelection.IsPhoneTelecoilProgramSetInOppSide())
+					{
+						// swap sides!!!
+						if(env:Sides == Sides.RightSide)
+						{
+							retVal = 3; // left only
+						}
+						else if(env:Sides == Sides.LeftSide)
+						{
+							retVal = 2; // right only
+						}
+					}
+				}
+			}
+			println ('[HAL]HLIB.High_Level_Library_AutoPhone.AutophoneSelection_Get >> ' + retVal);
+
+			return retVal;
+		}
+	}
+
+}

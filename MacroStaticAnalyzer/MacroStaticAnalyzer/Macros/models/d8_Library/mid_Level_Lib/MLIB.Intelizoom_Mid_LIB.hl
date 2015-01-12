@@ -1,0 +1,48 @@
+//---------------------------------------------------------------------------------------------------------------*
+//                                 MID LEVEL LIBRARY IntelliZoom
+// Initial Version                						   					: 2013-12-17	Al 
+// Reworked IsVisible code using BinFeatures_MinPossReqmts()                : 2013-03-18    Al
+// FR66291 rename InteliZoom to IntelliZoom and move IntelizoomEn_Set_Default to HLIB.	: 2014-04-16 Jenny
+// Sifit7.3 Peer review																: 2014-04-30 Jenny, Jeline
+// Sifit 7.4 PEER REVIEW															: 2014-11-18 Jenny, Niklas 
+// Sifit 7.4 peer review: removed check for dethi.bothsides in BeepIntelliZoomEn_IsEnabled() : 2014-11-19 MieMie/Sultan/Jeline
+//---------------------------------------------------------------------------------------------------------------
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib Mid_Level_Library_IntelliZoom
+	{
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Returns IsVisible for IntelliZoom 
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool BeepIntelliZoomEn_IsVisible() //SIFIT7.3PEERREVIEWED
+		{
+			// Visibility of IntelliZoom requires that the NarrowFocus feature is available-
+			// so check that the minimum requirements for binaural features exist.
+			// In 7.3 & 7.4, IntelliZoom visibility is not subject to up-marketing.
+			return Mid_Level_Library_Mic_Mode.IsNarrowFocusAvailable();
+
+		}
+	
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Returns IsEnabled for IntelliZoom    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool BeepIntelliZoomEn_IsEnabled() //Sifit 7.4 peer review: removed check for dethi.bothsides
+		{
+			// Beep IntelliZoom only enabled in binaural session with RockerSwitch configured as Intellizoom or Intellizoom & Program 
+			if(BasicLibrary_UserControl.Is_UserControl_RockerSwt_Config_as_IntelliZoom())
+			{
+				println('[HAL]MLIB.BeepIntelliZoomEn_IsEnabled >> TRUE (for binarual fitting and Rocker switch configured as iZoom or iZoom_Program');
+				return true;
+			}
+			else
+			{
+				println('[HAL]MLIB.BeepIntelliZoomEn_IsEnabled >> FALSE');
+				return false;
+			}		
+		}
+
+	}
+}
+//************************************ END Of Mic Level Library IntelliZoom ****************************************	

@@ -1,0 +1,371 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY  BasicLibrary_Curves
+// Initial Version																				: 2011-05-04 Nadine Seubert
+// Add in one more condition at 8KHz to differentiate double from open							: 2011-06-09 Jenny Lin
+// crv:VentOut is not availible jet, please let comments until fitting version is 
+// updated, for First Fit is open is always true                        						: 2011-06-09 Nadine Seubert
+// Updated is_open variable to true (for work around)											: 2011-06-22 Nadia Neugeborn
+// uncomment code for function to work correctly. Delete is_open to true						: 2011-06-24 Meike Doose
+// include if(env:HiDriverWorkMode == HiDriverWorkMode.Fitting as workaround for Hicoss error 	: 2011-07-15 Meike Doose
+// Added in isDefined check for crv:VentOut														: 2011-08-05 Jenny Lin
+// update function is open to new VentCurves                                        			: 2012-02-24 Nadine Seubert
+// change errorness brackets in order to work correctly											: 2012-03-14   Meike Steinbuss
+// include function VentOutisOpenOpen in order for XcelFit to differentiate between open and closed dome/tip : 2012-03-22 Meike Steinbuss
+// Added in OLG_reserve() function for ConnexxFit												: 2012-03-23 Nadia Neugeborn
+// Updated OLG reserve to 7dB																	: 2012-04-04 Nadia Neugeborn
+// Find_CurveIndex added. Updated OLG_reserve() to check TG not IG curve (ER54079)				: 2012-04-12   Nadia Neugeborn			
+// new VentOutisOpen function included but uncommented until all vent out curves are included into Sifit : 2012-04-27 Meike Steinbuss
+// activated new VentOutisOpem function and uncommented old one									: 2012-05-16 Frauke Schall and Nadine Seubert
+// Added VentOutisDoubleTipDome() for Double domes and tips										: 2012-05-17 Nadia Neugeborn
+// Updated Find_CurveIndex due to request from SW (Adelt, Andre)								: 2012-06-25 Frauke Schall
+// Updated OLG_reserve() & deleted Find_CurveIndex (TG and OLG now both with 228 points)		: 2012-07-16 Nadia & Judith
+// Macro Peer Review Updates																	: 2012-07-16 Nadia Neugeborn
+***************************************CODE FREEZE************************************************************************** 
+// ER56036: Updated VentOutisDoubleTipDome()													: 2012-08-01 Nadia Neugeborn
+//  ER57403: FIFI - FCO shall be always similar in both hearing aids after First Fit            : 2012-09-14 Nadine Seubert
+// Added assertion message									: 2012-12-18 Jenny Lin
+// ER62708 OpenOptimizer activation procedure for lower price points should be changed. Added CheckChnNumberDependendentOnFreqCutOff
+// to stop the check for OLG cutting TG at the instruments Freq cutoff (by ActiveNumberOfChn)	: 2013-08-14 Jenny Lin
+// FR61938 Added new algorithmn to stop the check for of OLG reserve by introducing additional
+// FOG vs OLG check.CheckChnNumberDependendentOnFreqCutOff() not use, updated to -2 steps.
+// Updated curve library OLG_reserve () to use the latest changes due to FR61938				: 2013-11-13 Mang Yew
+// Removed CheckChnNumberDependendentOnFreqCutOff()												: 2014-01-27 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_Curves uselib builtins
+	{
+
+	/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    VentOutisOpen()
+//   Input      :  none 
+//   Ouput      :  <bool> true = open Venting / false = closed Venting
+//   Description:  detects the current ventOut Curve with respect to open or close conditions 
+				   Last changed on 16.May 2012 by Frauke and Nadine   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool VentOutisOpen ()
+		{
+			int retval = 0;
+			// gain value variable to save the gain value for 500 Hz
+			gain VentOut500 = -200;
+			bool is_open = false; // for Hicoss workaround this boolean is set to true, when deleting workaround, please set to false again!
+
+			//Checks if VentOut curve is defined
+			if (isDefined (crv:VentOut))
+			{
+				println ('[HAL]BLIB-VentOutisOpen  crv:VentOut is Defined');
+
+				// this following if-conclusion deals as workaround for Hicoss error (no ventcurve known), delete when working with IT10
+				if (env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+				{
+				// Get the value from the VentOut curve
+					foreach (curvepoint vent in crv:VentOut)
+					{
+					// get the value at 500 Hz
+						if (vent->f == 500)
+						{
+							VentOut500 = vent->g;
+						}
+					}
+					// Based on VentOut curves:
+					// Open ==> at 500 Hz < -3.5 
+					// Closed ==> at 500 Hz >= 3.5
+					if (VentOut500 < -3.5)
+					{
+						is_open = true;
+						println ('[HAL]BLIB-VentOutisOpen  IS_OPEN');
+					}
+					else
+					{
+						is_open = false;
+						println ('[HAL]BLIB-VentOutisOpen  IS_NOT_OPEN');
+					}
+				}
+			}
+			else
+			{
+				retval = -1;
+				println ('[HAL]BLIB-VentOutisOpen  crv:VentOut is NOT Defined');
+			}
+			assertion (retval >= 0, "[MacroError] crv:VentOut curve is NOT defined!");
+			return is_open;
+		} // Closes	BasicLibrary_Curves.VentOutisOpen 
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    VentOutisOpen()
+//   Input      :  none 
+//   Ouput      :  <bool> true = open Venting / false = closed Venting
+//   Description:  detects the current ventOut Curve with respect to open or close conditions 
+				   Last changed on 16.May 2012 by Frauke and Nadine   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool VentOutisOpenOtherSide ()
+		{
+		//    	int retval = 0;
+
+		// gain value variable to save the gain value for 500 Hz
+			gain VentOut500 = -200;
+			bool is_open = false; // for Hicoss workaround this boolean is set to true, when deleting workaround, please set to false again!
+
+			//Checks if VentOut curve of the other Side is defined
+			if (env:DetHi == DetHi.BothSides &&
+					isDefined (opp (crv:VentOut)))
+			{
+				println ('[HAL]BLIB-VentOutisOpenOtherSide  crv:VentOut of other Side is Defined');
+
+				// this following if-conclusion deals as workaround for Hicoss error (no ventcurve known), delete when working with IT10
+				if (env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+				{
+				// Get the value from the VentOut curve of the other side
+					foreach (curvepoint vent in opp (crv:VentOut))
+					{
+					// get the value at 500 Hz
+						if (vent->f == 500)
+						{
+							VentOut500 = vent->g;
+						}
+					}
+					// Based on VentOut curves:
+					// Open ==> at 500 Hz < -3.5 
+					// Closed ==> at 500 Hz >= 3.5
+					if (VentOut500 < -3.5)
+					{
+						is_open = true;
+						println ('[HAL]BLIB-VentOutisOpenOtherSide  IS_OPEN');
+					}
+					else
+					{
+						is_open = false;
+						println ('[HAL]BLIB-VentOutisOpenOtherSide  IS_NOT_OPEN');
+					}
+				}
+			}
+			else
+			{
+			//        	retval = -1;
+				println ('[HAL]BLIB-VentOutisOpenOtherSide  crv:VentOut of other Side is NOT Defined');
+			}
+
+			//		assertion(retval >= 0, "[MacroError] crv:VentOut curve of the Other Side is NOT defined!");
+			return is_open;
+		} // Closes     BasicLibrary_Curves.VentOutisOpenOtherSide
+
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    BasicLibrary_Curves.VentOutisOpenOpen
+//   Input      :  none 
+//   Ouput      :  <bool> true= open Dome/Tip / false = closed Dome/Tip or anything else (e.g., all vents)
+//   Description:  detects the current ventOut Curve with respect to open conditions with either open dome/tip or closed dome/tip
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool VentOutisOpenOpen ()
+		{
+			int retval = 0;
+			println ('[HAL]BLIB-VentOutisOpenOpen starts');
+
+			// gain value variable to save the gain value for 1000 Hz 
+			gain VentOut1000 = -200;
+			bool is_openopen = true; // for Hicoss workaround this boolean is set to true, when deleting workaround, please set to false again!
+
+			//Checks if VentOut curve is defined
+			if (isDefined (crv:VentOut))
+			{
+				println ('[HAL]BLIB-VentOutisOpenOpen  crv:VentOut is Defined');
+
+				// this following if-conclusion deals as workaround for Hicoss error (no ventcurve known), delete when working with IT10
+				if (env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+				{
+				// Get the value from the VentOut curve
+					foreach (curvepoint vent in crv:VentOut)
+					{
+					// get the value at 1000 Hz
+						if (vent->f == 1000)
+						{
+							VentOut1000 = vent->g;
+						}
+					}
+					// Based on vent out curves: 
+					// OpenOpen ==> at 500Hz < 3.5dB AND at 1000 Hz <= -6
+					// OpenClosed ==> at 500Hz < 3.5dB AND at 1000 Hz > -6
+					if (VentOut1000 <= -6)
+					{
+						is_openopen = true;
+						println ('[HAL]BLIB-VentOutisOpenOpen  IS_OPENOPEN');
+					}
+					else
+					{
+						is_openopen = false;
+						println ('[HAL]BLIB-VentOutisOpenOpen  IS_OPENCLOSED');
+					}
+				}
+			}
+			else
+			{
+				retval = -1;
+				println ('[HAL]BLIB-VentOutisOpenOpen  crv:VentOut is NOT_Defined');
+			}
+			assertion (retval >= 0, "[MacroError] crv:VentOut curve is NOT defined!");
+			return is_openopen;
+		} // Closes	BasicLibrary_Curves.VentOutisOpenOpen    
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    BasicLibrary_Curves.VentOutisDoubleTipDome()
+//   Input      :  none 
+//   Ouput      :  <bool> true = Double Tip/Dome, false = everything else
+//   Description:  detects the current ventOut Curve with respect to double dome/tip conditions
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool VentOutisDoubleTipDome ()
+		{
+			int retval = 0;
+			gain VentOut100 = -200; // gain value variable to save the gain value for 100 Hz 
+			gain VentOut500 = -200; // gain value variable to save the gain value for 500 Hz 
+			bool doubleTipDome = true;
+
+			//Checks if VentOut curve is defined
+			if (isDefined (crv:VentOut))
+			{
+				if (env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+				{
+				// Get the value from the VentOut curve
+					foreach (curvepoint vent in crv:VentOut)
+					{
+					// get the value at 100Hz and 500Hz
+						if (vent->f == 100)
+						{
+							VentOut100 = vent->g;
+							println ('[HAL]BLIB-VentOutisDoubleTipDome @ 100Hz is ' + VentOut100);
+						}
+						if (vent->f == 500)
+						{
+							VentOut500 = vent->g;
+							println ('[HAL]BLIB-VentOutisDoubleTipDome @ 500Hz is ' + VentOut500);
+						}
+					}
+					// Based on vent out curves: Double Tip/Dome
+					// At 100Hz = -10 or -12.5 and at 500Hz < 0
+					// Note: Actual -12.5 value is for some reason treated as -12 (see debugger)
+					if ((VentOut100 == -10 ||
+								VentOut100 == -12 ||
+								VentOut100 == -12.5) &&
+							VentOut500 < 0)
+					{
+						doubleTipDome = true;
+						println ('[HAL]BLIB-VentOutisDoubleTipDome is TRUE');
+					}
+					else
+					{
+						doubleTipDome = false;
+						println ('[HAL]BLIB-VentOutisDoubleTipDome is FALSE');
+					}
+				}
+			}
+			else
+			{
+				retval = -1;
+				println ('[HAL]BLIB-VentOutisDoubleTipDome crv:VentOut is NOT Defined');
+			}
+			assertion (retval >= 0, "[MacroError] crv:VentOut curve is NOT defined!");
+			return doubleTipDome;
+		} // Closes	BasicLibrary_Curves.VentOutisDoubleTipDome()  
+
+		/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    OLG_reserve
+//   Input      :  N.A.
+//   Ouput      :  OLG reserve value 
+//   Description:  Check the TG distance to OLG (from 1kHz onwards) to determine if Open Optimizer / FBC should be set differently
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int OLG_reserve ()
+		{
+			int i = 50; //Array-Index for TG and OLG curve (228 points, starting count from 1000Hz)
+			int lowest_reserve = 50;
+			int y = 228;
+			int cutOff_count = 0;
+			int TG_counter = 0;
+			int difference_gain = 0;
+			int olg_reserve = -1;
+			int current_reserve = 200;
+			freq cutOff_freq = 0;
+			freq frequencyRESERVE = 12000;
+			
+			if (isDefined (levelcrv:TG) &&
+					isDefined (crv:OLG))
+			{
+			 	do
+				{
+					--y;
+					difference_gain = crv:OLG [ y ]->g - crv:FOG [ y ]->g;
+					println('[HAL] CurveLibrary.OLG_reserve gain differences is' + difference_gain + 'dB');
+					if((crv:OLG [ y ]->g - crv:FOG [ y ]->g) < -1)
+					{
+						if(cutOff_freq == 0) // will go into this if-statement once OLG is lower than FOG, 
+											// which marks the cutoff point.
+						{
+							cutOff_count = y;
+							cutOff_freq = crv:OLG [ y ]->f;
+							println('[HAL] CurveLibrary.OLG_reserve cutOff frequency is ' + crv:OLG [ y ]->f+'Hz');
+							println('[HAL] CurveLibrary.OLG_reserve cutOff count is at' + cutOff_count+' point');
+							println('[HAL] CurveLibrary.OLG_reserve OLG gain at cutoff frequency is' + crv:OLG [ y ]->g+'dB');
+							println('[HAL] CurveLibrary.OLG_reserve FOG gain at cutoff frequency is' + crv:FOG [ y ]->g+'dB');
+							break;
+						}
+					}
+				}
+				while(y > i);
+				
+				TG_counter = cutOff_count;
+				do
+				{
+					++ i; // next curvepoint					
+					if ((crv:OLG [ i ]->g - levelcrv:TG [ i ]->g_low) < current_reserve)
+					{
+						current_reserve = (crv:OLG [ i ]->g - levelcrv:TG [ i ]->g_low);
+						println ('[HAL] CurveLibrary.OLG_reserve (OLG - TG) is ' + current_reserve + ' dB at freq ' +
+							crv:OLG [ i ]->f);
+						println ('[HAL] CurveLibrary.OLG_reserve TG low is ' + current_reserve + ' dB at freq ' +
+							levelcrv:TG [i]->g_low);
+						println ('[HAL] CurveLibrary.OLG_reserve OLG gain is ' + crv:OLG [ i ]->g + ' dB at freq ' +
+							crv:OLG [ i ]->f);
+						println ('[HAL] After FirstFit TG gain for 50dB curve is ' + levelcrv:TG [ i ]->g_low +
+							' dB at freq ' + levelcrv:TG [ i ]->f);
+						lowest_reserve = i;
+					}
+				} // closing while loop
+				while (i < TG_counter);
+				
+				frequencyRESERVE = crv:OLG [ lowest_reserve ]->f; // to check where the cutoff frequency is.
+				
+				if (current_reserve <= 0)
+				{
+					println ('[HAL] CurveLibrary.OLG_reserve is 0dB');
+					olg_reserve = 0;
+				}
+				else if (current_reserve > 7)
+				{
+					println ('[HAL] CurveLibrary.OLG_reserve is > 7dB');
+					olg_reserve = 2;
+				}
+				else if (current_reserve <= 7)
+				{
+					println ('[HAL] CurveLibrary.OLG_reserve is <= 7dB');
+					olg_reserve = 1;
+				}
+				else
+				{
+					println ('[HAL] CurveLibrary.OLG_reserve PROBLEM WITH OLG RESERVE CHECK ');
+					olg_reserve = -1;
+				}
+			} // closes IsDefined
+			else
+			{
+				println
+				('[HAL] CurveLibrary no TG and no OLG defined. We will return the same value as CurveLibrary.OLG_reserve is > 7dB');
+				olg_reserve = 2;
+			}
+			return olg_reserve;
+		} // Closing BasicLibrary_Curves.OLG_reserve()	
+	
+		/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY     
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package BasicLibrary_Curves
+
+} //namespace shs.sat

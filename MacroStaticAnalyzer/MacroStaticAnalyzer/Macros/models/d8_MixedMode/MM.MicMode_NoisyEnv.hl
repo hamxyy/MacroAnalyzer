@@ -1,0 +1,63 @@
+/*----------------------------------------------------------------------------------------------------------------
+// CXX UI:                        MicMode panel for Noisy Environment
+//----------------------------------------------------------------------------------------------------------------
+// Initial Version                						     							: 2013-11-12 Raymond
+// Added method call for Getter and Setter												: 2013-11-28 Raymond
+// Added IsEnabledPhysicalPos function													: 2013-11-29 Raymond
+// Added max physical pos                                                               : 2014-02-04 Al
+// Removed IsEnabledPos, as not used                                                    : 2014-02-26 Al
+// Removed MaxPhysicalPos & IsVisiblePhysicalPos, replaced with IsEnabledPos        	: 2014-03-10 Al 
+// Removed commented out code lines                                                     : 2014-04-16 Al
+/*----------------------------------------------------------v7.4-------------------------------------------------
+// Chores																				: 2014-06-30 Sultan 
+/*---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_NoisyEnv 
+	{
+		application function bool IsVisible() 
+		{
+			bool retVal = true;
+			println('[HAL]MM - Mic_Mode_NoisyEnv.IsVisible = ' + retVal);
+			return retVal;
+		}
+		
+		application function int MaxPos()
+		{
+			int retVal = 1;
+			println('[HAL]MM - Mic_Mode_NoisyEnv.MaxPos = ' + retVal);
+			return retVal; // Two state radiobutton, so return 1.
+		}
+		
+		application function bool IsEnabled()
+		{
+			//NOTE:Hicoss & invalid mic mode greying-out conditions are covered by the Mic_Mode_Selection macro.
+			bool retVal = true;
+			println('[HAL]MM - Mic_Mode_NoisyEnv.IsEnabled = ' + retVal);
+            return retVal; 
+		}
+				
+		application function bool IsEnabledPos(int pos)
+		{
+			bool retVal = High_Level_Library_Mic_Mode.NoisyEnv_IsEnabledPos(pos);
+			println('[HAL]MM - Mic_Mode_NoisyEnv.IsVisiblePhysicalPos = ' + retVal + ' PhysicalPos = ' + pos);
+			return retVal;
+		}
+			
+		application function int GetPos()
+		{
+			int retVal = High_Level_Library_Mic_Mode.NoisyEnv_GetPos();
+			println('[HAL]MM - Mic_Mode_NoisyEnv.GetPos = ' + retVal);
+			return retVal;  //base on swmicmode setting
+		}
+		
+		application function void SetPos(int pos)
+		{			
+			println('[HAL]MM - Mic_Mode_NoisyEnv.SetPos = ' + pos);
+			High_Level_Library_Mic_Mode.Mic_Mode_Set_NoisyEnv(pos);
+		}
+	}
+}

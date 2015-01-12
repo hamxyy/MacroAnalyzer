@@ -1,0 +1,79 @@
+/*----------------------------------------------------------------------------------------------------------------
+//											BASIC FUNCTION LIBRARY BWNC
+// Initial version															: 2013-10-21 Raymond
+// Corrected d9PMicBwncEn parameters										: 2013-11-13 Raymond
+// First uncommented draft													: 2013-11-29 Raymond
+// Updated comments															: 2013-12-17 Raymond
+// Added println statements													: 2014-02-12 Raymond
+*/
+/*----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_BWNC
+	{
+/*----------------------------------------------------------------------------------------------------------------
+   BASIC LIBRARY Function:    BWNCEn_Get_Entry
+   Input      :  none 
+   Ouput      :  <bool> Current State of the iconic checkbox 
+   Description:  Compares the HI settings and returns the state of the UI. 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool BWNCEn_Get_Entry ()
+		{
+			return hi:d9PMicBwncEn == d9PMicBwncEn.enabled;
+		} // Closes BasicLibrary_BWNC.BWNCEn_Get_Entry
+
+/*----------------------------------------------------------------------------------------------------------------
+   BASIC LIBRARY Function:    BWNCEn_Get_EntrySw
+   Input      :  none 
+   Ouput      :  <bool> Current State of the iconic button 
+   Description:  Check software control of BWNC button
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool BWNCEn_Get_EntrySw ()
+		{
+			return hi:d9SwMacroBwncEnHp == d9SwMacroBwncEnHp.on;
+		} // Closes BasicLibrary_BWNC.BWNCEn_Get_EntrySw
+
+/*----------------------------------------------------------------------------------------------------------------
+   BASIC LIBRARY Function:    BWNCEn_Set_Entry
+   Input      :  <int> Desired state of button
+   Ouput      :  None 
+   Description:  Set button position 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void BWNCEn_Set_Entry (int pos)
+		{
+			if (pos == 1)
+			{
+				println('[HAL]: BLIB.BWNCEn_Set_Entry = d9PMicBwncEn.enabled');
+				hi:d9PMicBwncEn = d9PMicBwncEn.enabled;
+			}
+			else
+			{
+				println('[HAL]: BLIB.BWNCEn_Set_Entry = d9PMicBwncEn.disabled');
+				hi:d9PMicBwncEn = d9PMicBwncEn.disabled;
+			}
+		} // Closes BasicLibrary_BWNC.BWNCEn_Set_Entry
+
+/*----------------------------------------------------------------------------------------------------------------
+   BASIC LIBRARY Function:    BWNCEn_Set_EntrySw
+   Input      :  <int> Desired state of checkbox 
+   Ouput      :  None 
+   Description:  Set button position for Sw control 
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void BWNCEn_Set_EntrySw (int pos)
+		{
+			if (pos == 1)
+			{
+				println('[HAL]: BLIB.BWNCEn_Set_EntrySw = d9SwMacroBwncEnHp.on');
+				hi:d9SwMacroBwncEnHp = d9SwMacroBwncEnHp.on;
+			}
+			else
+			{
+				println('[HAL]: BLIB.BWNCEn_Set_EntrySw = d9SwMacroBwncEnHp.off');
+				hi:d9SwMacroBwncEnHp = d9SwMacroBwncEnHp.off;
+			}
+		} // Closes BasicLibrary_BWNC.BWNCEn_Set_EntrySw
+
+	} // package BasicLibrary_BWNC
+
+} // namespace shs.sat

@@ -1,0 +1,1690 @@
+/*---------------------------------------------------------------------------------------------------------------
+//                                 MID LEVEL PRICEPOINT LIBRARY 		 : Mic_Mode
+/*---------------------------------------------------------------------------------------------------------------
+//-----------------MicMode has changed from D8 to D9 hence to history of D8 in here------------------------------
+// Added Dir, NF, SL, SF IsVisible function												: 2013-11-01 Raymond
+// Added MicMode route logic functions													: 2013-11-08 Raymond
+// Refracter controls setter to call from BLIB											: 2013-11-11 Raymond
+// Added grouping functions for Omni, Dir and Auto micmode								: 2013-11-12 Raymond
+// Added IsVisible function for programs micmode panel									: 2013-11-12 Raymond
+// Corrected AllOtherProgIsVisible() logic												: 2013-11-13 Raymond
+// Replace (!) symbol call with == false comparator										: 2013-11-14 Raymond
+// Added MicModeProcForStrollProg														: 2013-11-28 Raymond
+// Replace d8SwCtlListSit with d9SwMacroProgramIdHp										: 2013-11-29 Raymond
+// D9 mic mode macro updates                                                        	: 2013-12-17 Al
+// Added Mic_Mode_InitErrorIsVisible                                                	: 2014-01-07 Al
+// Corrections to string spelling errors                                            	: 2014-01-08 Al
+// Corrections to IsVisible library functions                                       	: 2014-01-10 Al
+// Old unused D8 code deleted                                       					: 2014-02-06 Al
+// Annotation updates                                               					: 2014-02-17 Al
+// Added 7.4 code for the Binaural-omni fit directional mode        					: 2014-03-05 Al 
+// Reworked MicMode_DefaultPos (), to minimise the number of function calls used	    : 2014-03-10 Al
+// Added TVIsEnabledPos, reworked MicModeDefault (to use less function calls),
+// reworked MicmodeSet, and added extra annotation.               						: 2014-03-11 Al
+// Renamed Dir_LogicRouteForOff to ResetOmniForIzWncOo()             					: 2014-03-18 Al
+// Condensed DirMicModeProcPP500 () and DirMicModeProcPP500 (), and 
+// removed binaural-omni dirmic code  													: 2014-04-11 Al
+// Added default switch cases in Mic_Mode_HicossIsEnabledPos() and 
+// Mic_Mode_HicossIsEnabledPos() 													    : 2014-04-16 Al
+// Deleted NoisyEnvProgIsVisible, TVProgIsVisible, AllOtherProgIsVisible, 
+// and AfternoonStrlProgIsVisible as they are not being used.               	        : 2014-04-16 Al
+// FR66291 rename InteliZoom to IntelliZoom												: 2014-04-16 Jenny
+// Sifit7.3 PeerReview (Intellizoom): Added comments in ResetOmniForIzWncOo.			: 2014-04-30 Jenny/Frauke
+// ER67367: Added if statement in Is_MicMode_Valid_InCxx for REMParamOff flag	
+//			Added TSOmni_Mode if statement for MicMode_Set								: 2014-05-26 Raymond
+// ER67267: Refractor OmniMicModeProc to call BLIB getters								: 2014-05-29 Raymond
+//------------------------------------------------------7.4-------------------------------------------------------
+// Added SingleDirMicUI_IsVisible(), SetFeatDpdnciesFor_SDMDirMode(),...         
+// ...SetFeatDpdnciesFor_SDMOmniMode(), and SingleDirMicUI_IsVisible().         		: 2014-07-02 Al                                         :
+// Renamed MicModeIsAutomatic() to MicModeIsTwinMicDirAutomatic()               		: 2014-07-02 Al
+// Removed FBC code from ResetOmniForIzWncOo(), and placed it in a new...
+// ...dedicated function named SetFBCforOmni().                          		       	: 2014-07-02 Al
+// Updated MicMode_Set(), Set_MicMode_checkbox_states(), MicMode_DefaultPos()...
+// ...and MicMode_DetermineAndSet() to include the new Single Dir Mic mode usecases.	: 2014-07-02 Al 
+
+//Added IsNarrowFocusAvailable for checking if NarrowFocus can be enabled for
+//the device																			: 2014-06-26 Sultan
+//Amended the condition for DirIsVisible to check for price point              		 	: 2014-06-26 Sultan
+// Updated MicModeIsBinauralmode to include the new Single Dir Mic mode control...
+// ...positions for SwMicMode                                                      		: 2014-07-09 Al
+// Updated feature dependencies in SetFeatDpdnciesFor_SDMOmniMode and...
+// ...SetFeatDpdnciesFor_SDMDirMode                                    		            : 2014-07-09 Al
+// Added corrections to SingleDirMicIsVisible                          	    	        : 2014-07-15 Al 
+// Updated OmniMicModeProc() for Sdm fitting use-cases. This function now takes a 
+// string input.  																		: 2014-07-24 Al
+// In MicMode_DetermineAndSet, updated function calls to OmniMicModeProc, as above.		: 2014-07-24 Al
+// Updated MicModeIsOmni to include SingleBinDirOmni position.
+// Correction to typing error in assertion string in SetFBCforOmni ()               	: 2014-07-29 Al
+// Neatened up code in OmniMicModeProc()                                     	        : 2014-08-06 Al
+// Updated upmarketing usecases in NFIsVisible() and SingleDirMicIsVisible()      	    : 2014-08-15 Al
+// ER68373: In OmniMicModeProc function, changed SwMicMode of Testsetting from
+// OmniDual to SwMicModeForFog.
+// In MicMode_DetermineAndSet function, removed interdepenency ResetOmniForIzWncOo 
+// from TSOmni_mode
+// Added TestsettingOmniflag check in ResetOmniForIzWncOo()								: 2014-08-27 MieMie		
+// MicMode_DetermineAndSet() - Replaced ID0x to BasicLibrary_ProgramSelection.Is<prog>	: 2014-09-17 Sultan
+// ER68360 added check in Is_MicMode_Valid_InCxx for both sides to have same SwMicMode 	: 2014-09-26 Al, Sultan, Frauke	
+// Code Cleanup																			: 2014-10-01 Sultan	 						
+// Fix for ER69062 in Is_MicMode_Valid_InCxx()                                          : 2014-10-06 Al
+// Moved the function BinFeaturesForDirectionalDevices_MinPossReqmts from CommUtilBase
+*  to this library and removed pricepoint checks on that requirement and 
+*  Updated SLIsVisible() to check for BinFeaturesForDirectionalDevices_MinPossReqmts()	: 2014-10-16 Sultan
+// FR69523-->Added IsNarrowFocusSPASSAvailable() for checking NarrowFocusSPASS can be 
+*  	 activated for pp300bx and also code cleanup.
+*  --Added DirMicModeProcPP300() for pp300bx NF logic			
+*  --Updated condition for NFIsVisible() to check for IsNarrowFocusSPASSAvailable()								
+*  --Updated Dir_LogicRouteForOn() to check for pp300bx NF logic
+*  --Updated NF_LogicRouteForOn() for pp300bx NF logic
+*  --Updated NF_LogicRouteForOff() for pp300bx NF logic
+*  --Updated Set_MicMode_checkbox_states for pp300bx NF logic							: 2014-10-16 Sultan 
+*  7.4 Peer review Changes
+   -- DirMicModeProcPP300()-Added condition for controlling Speech in Noise Management  : 2014-11-12 Sultan/Al/Mie Mie/Frauke
+//---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package Lib Mid_Level_Library_Mic_Mode
+	{
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  The microphone mode selected as the FF default is the most 'advanced' mode possible
+		   *             with regard to the static capbilities of the device.   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string MicMode_DefaultPos ()
+		{
+			string retstring = "";
+			
+            if(Mid_Level_Library_Mic_Mode.IsNarrowFocusAvailable()== true)
+            {
+                 if(cap:PricePoint == PricePoint.PP700)
+                 {
+                     retstring = "NF_and_SL_mode"; // Maximum capabilities present -> select Narrowfocus and Sidelook mode, which is the
+                 }		                           // most 'advanced' automatic directional mode available in 7.3.
+                 else
+                 {
+                     retstring = "NF_and_SF_mode"; // Binaural capabilities present, but only a PP500 -> select the 2nd most 'advanced'
+                 }			                       // option; Narrowfocus and Speechfocus mode.
+            }        
+            else if(cap:DirMicAvailable == DirMicAvailable.dir)
+            {
+                 if(cap:PricePoint >= PricePoint.PP500) // Binaural capabilities not present, but device is directional and =>pp500;
+                 {                                      // select the 3rd most 'advanced' setting; Speechfocus mode.
+                     retstring = "SF_mode"; 
+                 }
+                 else                     // Binaural capabilities are not available and device is pp300 or lower; select the 
+                 {                        // 4th most 'advanced' setting; automatic directional mode.
+                     retstring = "Dir_mode";//CR69523 : Important Note : The Spass for Narrow Focus (First Fit) for pp300bx is implemented in the SPASS Library.
+                 }
+            }
+            else if(Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable() == true)
+            {
+                 retstring = "SDMdir_mode";	// Set SDM directional mode, if this is available.		            
+            }
+            else     // Device does not have directional capability -> set omnidirectional mode. 
+            {
+                 retstring = "Omni_mode";
+            }
+            
+			println('[HAL]MLIB.MicMode_DefaultPos = '+retstring);	           		   		
+			return retstring;			
+		}
+		
+		
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description: true = the current mic mode is valid; false = the current mic mode is not valid.   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool Is_MicMode_Valid_InCxx ()                        
+		{			
+			string currentMicMode = BasicLibrary_Mic_Mode.MicMode_Get();
+			
+			//Fix of ER68360: In-consistent behavior when changing from binaural to monaural to binaural mode
+			if (env:DetHi == DetHi.BothSides && 
+				hi:d9SwMicMode != opp(hi:d9SwMicMode))
+				 // Check if both hearing instruments have the same SwMicMode		
+			{
+				return false; 
+			}			
+            // Return false if a monaural session is loaded with a binaural mic mode set in the device
+			else if (env:DetHi != DetHi.BothSides && 
+				Mid_Level_Library_Mic_Mode.MicModeIsBinauralmode() == true)
+				 // In 7.4, also need to add here the binaural-omni Dir setting.			
+			{
+				return false; 
+			}			
+			// Return false if SwMicMode is set to a Narrowfocus mode, but without the minumum
+			// capability requirements for this.   
+			else if (IsNarrowFocusAvailable() == false && 
+				     	(currentMicMode == "NfcAdap" ||
+					 	 currentMicMode == "AutoNfcAdap" ||				 
+					 	 currentMicMode == "AutoNfcSelDirAdap"))	
+			{
+				return false; 
+			}
+			// Return false if SwMicMode is set to a Sidelook mode, but without the minumum
+			// capability requirements for this.
+			else if (IsSidelookAvailable() == false &&
+			         (currentMicMode == "SlkAdap" ||
+			          currentMicMode== "AutoSlkAdap" ||
+			          currentMicMode == "AutoNfcSlkAdap"))
+			{
+			    return false;
+			}
+			// Return false if SwMicMode is set to a Single Dir Mic mode, but without the minumum
+			// capability requirements for this.
+			else if (IsSingleMicDirModeAvailable() == false &&
+				     (currentMicMode == "SingleBinDirOmni" ||
+					  currentMicMode == "AutoSingleBinDirAdap" ||
+					  currentMicMode == "SingleBinDirAdap"))
+			{
+			    return false;
+			}		 		
+			// Return false if TestDir mode is activated in Connexx without this setting being 'flagged' 
+			// as valid (d8SwMacroVarEn25 = on). This will happen if user has selected TestDir in 
+			// Hicoss, and then afterwards loaded Connexx without changing the micmode to something that 
+			// is valid in Connexx. 
+			else if (currentMicMode == "TestDir" && env:HiDriverWorkMode == HiDriverWorkMode.Fitting) // ER67367: Use micmode getter instead of controls flag for invalid state
+			{
+			    return false;  
+			}
+			// Return false if Connexx is loaded with either wnc, open opt, or IntelliZoom activated, and an
+			// incompatible omni mode.
+			else if (cap:DirMicAvailable == DirMicAvailable.dir &&
+				    (currentMicMode == "OmniSingleMbat" || 
+				     currentMicMode == "OmniSingle") &&
+				    (BasicLibrary_EWindScreen.EWindScreenEn_Get_Entry () == true ||
+				     BasicLibrary_FeedbackStopper.OpenOptimizerEn_Get_Hw() == true  ||
+					 BasicLibrary_IntelliZoom.IntelliZoomEn_Get_Entry() == 1)) 	
+			{
+			    return false;  
+			}
+			// Return false if measurement settings (REMParamOff) are activated (d8SwMacroVarEn26.on)
+			// d8SwMacroVarEn26 is temp variable, to be requested and replaced in 7.4
+			else if (BasicLibrary_Mic_Mode.GetInvalidOmniMicModeTestSetFlag())
+			{
+				return false;
+			}
+			else
+			{    
+			    return true;  // No invalid conditions exist, everything is great
+			}			
+		}
+
+
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  finds number of available Hicoss radio buttons.  
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int Mic_Mode_HicossMaxPos ()                        
+		{
+			int retval = 1;
+			if (cap:DirMicAvailable == DirMicAvailable.dir)
+			{
+				retval = 2; // Omni, Dir and Cxx (inactive) radiobuttons are available
+			} 		
+			println('[HAL]MLIB.Mic_Mode_HicossMaxPos = ' + retval);
+			return retval;
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Ouput      :  <int> visibility of nth radio button
+		   Description:  returns visibility of the nth radio button.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool Mic_Mode_HicossVisPhysPos (int pos)                        
+		{		
+			bool retval = false;
+					
+			switch (pos) 
+			{
+				case 0:
+				{
+					retval = true;  // Omni mode rb is always visible.
+				}
+				case 1:
+				{				          
+					retval = true;  // dir mode rb is always visible (but greyed out for omni devices).			          
+				}    
+				case 2:
+				{
+					retval = false;  // Cxx mic mode indicator rb is not visible to the user and is not selectable.   
+				}
+				default:
+				{		     
+					assertion (false, "[MacroError] Invalid IsVisiblePhysPos index for Micmode Hicoss Radiobutton!");				
+				}			
+			}
+			 	
+			println('[HAL]MLIB.Mic_Mode_HicossVisPhysPos = '+retval);
+			return retval;							
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Ouput      :  <int> number of available radio buttons- zero based.
+		   Description:  finds number of available Hicoss radio buttons.  
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool Mic_Mode_HicossIsEnabledPos (int pos)                        
+		{		
+			bool retVal = false;
+					
+			switch (pos) 
+			{
+				case 0:
+				{
+					retVal = true; 
+				}
+				case 1:
+				{
+					retVal = cap:DirMicAvailable == DirMicAvailable.dir;
+				}    
+				case 2:
+				{
+					retVal = false;  // Cxx mic mode indicator button is non-selectable.   
+				}
+				default:
+				{
+					assertion (false, "[MacroError] Invalid IsEnabledPos index for Micmode Hicoss Radiobutton!");				
+				}			
+			} 	
+			println('[HAL]MLIB.Mic_Mode_HicossIsEnabledPos = '+retVal);		
+			return retVal;							
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		//   Ouput      :  <int> number of available radio buttons- zero based.
+		//   Description:  sets mic mode based on radiobutton index 
+		//-----------------------------------------------------------------------------------------------------------------*/
+		public function void Mic_Mode_HicossSetPos (int pos)                        
+		{		
+		   	switch (pos)  // Position remapping is not necessary here.
+			{
+				case 0:
+				{
+					// ER67367: Reset d8SwMacroVarEn26 to .off position, d8SwMacroVarEn26 is set to on when Test settings REMParamOff is activated
+                	// and the reset is needed when the user manually change the micmode in Hicoss
+					BasicLibrary_Mic_Mode.SetInvalidOmniMicModeTestSetFlag(false);  
+				    Mid_Level_Library_Mic_Mode.MicMode_Set("Omni_mode"); // set to omni
+				}
+				case 1:
+				{
+				     Mid_Level_Library_Mic_Mode.MicMode_Set("TestDir_mode"); // set to Testdir mode
+				} 		
+                default :
+                {   // the third radiobutton cannot be selected
+                     assertion (false, "[MacroError] Invalid setpos index for Mode Hicoss Radiobutton!");		           
+                }		            		            
+            }		            		
+		}
+				
+		/*---------------------------------------------------------------------------------------------------------------*
+		//   Description:  Obtains activated radio button position index.
+		//---------------------------------------------------------------------------------------------------------------*/
+		public function int Mic_Mode_HicossGetPos ()                        
+		{		
+			int retpos = -1;
+					    
+		    if (BasicLibrary_Mic_Mode.MicMode_Get() == BasicLibrary_Mic_Mode.MicMode_Get_SwMicModeForFOG())
+			{
+				retpos = 0; // Highlight the omni radio button
+			}     
+			else if (BasicLibrary_Mic_Mode.MicMode_Get() == "TestDir")
+			{
+				retpos = 1; // Highlight the directional radio button		         
+			}
+			else
+			{
+				retpos = 2; // Highlight the non-selectable Cxx mic-mode radio button
+			}		         
+		  	println('[HAL]MLIB.Mic_Mode_HicossGetPos = '+retpos);		  		   		        
+			return retpos;		    	            		
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Returns IsEnabledPos for the separate radiobuttons in the TV program   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool TVProgIsEnabledPos(int pos)
+		{	 		   
+		   bool retval = false;
+		   
+		    switch (pos) 
+		    {		  
+		         case 0:
+		         {
+		            retval = true; // omni panel is always enabled
+		         }
+                 case 1:
+                 {
+                    if (cap:DirMicAvailable == DirMicAvailable.dir ||
+                    	Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable() == true) // dir panel enabled only if directional mic available.
+                    {
+                       retval = true;
+                    }
+                    else
+                    {
+                       retval = false;
+                    }
+                 }
+                 default :
+                 {
+                    retval = false;
+                 }             
+            }
+            println('[HAL]MLIB.TVProgIsEnabledPos = '+retval);
+            return retval;                		
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Returns maxpos for the separate radiobuttons in the TV program   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int TVProgMaxPos()
+		{	 		   
+		   int maxpos = 0;
+		   
+           if (cap:DirMicAvailable == DirMicAvailable.dir) // dir panel visible only if directional mic available.
+           {
+                maxpos = 1;
+           }
+             
+           println('[HAL]MLIB.TVProgMaxPos = '+maxpos);
+           return maxpos;                		
+		}
+		
+
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns IsVisible for OmniDirectional    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool OmniIsVisible()
+		{
+			return cap:PricePoint >= PricePoint.PP100;
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Returns IsVisible for Directional     
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool DirIsVisible()
+		{
+			return (cap:DirMicAvailable == DirMicAvailable.dir);
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Returns IsVisible for the Single Dir Mic UI, shown in the universal program.
+		   *             Note that this function is called by the mic mode selection macro, and not the 
+		   *             IsVisible application function in Mic_Mode_SingleDirMicIsVisible.     
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SingleDirMicIsVisible()
+		{
+			if (Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable() == true)
+		    {
+		       return true;
+		    }
+		    // 'Upmarketing' strategy requested from marketing! Sdm should also be visible 
+		    // (but greyed out) in monaural fittings, where the feature would otherwise be available 
+		    // if two of the exact same devices were fitted binaurally.
+			else if(cap:DirMicAvailable == DirMicAvailable.omni &&
+				     env:DetHi != DetHi.BothSides &&		
+				     BasicLibrary_CommUtil.IsWirelessCapable() &&			     
+				     cap:HICategory == HICategory.ITE &&
+		             cap:PricePoint == PricePoint.PP700)
+			{
+			   return true;
+			}
+			// 'Upmarketing' strategy requested from marketing! Sdm should also be visible 
+		    // (but greyed out) in binaural fittings, where the only thing preventing it from being available
+		    // is that the microphones on both devices are not compatible.
+			else if((cap:DirMicAvailable == DirMicAvailable.omni && opp(cap:DirMicAvailable) == DirMicAvailable.omni) &&
+			         env:BinauralDirMicCompatibleMicType != BinauralDirMicCompatibleMicType.UsableTogether &&
+				     BasicLibrary_CommUtil.IsWirelessCapableOnBothSides() &&
+				     cap:HICategory == HICategory.ITE &&
+		             cap:PricePoint == PricePoint.PP700)
+			{
+			   return true;
+			}
+			else
+			{
+			   return false;
+			}
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Returns IsVisible for Narrow Focus    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool NFIsVisible()
+		{
+			if (IsNarrowFocusAvailable() == true || IsNarrowFocusSPASSAvailable() == true)
+		    {
+		       return true;
+		    }
+		    // 'Upmarketing' strategy requested from marketing! The Narrowfocus feature should also be visible 
+		    // (but greyed out) in monaural fittings, where NF would otherwise be available if two such devices were fitted 
+		    // binaurally. 
+		    else if (BasicLibrary_CommUtil.IsMonoAuralFitForDirMicWithWirelessForPP300AndAbove() == true)
+		    {
+		       return true;
+		    }
+		    // 'Upmarketing' strategy requested from marketing! The Narrowfocus feature should also be visible 
+		    // (but greyed out) in binaural fittings, where the only thing preventing it from being available
+		    // is that the microphones on both devices are not compatible.
+		    else if(cap:DirMicAvailable == DirMicAvailable.dir &&
+				BasicLibrary_CommUtil.IsBinaurallyCompatibleMic() == false &&  
+				BasicLibrary_CommUtil.IsWirelessCapableOnBothSides() == true &&
+				cap:PricePoint >= PricePoint.PP300)
+		    {
+		       return true;
+		    }
+		    else
+		    {
+		       return false;
+		    }
+		        
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns IsVisible for Side Look    
+		   * 			 REVISED FOR 7.4!
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SLIsVisible()
+		{			
+			if(cap:PricePoint == PricePoint.PP700 &&
+				Mid_Level_Library_Mic_Mode.BinFeaturesForDirectionalDevices_MinPossReqmts())
+			{
+			    return true; // required capabilities exist, Sidelook can be user-activated
+			}				
+			else
+			{
+			    return false; // Either Speechfocus is visible instead, or neither feature is offered. 
+			}
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Returns IsVisible for Speech Focus    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SFIsVisible()
+		{ 
+			if (cap:DirMicAvailable == DirMicAvailable.dir &&
+					 cap:PricePoint >= PricePoint.PP500) 
+			{
+				if(Mid_Level_Library_Mic_Mode.SLIsVisible() == false)
+	            {
+	                return true; // Minimum requirements for Speechfocus exist, and Sidelook is not visible -> Speechfocus is visible. 
+	            }
+	            else
+	            {
+	                return false; // Minimum requirements for Speechfocus exist, but sidelook is visible instead! -> Speechfocus is not visible 
+	            }                 // (Speechfocus and Sidelook cannot be visible simultaneously).
+			}
+			else
+			{
+		   		return false; // Minimum requirements for speechfocus do not exist -> Speechfocus is not visible. 
+			}		
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Returns IsVisible for Mic Mode selection    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SelectionIsVisible()
+		{    
+		     // No part of the microphone UI is visible when the tinnitus program is selected. Else, IsVisible = true.
+		     if(BasicLibrary_ProgramSelection.IsTinnitus())		     			     
+		     {
+		        return false;
+		     }
+		     else
+		     {
+		        return true;
+		     }
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Conditions for support of Binaural fitting
+		   * To be Binaurally activated
+		   * * Should support Directional Microphone
+		   * * Should support Binaural Fitting
+		   * * Has Wireless Capability
+		-----------------------------------------------------------------------------------------------------------------*/
+        public function bool BinFeaturesForDirectionalDevices_MinPossReqmts()
+        {
+        	
+        	bool retVal = (cap:DirMicAvailable == DirMicAvailable.dir &&
+							BasicLibrary_CommUtil.IsBinaurallyCompatibleMic() &&  
+							BasicLibrary_CommUtil.IsWirelessCapableOnBothSides() == true);
+        	return retVal;
+        }
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Use IsNarrowFocusAvailable to check if the Mic Mode can enable this feature. 
+		   * Conditions for Narrow Focus support
+		   * * Binaural Fitting Mode is active
+		   * * Supports Directional Microphone  
+		   * * Supports e2e capabilities
+		   * * Performance Level is 700 or Price Point Level is 500  
+		-----------------------------------------------------------------------------------------------------------------*/
+        public function bool IsNarrowFocusAvailable()
+        {	
+        	bool retVal = BinFeaturesForDirectionalDevices_MinPossReqmts() == true &&
+							cap:PricePoint >= PricePoint.PP500; 
+        	return retVal;
+        }
+        
+         /*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Use IsNarrowFocusSPASSAvailable to check if SPASS can be activated for 300pp bx devices. 
+		   * Conditions for Narrow Focus SPASS support
+		   * * Binaural Fitting Mode is active
+		   * * Supports Directional Microphone  
+		   * * Supports e2e capabilities
+		   * * Performance Level is 300
+		-----------------------------------------------------------------------------------------------------------------*/
+        public function bool IsNarrowFocusSPASSAvailable()
+        {	
+        	bool retVal = (cap:PricePoint == PricePoint.PP300 &&
+							BinFeaturesForDirectionalDevices_MinPossReqmts());
+        	return retVal;
+        }	
+    
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Returns whether Sidelook is offered for a device (i.e. could be activated). 
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsSidelookAvailable()
+		{    
+			bool retVal = (BinFeaturesForDirectionalDevices_MinPossReqmts() &&
+							cap:PricePoint == PricePoint.PP700);
+		     return retVal;
+		}		
+
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Returns whether Speechfocus is offered for a device (i.e. could be activated). 
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsSpeechFocusAvailable()
+		{    
+			if (cap:DirMicAvailable == DirMicAvailable.dir &&
+					 cap:PricePoint >= PricePoint.PP500) 
+			{
+				if(IsSidelookAvailable() == false)
+				{
+					return true; // Minimum requirements for Speechfocus exist, and Sidelook is not visible -> Speechfocus is available 
+				}
+				else
+				{
+					return false; // Minimum requirements for Speechfocus exist, but sidelook is visible instead! -> Speechfocus is not available 
+				}                 // (Speechfocus and Sidelook cannot be visible simultaneously).
+			}
+			else
+			{
+		   		return false; // Minimum requirements for speechfocus do not exist -> Speechfocus is not available. 
+			}
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  From 7.4 onwards, a special single-mic directional mode will be available
+				         for binaurally-fitted PP700 devices with e2e and compatible mics. This 
+				         function returns true / false to indicate whether the fitting has the correct 
+				         static capabilities to offer this feature. 
+				         * 
+				         *This function is to be used from 7.4 onwards.  
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsSingleMicDirModeAvailable()
+		{    
+	  	 	 // REVISED FOR 7.4
+		     return  ((cap:DirMicAvailable == DirMicAvailable.omni && opp(cap:DirMicAvailable) == DirMicAvailable.omni) &&
+			         env:BinauralDirMicCompatibleMicType == BinauralDirMicCompatibleMicType.UsableTogether &&
+				     BasicLibrary_CommUtil.IsWirelessCapableOnBothSides() &&
+				     cap:HICategory == HICategory.ITE &&
+		             cap:PricePoint == PricePoint.PP700);
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		  
+		   Description:  Logic route for Directional 'ON' based on Price Point    
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void Dir_LogicRouteForOn()
+		{				 
+			switch(cap:PricePoint) // For directional devices only!
+			{
+				case PricePoint.PP300:
+				{
+					BasicLibrary_Mic_Mode.MicMode_Set("AutoAdap");
+					DirMicModeProcPP300();
+				}
+				case PricePoint.PP500:
+				{
+					DirMicModeProcPP500();
+				}
+				case PricePoint.PP700:
+				{
+					DirMicModeProcPP700();
+				}
+				default:
+				{
+				    assertion (false,"[MacroError] Unexpected workflow in Mid_Level_Library_Mic_Mode.Dir_LogicRouteForOn");
+				}
+			}		
+		 	  	
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Query the activation states of IntelliZoom, Wnc and OpenOptimiser, and adjust the Omni micmode setting 
+		   *             accordingly.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string ResetOmniForIzWncOo()
+		{		
+			string micMode = BasicLibrary_Mic_Mode.MicMode_Get();
+				
+			// Test setting omni follows SwMicModeForFog (ER68373). It doesn't need to reset mic mode. 
+			if (BasicLibrary_Mic_Mode.GetInvalidOmniMicModeTestSetFlag()!=true)
+			{											   
+				// 	Reset MicMode if it was previously OmniSingle, or OmniSingleMbat >> so that Two mic can be taken care.
+				if(micMode == "OmniSingle" || micMode == "OmniSingleMbat")
+			    {		 
+					if(cap:DirMicAvailable == DirMicAvailable.dir && env:HiDriverWorkMode == HiDriverWorkMode.Fitting) // Directional capability exists AND Cxx is running
+	        		{  
+						if(BasicLibrary_EWindScreen.EWindScreenEn_Get_Entry () == true ||
+					  		BasicLibrary_FeedbackStopper.OpenOptimizerEn_Get_Hw() == true  ||
+					  		BasicLibrary_IntelliZoom.IntelliZoomEn_Get_Entry() == 1) // Intellizoom, Wnc and OpenOptimiser are on			
+					  	{
+					  		BasicLibrary_Mic_Mode.MicMode_Set("OmniDual");
+					  		micMode = "OmniDual";
+					  	}	                  
+					}	           	           	        
+				}
+			}
+			return micMode;				
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		  
+		   Description:  Set the FBC controls according to the omnidirecitonal mode type. Only for use when changing to an 
+		   *             omni mode!
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string SetFBCforOmni(string omnimode)
+		{				
+			// Setting FBC controls dependent on Mic Mode
+			if (omnimode == "OmniDual" || omnimode == "SpatialOmni") 
+			{
+			       BasicLibrary_FeedbackStopper.FBCSwitchdepMicMode_Set(1); // Set FBC to dual mic configuration
+			}
+			else if(omnimode == "OmniSingle" || omnimode == "OmniSingleMbat" || omnimode == "SingleBinDirOmni")
+			{      // mic mode is OmniSingle or OmniSingleMbat; Set FBC to single mic configuration
+			       BasicLibrary_FeedbackStopper.FBCSwitchdepMicMode_Set(0); 
+			}
+			else
+			{
+			      assertion (false,"[MacroError] Unexpected state of d9SwMicMode detected in Mid_Level_Library_Mic_Mode.SetFBCforOmni()");			
+			}		
+			return omnimode;
+		
+		}
+										
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Logic route for Narrow Focus 'On' based on Price Point
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void NF_LogicRouteForOn()
+		{
+			println('[HAL]MLIB.NF_LogicRouteForOn >>> start....');
+			switch(cap:PricePoint)
+			{
+				case PricePoint.PP700:
+				{
+					if(BasicLibrary_Mic_Mode.GetSlSwEnIsOn())//The Sidelook checkbox is ticked
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoNfcSlkAdap");
+						// NOTE! Here, the Wnc and SIN Hw controls are not altered,
+						//       because this was already done when
+						//       the user ticked the Sidelook checkbox; i.e. there's no
+						//       need to do it twice!  
+					}
+					else//The Sidelook checkbox is un-ticked
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoNfcAdap");
+						NFSLMicModeProcForOn();//Set the mm & snm SIN Hw controls OFF, and reconfigure the Wnc Hw controls (if the Wnc checkbox is un-ticked). 
+					}
+				}
+				case PricePoint.PP500:
+				{
+					if(BasicLibrary_Mic_Mode.GetSfSwEnIsOn())//The Speechfocus checkbox is ticked
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoNfcSelDirAdap");
+						NFSLMicModeProcForOn();//Set the mm & snm SIN Hw controls OFF, and reconfigure the Wnc Hw controls (if the Wnc checkbox is un-ticked).
+					}
+					else//The Speechfocus checkbox is un-ticked
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoNfcAdap");
+						NFSLMicModeProcForOn();//Set the mm & snm SIN Hw controls OFF, and reconfigure the Wnc Hw controls (if the Wnc checkbox is un-ticked).
+					}
+				}
+				case PricePoint.PP300:
+				{					
+					BasicLibrary_Spass.SpassEn_Set(1);
+					NFSLMicModeProcForOn();
+				}
+				default:
+				{
+					//Do nothing
+				}
+			}
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		  
+		   Description:  Logic route for Narrow Focus 'Off' based on Price Point
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void NF_LogicRouteForOff()
+		{
+			println('[HAL]MLIB.NF_LogicRouteForOff >>> start....');
+			switch(cap:PricePoint)
+			{
+				case PricePoint.PP700:
+				{
+					if(BasicLibrary_Mic_Mode.GetSlSwEnIsOn())//The Sidelook checkbox is ticked
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoSlkAdap");
+                        // NOTE! Here, the Wnc and SIN Hw controls are not altered,
+						//       because this was already done when
+						//       the user ticked the Sidelook checkbox; i.e. there's no
+						//       need to do it twice!
+					}
+					else//The Sidelook checkbox is un-ticked
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoAdap");
+						NFSLMicModeProcForOff();//Reset the Wnc Hw ctrls to the Sw ctrl positions, and turn ON the mm & snm SIN Hw ctrls if the SIN checkboxes are ticked. 
+					}
+				}
+				case PricePoint.PP500:
+				{
+					if(BasicLibrary_Mic_Mode.GetSfSwEnIsOn())//The Speechfocus checkbox is ticked
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoSelDir");
+						NFSLMicModeProcForOff();//Reset the Wnc Hw ctrls to the Sw ctrl positions, and turn ON the mm & snm SIN Hw ctrls if the SIN checkboxes are ticked.
+					}
+					else//The Speechfocus checkbox is un-ticked
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoAdap");
+						NFSLMicModeProcForOff();//Reset the Wnc Hw ctrls to the Sw ctrl positions, and turn ON the mm & snm SIN Hw ctrls if the SIN checkboxes are ticked.
+					}
+				}
+				case PricePoint.PP300:
+				{
+					BasicLibrary_Spass.SpassEn_Set(0);	
+					NFSLMicModeProcForOff();				
+				}
+				default:
+				{
+					//Do nothing
+				}
+			}
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		  
+		   Description:  Logic route for Side Look 'On'
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void SL_LogicRouteForOn()
+		{
+			println('[HAL]MLIB.SL_LogicRouteForOn >>> start....');
+			
+			if(BasicLibrary_Mic_Mode.GetNfSwEnIsOn())//The Narrowfocus checkbox is ticked
+			{
+				BasicLibrary_Mic_Mode.MicMode_Set("AutoNfcSlkAdap");
+				// NOTE! Here, the Wnc and SIN Hw controls are not altered,
+						//       because this was already done when
+						//       the user ticked the Narrowfocus checkbox; i.e. there's no
+						//       need to do it twice! 
+			}
+			else//The Narrowfocus checkbox is un-ticked
+			{
+				BasicLibrary_Mic_Mode.MicMode_Set("AutoSlkAdap");
+				NFSLMicModeProcForOn();//Set the mm & snm SIN Hw controls OFF, and reconfigure the Wnc Hw controls (if the Wnc checkbox is un-ticked).  
+			}
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		  
+		   Description:  Logic route for Side Look 'Off'
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void SL_LogicRouteForOff()
+		{
+			println('[HAL]MLIB.SL_LogicRouteForOff >>> start....');
+			if(BasicLibrary_Mic_Mode.GetNfSwEnIsOn())//The Narrowfocus checkbox is ticked
+			{
+				BasicLibrary_Mic_Mode.MicMode_Set("AutoNfcAdap");
+                // NOTE! Here, the Wnc and SIN Hw controls are not altered,
+						//       because this was already done when
+						//       the user ticked the Narrowfocus checkbox; i.e. there's no
+						//       need to do it twice!				
+			}
+			else//The Narrowfocus checkbox is un-ticked
+			{
+				BasicLibrary_Mic_Mode.MicMode_Set("AutoAdap");
+				NFSLMicModeProcForOff();//Reset the Wnc Hw ctrls to the Sw ctrl positions, and turn ON the mm & snm SIN Hw ctrls if the SIN checkboxes are ticked.
+			}
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		  
+		   Description:  Logic route for Speech Focus 'On' based on PricePoint
+		-----------------------------------------------------------------------------------------------------------------*/		
+		public function void SF_LogicRouteForOn()
+		{
+			println('[HAL]MLIB.SF_LogicRouteForOn >>> start....');
+			switch(cap:PricePoint)
+			{
+				case PricePoint.PP700:
+				{
+					BasicLibrary_Mic_Mode.MicMode_Set("AutoSelDir");
+				}
+				case PricePoint.PP500:
+				{
+					if(env:DetHi == DetHi.BothSides)// BINAURAL FITTING
+					{
+						if(BasicLibrary_Mic_Mode.GetNfSwEnIsOn())//The Narrowfocus checkbox is ticked
+						{
+							BasicLibrary_Mic_Mode.MicMode_Set("AutoNfcSelDirAdap");
+						}
+						else//The Narrowfocus checkbox is un-ticked
+						{
+							BasicLibrary_Mic_Mode.MicMode_Set("AutoSelDir");
+						}
+					}
+					else// MONAURAL FITTING
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoSelDir");
+					}
+				}
+				default:
+				{
+					//Do nothing
+				}
+			}
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		  
+		   Description:  Logic route for Speech Focus 'Off' based on PricePoint
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void SF_LogicRouteForOff()
+		{
+			println('[HAL]MLIB.SF_LogicRouteForOff >>> start....');
+			switch(cap:PricePoint)
+			{
+				case PricePoint.PP700:
+				{
+					BasicLibrary_Mic_Mode.MicMode_Set("AutoAdap");
+				}
+				case PricePoint.PP500:
+				{
+					if(env:DetHi == DetHi.BothSides)// BINAURAL FITTING
+					{
+						if(BasicLibrary_Mic_Mode.GetNfSwEnIsOn())//The Narrowfocus checkbox is ticked
+						{
+							BasicLibrary_Mic_Mode.MicMode_Set("AutoNfcAdap");
+						}
+						else//The Narrowfocus checkbox is un-ticked
+						{
+							BasicLibrary_Mic_Mode.MicMode_Set("AutoAdap");
+						}
+					}
+					else// MONAURAL FITTING
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoAdap");
+					}
+				}
+				default:
+				{
+					//Do nothing
+				}
+			}
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*
+		   Description:  Set d9SwMicMode to d9SwMicModeForOmni (For normal omni mode in Connexx)
+		   * 			ER67367: Set d9SwMicMode to d9SwMicModeForFog (For Test Setttings / REMParamOff / Measurement Condition in Connexx or Omni mode in Hicoss)
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string OmniMicModeProc(string micMode)
+		{			
+			if (micMode == "TSOmni_mode" || Mid_Level_Library_Mic_Mode.IsSingleMicDirModeAvailable() == false)
+			{ 
+				//ER68373: changed SwMicMode of Testsetting from OmniDual to SwMicModeForFog for Test setting omni 
+				if (BasicLibrary_Mic_Mode.GetInvalidOmniMicModeTestSetFlag()||
+					env:HiDriverWorkMode == HiDriverWorkMode.Service)
+				{
+					string micModeForFog = BasicLibrary_Mic_Mode.MicMode_Get_SwMicModeForFOG();
+					BasicLibrary_Mic_Mode.MicMode_Set(micModeForFog);
+					return micModeForFog;					
+				}
+				else if (env:HiDriverWorkMode == HiDriverWorkMode.Fitting)
+				{
+					string omniMicMode = BasicLibrary_Mic_Mode.MicMode_Get_SwMicModeForOmni();
+					BasicLibrary_Mic_Mode.MicMode_Set(omniMicMode);
+					return omniMicMode;
+				}
+				else
+				{
+					assertion (false, "[MacroError] Unexpected driver state detected in MLIB.MicMode_Mid_LIB.OmniMicModeProc()");
+					return "error";
+				}			
+			}
+			else 
+			{			    
+			    return BasicLibrary_Mic_Mode.MicMode_Get(); // Do nothing, apart from return the currently active mic mode 
+			}
+			
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  NF mic mode logic processing for ON. 
+		   *             (Note that there is no need to take care of dependencies between Wnc and Input-mode here,
+		   *             because this function is not activated from programs where a non-microphone input mode can be selected.)   
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void NFSLMicModeProcForOn()
+		{
+			println('[HAL]MLIB.NFSLMicModeProcForOn >>> start....');
+			// Set mic-mode + snm SIN HW controls OFF
+		    BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(0); // mic mode
+		    BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set(0); // snm
+			
+			//Don't need to to the below calls for pp300 NF
+			if(IsNarrowFocusSPASSAvailable() == false)
+			{
+				// If WncEn SW variable is OFF, set Wnc HW controls for binaural mic mode			
+		    	if(hi:d8SwMacroWncEnHp == d8SwMacroWncEnHp.off)
+				{
+					BasicLibrary_EWindScreen.EWind_SetHwCtrlsForBinMicModeAndEnOff();
+		    	}
+			}
+		}
+							
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  NF mic mode logic processing for OFF
+		   *             (Note that there is no need to take care of dependencies between Wnc and Input-mode here,
+		   *             because this function is not activated from programs where a non-microphone input mode can be selected.) 
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void NFSLMicModeProcForOff()
+		{
+			println('[HAL]MLIB.NFSLMicModeProcForOff >>> start....');
+			
+			//Don't need to reset Ewindscreen for pp300 NF
+			if(IsNarrowFocusSPASSAvailable() == false)
+			{
+				BasicLibrary_EWindScreen.EWindScreen_ResetHwCtrlsToSwVars(); // Set Wnc HW controls to SW variable values
+			}
+			
+			// Turn on mic mode SIN HW controls if the SW control is on 
+			if(BasicLibrary_MicModeSpeechInNoiseEn.GetSpeechNoiseOnlyEnHpSwIsOn() == true)
+			{
+				BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(1);
+			}
+		    
+		    // Turn on snm SIN HW controls if the SW control is on, and we're in the extended snm view
+	        if(BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Get_Sw() == true &&
+	        	hi:d8SwMacroNrViewHp == d8SwMacroNrViewHp.advance) 
+		    {
+		       BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set(1); 
+		    }		
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Mic mode logic processing for Afternoon Stroll program
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void MicModeProcForStrollProg()
+		{
+			println('[HAL]MLIB.MicModeProcForStrollProg >>> start....');
+			if(cap:PricePoint == PricePoint.PP700)
+			{
+				SL_LogicRouteForOn();
+			}
+			else
+			{
+				SF_LogicRouteForOn();
+			}
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Check if current mic mode is omni
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool MicModeIsOmni()
+		{
+			string currentMicMode = BasicLibrary_Mic_Mode.MicMode_Get();
+			
+			bool retVal = (currentMicMode == "OmniSingle" ||
+							currentMicMode == "OmniSingleMbat" ||
+							currentMicMode == "OmniDual" ||
+							currentMicMode == "SpatialOmni" ||
+							currentMicMode == "SingleBinDirOmni");
+			return retVal;
+		}
+				
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Check if current mic mode is Directional
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool MicModeIsDirectional()
+		{
+			string currentMicMode = BasicLibrary_Mic_Mode.MicMode_Get();
+			
+			bool retVal = (currentMicMode == "DirStaticHP" ||
+							currentMicMode == "DirStaticFlat" ||
+							currentMicMode == "DirAdapHP" ||
+							currentMicMode == "DirAdapFlat" ||
+							currentMicMode == "SelDir" ||
+							currentMicMode == "TestDir");
+			return retVal;
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Check if current mic mode is Directional test mode
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool MicModeIsTestDirectional()
+		{
+			return (BasicLibrary_Mic_Mode.MicMode_Get() == "TestDir");
+		}
+		
+		
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Check if current mic mode is Automatic
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool MicModeIsTwinMicDirAutomatic()
+		{
+			string currentMicMode = BasicLibrary_Mic_Mode.MicMode_Get();
+			
+			bool retVal = (currentMicMode == "AutoAdap" ||
+						   	currentMicMode == "AutoFix" ||
+						   	currentMicMode == "AutoSelDir" ||
+							currentMicMode == "AutoNfcAdap" ||
+							currentMicMode == "AutoSlkAdap" ||
+							currentMicMode == "AutoNfcSlkAdap" ||
+							currentMicMode == "AutoNfcSelDirAdap");
+					
+			return retVal;
+		}
+
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Check if current mic mode is a binaural mode.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool MicModeIsBinauralmode()
+		{
+			string currentMicMode = BasicLibrary_Mic_Mode.MicMode_Get();
+			
+			bool retVal = (currentMicMode == "SlkAdap" ||
+						   	currentMicMode == "NfcAdap" ||
+						   	currentMicMode == "AutoNfcAdap" ||
+						   	currentMicMode == "AutoSlkAdap" ||
+					       	currentMicMode == "AutoNfcSlkAdap" ||
+					       	currentMicMode == "AutoNfcSelDirAdap" ||								
+					       	currentMicMode == "AutoSingleBinDirAdap" ||
+					       	currentMicMode == "SingleBinDirAdap");
+			return retVal;
+		}
+	
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description: - This function is used to change the microphone mode. 
+		   *            - Can be called from any program in Connexx or Hicoss
+		   *            - Sets the SwMicMode control, and adjusts all other controls for features that have mic-mode dependencies.
+		-----------------------------------------------------------------------------------------------------------------*/	
+		public function void MicMode_Set (string micMode)
+		{     
+	      	println('[HAL]MLIB.MicMode_Set >> micMode=' + micMode);
+    	    
+    	    // ------------ Set the mic mode HW control (d9SwMicMode) --------------
+	      	string ctrlvalue_set = MicMode_DetermineAndSet (micMode); 
+	      
+	        // -----  Set the mic mode checkbox ticks, if we're in the Connexx universal program ------
+	      
+	  	    if (BasicLibrary_ProgramSelection.IsUniversal() &&
+	      	   env:HiDriverWorkMode == HiDriverWorkMode.Fitting) 
+			{
+				Set_MicMode_checkbox_states(micMode);	           	      
+	      	}	
+	       	       
+	        //------------- Set feature dependencies for binaural directional mic modes ------------- 	    	      
+	  	    if (micMode == "NF_mode" || 
+	  	    	micMode == "SL_mode" || 
+	    	  	micMode == "NF_and_SL_mode" || 
+	    	  	micMode == "NF_and_SF_mode")
+	       	{	          
+				SetFeatDpdnciesFor_BinDirModes (ctrlvalue_set);       	         
+	       	}	
+          	else if (micMode == "SDMdir_mode")
+           	{
+				SetFeatDpdnciesFor_SDMDirMode(ctrlvalue_set);  
+           	}
+	        //------------- Set feature dependencies for directional and speechfocus mic modes ------------- 	
+    	 	else if (micMode == "Dir_mode" || micMode == "SF_mode" || micMode == "TestDir_mode")
+    	 	{
+				SetFeatDpdnciesFor_DirModes (ctrlvalue_set); 	   
+    	 	}    	 
+		     //------------- Set feature dependencies for omnidirectional mic modes -------------
+			else if (micMode == "Omni_mode" || micMode == "TSOmni_mode")  
+		    { 
+		    	// NOTE! a.) Setting the Fbc control dependency for omni mode, and b.) resetting the Wnc HW controls to the SW variable values 
+		       //		     were performed earlier on, inside MicMode_DetermineAndSet(), so they are not done a second time here.  
+				SetFeatDpdnciesFor_OmniModes (ctrlvalue_set);	    
+		     }
+		     else if (micMode == "SDMomni_mode")
+		     {
+				SetFeatDpdnciesFor_SDMOmniMode (ctrlvalue_set);	     
+		     }	     
+	     	println('[HAL]MLIB.MicMode_Set >>> micMode=' + micMode + '    ctrlvalue_set=' + ctrlvalue_set);	     	          
+	   	}
+	
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Determines the appropriate mic mode, then sets the HW control
+		-----------------------------------------------------------------------------------------------------------------*/		
+		function string MicMode_DetermineAndSet (string micMode)
+		{	
+			println('[HAL]MLIB.MicMode_DetermineAndSet >>> start... >> with micMode='+ micMode);
+			string ctrlvalue_set = "error";
+		
+			
+		   	switch (micMode)
+		   	{		
+				case "Omni_mode":
+				{ 
+					// Reset the Wnc HW controls to the SW variable values.
+					BasicLibrary_EWindScreen.EWindScreen_ResetHwCtrlsToSwVars();
+					
+					// Set SwMicMode to SwMicModeForOmni
+					Mid_Level_Library_Mic_Mode.OmniMicModeProc("Omni_mode");
+					  
+					// Adjust SwMicMode according to the activation states of Wnc / Izoom / OpenOpt,
+				    // then set the FBC parameters.
+				    ctrlvalue_set = Mid_Level_Library_Mic_Mode.ResetOmniForIzWncOo(); 					
+				}
+				case "SDMomni_mode":
+				{ 
+					// Binaural Single Dir Mic omnidirectional mode
+	   				// Set SwMicMode = SingleBinDirOmni
+					BasicLibrary_Mic_Mode.MicMode_Set("SingleBinDirOmni");
+					ctrlvalue_set = "SingleBinDirOmni";
+						    
+					// No need to reset the Wnc HW controls to the SW variable values as with regular omni,
+					// because only Swine is available for the Binaural Single Dir Mic fittings.
+						    
+					// No need to adjust SwMicMode according to the activation states of Wnc / Izoom / OpenOpt,
+					// because none of these features are available. NB. The FBC microphone configuration (for
+					// either single / dir mic) must be set to single mic in etemplates!     					
+				}			
+				case "TSOmni_mode":
+				{ 
+					// Omni mode for Test Setting / REMParamOff / MeasCond
+					// ER67367: Switch d8SwMacroVarEn26.on to indicate micmode is now changed by Test Settings/REMParamOff/MeasCond
+					BasicLibrary_Mic_Mode.SetInvalidOmniMicModeTestSetFlag(true);
+					//Reset the WNC HW controls to the SW variable values
+					BasicLibrary_EWindScreen.EWindScreen_ResetHwCtrlsToSwVars();
+					// Set SwMicMode to SwMicModeForFog
+					ctrlvalue_set = Mid_Level_Library_Mic_Mode.OmniMicModeProc("TSOmni_mode");
+					// Adjust SwMicMode according to the activation states of Wnc / Izoom / OpenOpt.
+					// then set the FBC paramemeters
+					// ctrlvalue_set = Mid_Level_Library_Mic_Mode.ResetOmniForIzWncOo();//interdepenency not needed anymore because of ER68373
+				}
+				case "Dir_mode":
+				{ 							
+					if (BasicLibrary_ProgramSelection.IsUniversal()) // If Universal program- i.e. from FirstFit
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoAdap");
+						ctrlvalue_set = "AutoAdap";
+					}
+					else // not universal program
+					{
+						if(cap:GMax >= 80)
+				        {
+							BasicLibrary_Mic_Mode.MicMode_Set("DirAdapFlat");
+				            ctrlvalue_set = "DirAdapFlat";
+						}
+						else // Gmax < 80
+						{
+							BasicLibrary_Mic_Mode.MicMode_Set("DirAdapHP");
+							ctrlvalue_set = "DirAdapHP";
+						}	     
+					}									     			
+				}
+				case "SDMdir_mode":
+				{ 
+					// Binaural Single Dir Mic directional mode
+					if (BasicLibrary_ProgramSelection.IsUniversal())
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoSingleBinDirAdap");
+						ctrlvalue_set = "AutoSingleBinDirAdap";
+					}
+					else
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("SingleBinDirAdap");
+						ctrlvalue_set = "SingleBinDirAdap";
+					}
+				}
+				case "TestDir_mode":
+				{ 
+					// Directional test mode					
+					BasicLibrary_Mic_Mode.MicMode_Set("TestDir");
+					ctrlvalue_set = "TestDir";				
+				}
+				case "NF_mode":
+				{ 
+					// Narrowfocus mode
+					if (BasicLibrary_ProgramSelection.IsUniversal())
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoNfcAdap");
+						ctrlvalue_set = "AutoNfcAdap";
+					}
+					else // not universal program
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("NfcAdap");
+					    ctrlvalue_set = "NfcAdap";			
+					}	
+				}
+				case "SL_mode":
+				{ 
+					// Sidelook mode						
+					if (BasicLibrary_ProgramSelection.IsUniversal())
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoSlkAdap");
+						ctrlvalue_set = "AutoSlkAdap";
+					}
+					else // not universal program
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("SlkAdap");
+						ctrlvalue_set = "SlkAdap";			
+					}	
+				}
+				case "SF_mode":
+				{ // Speechfocus mode						
+					if (BasicLibrary_ProgramSelection.IsUniversal())
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("AutoSelDir");
+						ctrlvalue_set = "AutoSelDir";
+					}
+					else // not universal program
+					{
+						BasicLibrary_Mic_Mode.MicMode_Set("SelDir");
+						ctrlvalue_set = "SelDir";			
+					}	
+				}
+				case "NF_and_SL_mode":
+				{	
+					// Narrowfocus and Sidelook mode												     						
+					BasicLibrary_Mic_Mode.MicMode_Set("AutoNfcSlkAdap");
+					ctrlvalue_set = "AutoNfcSlkAdap";										
+				}
+				case "NF_and_SF_mode":
+				{ 
+					// Narrowfocus and Speechfocus mode						
+					BasicLibrary_Mic_Mode.MicMode_Set("AutoNfcSelDirAdap");
+					ctrlvalue_set = "AutoNfcSelDirAdap";						
+				}						
+				default:
+				{
+					//Do nothing	
+				} 				
+			}    
+				
+			println('[HAL]MLIB.MicMode_DetermineAndSet >>> micMode=' + micMode + '    ctrlvalue_set=' + ctrlvalue_set);
+        	return ctrlvalue_set;       		 
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Directional MicMode logic processor for PP300
+		-----------------------------------------------------------------------------------------------------------------*/
+	    function void DirMicModeProcPP300()
+	    {
+	    	if(IsNarrowFocusSPASSAvailable() == true)
+	    	{
+	    		bool isNarrowFocusEnabled =  BasicLibrary_Mic_Mode.GetNfSwEnIsOn();	    			    		
+	    		if(isNarrowFocusEnabled)
+	    		{
+	    			BasicLibrary_Spass.SpassEn_Set(1);
+	    			
+	    			// Set mic-mode + snm SIN HW controls OFF
+			    	BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(0);// mic mode
+			    	BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set(0); // snm
+	    			
+	    		}
+	    		else
+	    		{
+	    			BasicLibrary_Spass.SpassEn_Set(0);
+	    			
+	    			 // Set mic-mode SIN HW control on if SW control is on
+			    	if(hi:d9SwMacroSpeechnoiseOnlyEnHp == d9SwMacroSpeechnoiseOnlyEnHp.on)
+			    	{
+			       		BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(1);
+			    	}
+	    		}	    		
+	    	}
+	    }
+		
+   		/*---------------------------------------------------------------------------------------------------------------*		
+		   Description:  Directional MicMode logic processor for PP500
+		-----------------------------------------------------------------------------------------------------------------*/
+		function void DirMicModeProcPP500 ()
+		{
+			println('[HAL]MLIB.DirMicModeProcPP500 >>> start....');            
+            string ctrlValue = "";
+		
+			// MONAURAL FITTING		
+			if ((env:DetHi == DetHi.BothSides) == false)
+			{
+				if (BasicLibrary_Mic_Mode.GetSfSwEnIsOn())//Speechfocus checkbox is ticked
+				{						
+					ctrlValue = "AutoSelDir";   
+					
+				}
+				else//Speechfocus checkbox is un-ticked
+				{					
+					ctrlValue = "AutoAdap";
+				}
+			}						
+			else			// BINAURAL FITTING
+			{
+				if (BasicLibrary_Mic_Mode.GetNfSwEnIsOn() == false &&//Narrowfocus & Speechfocus both un-ticked
+					BasicLibrary_Mic_Mode.GetSfSwEnIsOn() == false)
+				{				
+					ctrlValue = "AutoAdap";
+				}
+				else if (BasicLibrary_Mic_Mode.GetNfSwEnIsOn() == true &&//Narrowfocus & Speechfocus both ticked
+						 BasicLibrary_Mic_Mode.GetSfSwEnIsOn() == true)
+				{				
+					ctrlValue = "AutoNfcSelDirAdap";
+				}
+				else if (BasicLibrary_Mic_Mode.GetNfSwEnIsOn() == true &&//Narrowfocus ticked, Speechfocus un-ticked
+						 BasicLibrary_Mic_Mode.GetSfSwEnIsOn() == false)
+				{				
+					ctrlValue = "AutoNfcAdap";
+				}
+				else//Narrowfocus un-ticked, Speechfocus ticked
+				{					
+					ctrlValue = "AutoSelDir";	
+				}
+			}
+			BasicLibrary_Mic_Mode.MicMode_Set (ctrlValue);
+			
+			// Set feature dependencies, based on the micmode setting selected (above)
+			if(ctrlValue == "AutoAdap" || ctrlValue == "AutoSelDir")
+			{
+		        // Set mic-mode SIN HW control on if SW control is on
+			    if(hi:d9SwMacroSpeechnoiseOnlyEnHp == d9SwMacroSpeechnoiseOnlyEnHp.on)
+			    {
+			       BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(1);
+			    }
+			}
+			if(ctrlValue == "AutoNfcAdap" || ctrlValue == "AutoNfcSelDirAdap")
+			{
+		        // Set mic-mode + snm SIN HW controls OFF
+			    BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(0);// mic mode
+			    BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set(0); // snm
+			    // If WncEn SW variable is OFF, set Wnc HW controls for binaural mic mode
+			    if(hi:d8SwMacroWncEnHp == d8SwMacroWncEnHp.off)
+			    {
+					BasicLibrary_EWindScreen.EWind_SetHwCtrlsForBinMicModeAndEnOff();
+			    }     
+			}						
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Directional MicMode logic processor for PP700
+		-----------------------------------------------------------------------------------------------------------------*/
+		function void DirMicModeProcPP700 ()
+		{
+			println('[HAL]MLIB.DirMicModeProcPP700 >>> start....');
+			string ctrlValue = "";
+			
+			// MONAURAL FITTING
+			if ((env:DetHi == DetHi.BothSides) == false)
+			{
+				if (BasicLibrary_Mic_Mode.GetSfSwEnIsOn())//Speechfocus checkbox is ticked
+				{				
+					ctrlValue = "AutoSelDir";
+				}
+				//********************//
+				else//Speechfocus checkbox is un-ticked
+				{				
+					ctrlValue = "AutoAdap";
+				}
+			}			
+			// BINAURAL FITTING
+			else 
+			{
+				bool nfSWEnIsOn = BasicLibrary_Mic_Mode.GetNfSwEnIsOn();
+				bool slSWEnIsOn = BasicLibrary_Mic_Mode.GetSlSwEnIsOn();
+				if (nfSWEnIsOn == false &&	//Narrowfocus & Sidelook both un-ticked
+					slSWEnIsOn == false)
+				{				
+					ctrlValue = "AutoAdap";
+				}
+				else if (nfSWEnIsOn == true &&//Narrowfocus & Sidelook both ticked
+						 slSWEnIsOn == true)
+				{				
+					ctrlValue = "AutoNfcSlkAdap";
+				}
+				else if (nfSWEnIsOn == true &&//Narrowfocus ticked, Sidelook un-ticked
+						 slSWEnIsOn == false)
+				{				
+					ctrlValue = "AutoNfcAdap";
+				}
+				else//Narrowfocus un-ticked, Sidelook ticked 
+				{				
+					ctrlValue = "AutoSlkAdap";
+				}
+			}
+			BasicLibrary_Mic_Mode.MicMode_Set (ctrlValue);
+			
+			// Set feature dependencies, based on the micmode setting selected (above)
+			if(ctrlValue == "AutoSelDir" || ctrlValue == "AutoAdap")
+			{
+		        // Set the mic-mode SIN HW control on if SW control is on
+			    if(hi:d9SwMacroSpeechnoiseOnlyEnHp == d9SwMacroSpeechnoiseOnlyEnHp.on)
+			    {
+			       BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(1);
+			    }       
+			}
+			if(ctrlValue == "AutoNfcAdap" || ctrlValue == "AutoSlkAdap" || ctrlValue == "AutoNfcSlkAdap")
+			{
+		        // Set the mic-mode & snm SIN HW controls OFF
+			    BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(0); // mic mode
+			    BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set(0); // snm
+			    // If WncEn SW variable is OFF, set Wnc HW controls for binaural mic mode
+			    if(hi:d8SwMacroWncEnHp == d8SwMacroWncEnHp.off)
+			    {
+			   	 	BasicLibrary_EWindScreen.EWind_SetHwCtrlsForBinMicModeAndEnOff();
+			    }          
+			}						
+		}
+		
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Set tick-states of the micmode checkboxes in the universal program
+		   *             according to the input microphone mode. 
+		-----------------------------------------------------------------------------------------------------------------*/	
+		function void Set_MicMode_checkbox_states (string micMode)
+		{	                  	            
+			println('[HAL]MLIB.Set_MicMode_checkbox_states >>> start... >> with micMode='+ micMode);
+			
+            switch (micMode)
+			{
+                case "Omni_mode" :
+                {
+					BasicLibrary_Mic_Mode.SetDirSwEnIsOn(false);
+                    BasicLibrary_Mic_Mode.SetSlSwEnIsOn(false);
+                    BasicLibrary_Mic_Mode.SetSfSwEnIsOn(false);
+                    BasicLibrary_Mic_Mode.SetNfSwEnIsOn(false);            
+				}
+                case "SDMomni_mode" :
+                {   	                   
+					BasicLibrary_Mic_Mode.SetSDMdirSwEnIsOn(false);
+				}     
+	            case "Dir_mode" :
+	            {   
+                  	BasicLibrary_Mic_Mode.SetDirSwEnIsOn(true);
+                    BasicLibrary_Mic_Mode.SetSlSwEnIsOn(false);
+                    BasicLibrary_Mic_Mode.SetSfSwEnIsOn(false);
+                    
+                    if(IsNarrowFocusSPASSAvailable())
+                    {	
+                    	BasicLibrary_Mic_Mode.SetNfSwEnIsOn(true);
+                    }
+                    else
+                    {
+                    	BasicLibrary_Mic_Mode.SetNfSwEnIsOn(false);
+                    }
+                }
+                case "SDMdir_mode" :
+                {	               
+                    BasicLibrary_Mic_Mode.SetSDMdirSwEnIsOn(true);
+                }    
+                case "TestDir_mode" :
+                {   
+                    BasicLibrary_Mic_Mode.SetDirSwEnIsOn(true);
+                    BasicLibrary_Mic_Mode.SetSlSwEnIsOn(false);
+                    BasicLibrary_Mic_Mode.SetSfSwEnIsOn(false);
+                    BasicLibrary_Mic_Mode.SetNfSwEnIsOn(false);
+                }
+                case "NF_mode" :
+                {
+                    BasicLibrary_Mic_Mode.SetDirSwEnIsOn(true);
+                    BasicLibrary_Mic_Mode.SetSlSwEnIsOn(false);
+                    BasicLibrary_Mic_Mode.SetSfSwEnIsOn(false);
+                    BasicLibrary_Mic_Mode.SetNfSwEnIsOn(true);
+                }
+                case "SL_mode" :
+                {
+                    BasicLibrary_Mic_Mode.SetDirSwEnIsOn(true);
+                    BasicLibrary_Mic_Mode.SetSlSwEnIsOn(true);
+                    BasicLibrary_Mic_Mode.SetSfSwEnIsOn(false);
+                    BasicLibrary_Mic_Mode.SetNfSwEnIsOn(false);
+                }
+                case "SF_mode" :
+                {   
+                    BasicLibrary_Mic_Mode.SetDirSwEnIsOn(true);
+                    BasicLibrary_Mic_Mode.SetSlSwEnIsOn(false);
+                    BasicLibrary_Mic_Mode.SetSfSwEnIsOn(true);
+                    BasicLibrary_Mic_Mode.SetNfSwEnIsOn(false);
+                }
+                case "NF_and_SL_mode" :
+                {
+                    BasicLibrary_Mic_Mode.SetDirSwEnIsOn(true);
+                    BasicLibrary_Mic_Mode.SetSlSwEnIsOn(true);
+                    BasicLibrary_Mic_Mode.SetSfSwEnIsOn(false);
+                    BasicLibrary_Mic_Mode.SetNfSwEnIsOn(true);
+                }
+                case "NF_and_SF_mode" :
+                {
+                    BasicLibrary_Mic_Mode.SetDirSwEnIsOn(true);
+                    BasicLibrary_Mic_Mode.SetSlSwEnIsOn(false);
+                    BasicLibrary_Mic_Mode.SetSfSwEnIsOn(true);
+                    BasicLibrary_Mic_Mode.SetNfSwEnIsOn(true);
+                }           
+            }
+		}
+
+
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Set FBC, Wnc, Spass, SIN and Activation threshold feature dependencies for running a binaural
+		   *             directional microphone mode.
+		   *             (Note that there is no need to take care of dependencies between Wnc and Input-mode here,
+		   *             because this function is not activated from programs where a non-microphone input mode can be selected.)  
+		-----------------------------------------------------------------------------------------------------------------*/	
+		function void SetFeatDpdnciesFor_BinDirModes (string ctrlvalue_set)
+        {       
+			println('[HAL]MLIB.SetFeatDpdnciesFor_BinDirModes >>> start... >> with ctrlvalue_set='+ ctrlvalue_set);
+	          
+	        BasicLibrary_FeedbackStopper.FBCSwitchdepMicMode_Set(1); // Set FBC controls to dual mic configuration.  
+		    if(hi:d8SwMacroWncEnHp == d8SwMacroWncEnHp.off)// If WncEn SW variable is OFF, set Wnc HW controls for binaural mic mode.
+			{
+				BasicLibrary_EWindScreen.EWind_SetHwCtrlsForBinMicModeAndEnOff();
+			}
+			
+			High_Level_Library_Spass.SpassEn_ForOmni("Directional"); // Turn on Spass & reset SNM controls, if previously on.
+			
+	        // Set mic-mode + snm SIN HW controls OFF
+		    BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(0); // mic mode
+		    BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set(0); // snm
+	        // Set Activation threshold controls
+	        if (ctrlvalue_set == "NfcAdap" || ctrlvalue_set == "SlkAdap")
+	        {
+				High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_UpdateForMicMode("Set_to_0dB"); // Set to 0dB for non-automatic directional modes.
+			}
+			else
+			{
+				High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_UpdateForMicMode("Set_to_SWvar"); // Else set to the SW variable setting.
+	        }	       
+     	}
+     
+		/*---------------------------------------------------------------------------------------------------------------*		 
+		   Description:  Set feature dependencies for the Single Dir Mic directional mode
+		-----------------------------------------------------------------------------------------------------------------*/	
+	    function void SetFeatDpdnciesFor_SDMDirMode (string ctrlvalue_set)
+		{       
+			println('[HAL]MLIB.SetFeatDpdnciesFor_BinDirModes >>> start... >> with ctrlvalue_set= SDMdir_mode');
+		            
+			High_Level_Library_Spass.SpassEn_ForOmni("Directional"); // Turn on Spass & reset SNM controls, if previously on.	      
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set(0); // Set snm SIN HW controls OFF
+			      
+  	        // - No FBC dependency: dir and omni SDM modes both use a single mic FBC configuration.
+	        // - No Wnc dependency: only Swine available
+	        // - No Activation threshold dependency: feature is not available.
+            // - No Mic mode SIN dependency: feature is not available.	         	             
+		          
+	     }
+     
+		/*---------------------------------------------------------------------------------------------------------------*		  
+		   Description:  Set FBC, Wnc, Spass, SIN and Activation threshold feature dependencies for running a non-binaural
+		   *             directional microphone mode.
+		   *             (Note that there is no need to take care of dependencies between Wnc and Input-mode here,
+		   *             because this function is not activated from programs where a non-microphone input mode can be selected.)   
+		-----------------------------------------------------------------------------------------------------------------*/	
+		function void SetFeatDpdnciesFor_DirModes (string ctrlvalue_set)
+	    {
+    	    println('[HAL]MLIB.SetFeatDpdnciesFor_DirModes >>> start... >> with ctrlvalue_set='+ ctrlvalue_set);
+    	        	                                                            
+    	    BasicLibrary_FeedbackStopper.FBCSwitchdepMicMode_Set(1); // Set FBC controls to dual mic configuration for all other directional modes.
+    	     
+    	    Mid_Level_Library_Mic_Mode.NFSLMicModeProcForOff(); // Set the Ewindscreeen controls to the SW variable positions,
+    	                                                        // and set both Speech in noise checkbox HW controls to the SW variable positions.   	     
+    	    High_Level_Library_Spass.SpassEn_ForOmni("Directional"); // Turn on Spass & reset SNM controls, if Spass was previously on.
+    	     // Set Activation threshold controls
+	        if (ctrlvalue_set == "DirAdapFlat" || ctrlvalue_set == "DirAdapHP" || ctrlvalue_set == "SelDir" ||  ctrlvalue_set == "TestDir")
+			{
+				High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_UpdateForMicMode("Set_to_0dB"); // Set to 0dB for non-automatic directional modes.
+	        }
+	        else
+	        {
+				High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_UpdateForMicMode("Set_to_SWvar"); // Else set to the SW variable setting.
+	        }	         	     
+       	}
+       
+	   /*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Set Spass, SIN and Activation threshold feature dependencies for running an
+		   *             omnidirectional microphone mode.
+		   *             (Note that there is no need to take care of dependencies between Wnc and Input-mode here,
+		   *             because this function is not activated from programs where a non-microphone input mode can be selected.)   
+		-----------------------------------------------------------------------------------------------------------------*/	
+    	function void SetFeatDpdnciesFor_OmniModes (string ctrlvalue_set)
+       	{	 
+			println('[HAL]MLIB.SetFeatDpdnciesFor_OmniModes >>> start... >> with ctrlvalue_set='+ ctrlvalue_set);
+			
+  	        // NOTE!! This function should only be called from inside Mid_Level_Library_Mic_Mode.MicMode_Set(). 
+		    // It is not intended to be called from anywhere else. 
+		    // This is because resetting the Wnc HW controls to the SW variable values are not performed in this function. 
+		    // (This instead performed in MicMode_Set(), which calls this function afterwards.)   
+	        
+	        Mid_Level_Library_Mic_Mode.SetFBCforOmni(ctrlvalue_set); // Set the FBC controls according to the omnimode type.    
+	        High_Level_Library_Spass.SpassEn_ForOmni("Omnidirectional"); // Turn OFF Spass & reset SNM controls, if required.
+	        BasicLibrary_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_Set(0); // Set micmode SIN HW control off.
+	        
+		    // Turn on snm SIN HW controls if the SW control is on, and we're in the extended snm view.
+	        if(BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Get_Sw() == true &&
+	        	hi:d8SwMacroNrViewHp == d8SwMacroNrViewHp.advance) 
+		    {
+		       BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set(1); 
+		    }
+		      
+            // Set Activation threshold controls to their SW settings.	        
+            High_Level_Library_ActivationThresholdDD.ActivationThresholdDD_UpdateForMicMode("Set_to_SWvar"); 	    	             
+      	}
+      
+		/*---------------------------------------------------------------------------------------------------------------*		   
+		   Description:  Set feature dependencies for the Single Dir Mic omnidirectional mode 
+		-----------------------------------------------------------------------------------------------------------------*/	
+    	function void SetFeatDpdnciesFor_SDMOmniMode (string ctrlvalue_set)
+       	{	 
+       		// - No FBC dependency: dir and omni SDM modes both use a single mic FBC configuration.
+		    // - No Activation threshold dependency: feature is not available.
+	        // - No Mic mode SIN dependency: feature is not available.ww	        
+			println('[HAL]MLIB.SetFeatDpdnciesFor_OmniModes >>> start... >> with ctrlvalue_set='+ ctrlvalue_set);
+
+	        High_Level_Library_Spass.SpassEn_ForOmni("Omnidirectional"); // Turn OFF Spass & reset SNM controls, if required.
+	        	           
+		    // Turn on snm SIN HW controls if the SW control is on, and we're in the extended snm view.		    
+	        if(BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Get_Sw() == true &&
+	        	hi:d8SwMacroNrViewHp == d8SwMacroNrViewHp.advance) 
+		    {
+				BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set(1); 
+		    }  		    	       
+      	}      
+	    	
+	}
+}

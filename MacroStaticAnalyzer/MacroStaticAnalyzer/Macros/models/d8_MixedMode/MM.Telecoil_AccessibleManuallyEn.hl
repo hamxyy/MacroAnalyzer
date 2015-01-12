@@ -1,0 +1,69 @@
+
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                           Accessible Manually Telecoil Checkbox
+// Initial Version                										   :  2011-03-08   Cecil Wilson
+// Updated all functions												   :  2011-03-14   Cecil Wilson
+// Added Tinnitus greyout												   :  2011-03-23   Cecil Wilson  
+// Removed env:Prog workaround											   :  2011-07-07   Cecil Wilson	
+// Add println for MPV testing											   :  2011-09-22   Jenny Lin
+// Macro code Cleanup													   :  2012-02-14   Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Changed IsEnabled function to use BasicLibrary_Noiser.Noiser_IsOnAndPure() :2012-06-19	Mang Yew
+// *********************************************CODE FREEZE*******************************************************
+// ******SIFIT7.2_PEERREVIEWED: No changes required							 :  2013-07-30   Jenny, Judith
+// updated IsVisible() to call the Is_Telecoil_Input_Mode()	: 2013-11-04 Jenny
+// refractor: Optimize code									: 2013-12-02 Jenny
+// updated println statement for debugging.											: 2014-01-15 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// ****** SIFIT7.4 ******
+// Updated SetPos to PrintEnvSettings to test SideSelection macro.  				:  2014-08-25   Jenny
+// FR68862: Call HLIB for IsVisible checkbox to hide for Induction Loop Program.	: 2014-09-22 Jenny
+// Code cleanup: Updated printlines.												: 2014-10-09 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode Telecoil_AccessibleManuallyEn
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MixedMode.Telecoil_AccessibleManuallyEn.IsVisible'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+
+			bool retVal = High_Level_Library_AccessibleManually.Telecoil_AccessibleManuallyEn_IsVisible();
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.Telecoil_AccessibleManuallyEn.IsEnabled');
+
+			bool retVal = (BasicLibrary_Noiser.Noiser_IsOnAndPure () == false &&
+				High_Level_Library_AccessibleManually.Telecoil_AccessibleManuallyEn_IsEnabled());
+				
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.Telecoil_AccessibleManuallyEn.MaxPos');
+
+			int retVal = 1;
+			return retVal;
+		}
+
+		application function int GetPos ()
+		{
+			println ('[HAL]MixedMode.Telecoil_AccessibleManuallyEn.GetPos');
+
+			int retVal = BasicLibrary_AccessibleManually.AccessibleManuallyEn_Get_HPx (env:Prog);
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.Telecoil_AccessibleManuallyEn.SetPos'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+			
+			BasicLibrary_AccessibleManually.AccessibleManuallyEn_Set_HPx (env:Prog, pos);
+		}
+	}
+}

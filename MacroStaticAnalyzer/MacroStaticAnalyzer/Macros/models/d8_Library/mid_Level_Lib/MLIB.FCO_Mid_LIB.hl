@@ -1,0 +1,39 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                            MID LEVEL PRICEPOINT LIBRARY : FCO
+// Initial Version                                          		: 2011-11-28 Nadia Neugeborn 
+// No default: enable/disable of FCO is implemented by Cxx now		: 2011-12-15 Nadia Neugeborn
+// Updated IsVisible for PP100										: 2012-03-14 Leong Mang Yew
+// Peer review changes												: 2012-06-20 Nadine and Frauke
+// FcoEn_IsVisible() changed- function now returns false for PP75.  : 2013-02-27 Al
+// Renamed FcoEn_IsVisible() to be less function specific 			:2013-06-11 Raymond
+*/
+// *********************************************CODE FREEZE*******************************************************
+// Optimize code.								: 2014-03-03 Jenny
+// Sifit7.3 Peer review																: 2014-04-21 Jenny, Jeline
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat {
+
+	package Lib Mid_Level_Library_FCO{
+		
+	/*---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    Fco_IsAvailable()
+//   Input		:  none
+//   Output      :  <bool> Returns True if available; False if Not available 
+//   Description:  Decides the availability of the FCO feature. Available for all PPs except PP75.
+-----------------------------------------------------------------------------------------------------------------*/ 	
+		public function bool Fco_IsAvailable(){ //SIFIT7.3PEERREVIEWED	
+			if(cap:PricePoint > PricePoint.PP75){
+				println('[HAL]MLIB.Fco_IsAvailable = TRUE for >PricePoint.PP75');
+				return true;
+			}
+			else{
+				println('[HAL]MLIB.Fco_IsAvailable = FALSE for PricePoint.PP75');
+				return false;
+			}
+		} //Closes Mid_Level_Library_FCO.Fco_IsAvailable()
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Middle Level PP LIBRARY    FCO
+-----------------------------------------------------------------------------------------------------------------*/	
+	}	//package Mid_Level_Library_FCO
+}	//namespace shs.sat
+		

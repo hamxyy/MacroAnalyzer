@@ -1,0 +1,62 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        Power On Delay CheckBox
+// Initial Version      without isEnabled --> still missing          			:  	2011-04-20  Meike Doose
+// Add println for MPV testing													:  	2011-09-22  Jenny Lin
+// Macro code Cleanup															:  	2012-02-14  Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// Macro Peer Review															:	2012-06-21 Nadia/Frauke/MangYew
+*********************************************CODE FREEZE**********************************************************
+// Sifit 7.2 Peer Review															: 2013-07-31 Jenny, Judith, Raymond
+// Default for Power On/Off is set to ON via Power On Delay, no longer through beeps
+// therefor a new function is added: "High_Level_Library_PowerOnDelay.PowerOnDelay_Set(pos)" : 2014-04-24 Frauke
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode PowerOnDelayEn
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MM - PowerOnDelayEn - IsVisible = TRUE');
+			return true;
+		} // Closes PowerOnDelayEn.IsVisible
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MM - PowerOnDelayEn - IsEnabled = TRUE');
+			return true;
+		} // Closes PowerOnDelayEn.IsEnabled
+		application function int MaxPos ()
+		{
+			println ('[HAL]MM - PowerOnDelayEn - MaxPos = 1');
+			return 1; // This is a Check Box with 2 states. 0 and 1
+
+		} // Closes PowerOnDelayEn.MaxPos
+		application function bool IsEnabledPos (int pos)
+		{
+			println ('[HAL]MM - PowerOnDelayEn - IsEnabledPos = TRUE');
+			return true;
+		} // Closes PowerOnDelayEn.IsEnabledPos
+		application function int GetPos ()
+		{
+			int retval = -1;
+			if (BasicLibrary_PowerOnDelay.PowerOnDelayEn_Get_Entry () == true)
+			{
+				retval = 1;
+			}
+			else
+			{
+				retval = 0;
+			}
+			println ('[HAL]MM - PowerOnDelayEn - GetPos = ' + retval);
+			return retval;
+		} // Closes PowerOnDelayEn.GetPos
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MM - PowerOnDelayEn - SetPos = ' + pos);
+			High_Level_Library_PowerOnDelay.PowerOnDelay_Set(pos);
+			
+		} // Closes PowerOnDelayEn.SetPos
+
+	} //package MixedMode.PowerOnDelayEn
+
+} //namespace shs.sat

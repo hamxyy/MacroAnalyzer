@@ -1,0 +1,238 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                                 HIGH LEVEL LIBRARY : Direct Audio Input (DAI)
+// Initial Version                						    				: 2011-03-28 Cecil Wilson
+// Update env:Prog for DAI 										            : 2011-06-14 Chuah LayYuan
+// Update env:Prog for Get function											: 2011-07-07 Cecil Wilson
+// Add DAI_ToggleEn_IsEnabled function										: 2011-08-04	
+// Modified handling for tick with greyOut							        : 2011-11-08 Chuah LayYuan
+// Added Accessible Manually BLIB reuse										: 2011-12-20 Cecil Wilson
+// Added Valid program check												: 2011-12-21 Cecil Wilson
+// Added DAI_ToggleEn_Set function and Macro code clean up					: 2012-02-14 Cecil Wilson
+// Added Automatic Audioshoe Detection based Greyout for Toggle				: 2012-06-15 Cecil Wilson  
+// Updated Based on peer review. 
+	Added BasicLibrary_DAI.DAI_ToggleEn_Get_Mode_By_Hw()
+	in SpeechActivatedFM_En_IsEnabled(). 
+	Removed Blib Dai.SpeechActivatedFM_En_Get_Mode()						: 2012-06-21 Mang Yew
+// Added new function based on peer review "SpeechActivatedFM_En_Set"		: 2012-06-21 Cecil Wilson
+// Added new function call
+	Mid_Level_Library_DAI.Toggle_GreyedOut_RockerSwitch_Only()
+	to DAI_ToggleEn_IsEnabled() due to Orion M greying out Toggle when 
+	UserControl Function is not set to Program Change or Volume+Prg Change	: 2012-08-07 Mang Yew
+// Changed Toggle_GreyedOut_RockerSwitch_Only() to 
+   Check_Program_Change_UserControl_For_Toggle_Greyed_Out(). CR56697		: 2012-08-16 Mang Yew
+// Removed ProgramControlLocal and update IsEnabled() for and DAI Toggle due to ER59269 .	:  2013-01-31 Mang Yew	   
+// ******SIFIT7.2_PEERREVIEWED: 										  :  2013-07-30   Jenny, Judith 
+// Added DAIFeature_For_InputModeDD()					: 2013-11-04 Jenny
+// refractor: Optimize code									: 2013-12-02 Jenny
+// updated println statement for debugging.											: 2014-01-10 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// Sifit7.4 Peer review: in DAI_ToggleEn_IsEnabled (), 
+// change Mid_Level_Library_UserControl.Check_Program_Change_UserControl_For_Toggle_Greyed_Out () 
+// to Mid_Level_Library_UserControl.Check_Program_Change_UserControl () 			: 2014-11-20 MieMie/Sultan/Jeline
+/*$$---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib High_Level_Library_DAI
+	{
+	/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    DAIFeature_For_InputModeDD
+//   Input      :  <int> Position of checkbox 1= Ticked/checked  0= Unticked/UnChecked
+//   Output      :  none 
+//   Description:  Sets Speech activated FM checkbox, Toggle checkbox & Automatic audioshoe detection
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void DAIFeature_For_InputModeDD () //SIFIT7.3PEERREVIEWED
+		{
+			if (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Direct_Audio_InputFM)
+			{ // Only activated in DAI
+				println('[HAL]HLIB.DAIFeature_For_InputModeDD >> For DAI Input >> Sets SpeechActivated FM ON, Toggle OFF, AutoAshoeDetect ON');
+	
+				High_Level_Library_DAI.SpeechActivatedFM_En_Set (1);
+				// note that the Microphone level will be adjusted based on position of DAI_SAFM.
+				High_Level_Library_DAI.DAI_ToggleEn_Set (0);
+				High_Level_Library_DAI.AutoAudioShoeDetectEn_Set (1);
+			}
+			else
+			{
+				println('[HAL]HLIB.DAIFeature_For_InputModeDD >> For NON-DAI Input >> Sets SpeechActivated FM, Toggle, AutoAshoeDetect OFF');
+
+				High_Level_Library_DAI.SpeechActivatedFM_En_Set (0);
+				// note that the Microphone level will be adjusted based on position of DAI_SAFM.
+				High_Level_Library_DAI.DAI_ToggleEn_Set (0);
+				High_Level_Library_DAI.AutoAudioShoeDetectEn_Set (0);
+			}
+		} //Closing High_Level_Library_DAI.DAIFeature_For_InputModeDD
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    AutoAudioShoeDetectEn_Set
+//   Input      :  <int> 1 indicates CheckBox is ticked for current Hearing Program
+//   Output      :  void  
+//   Description:  Resolves the Hearing Program dependencies and sets AutoAudioShoeDetect. Only 
+                   one HP can have AutoAudioShoeDetect Enabled at any one time.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void AutoAudioShoeDetectEn_Set (int pos) //SIFIT7.3PEERREVIEWED
+		{
+		//  Get the Hearing Program for which the AutoAudioShoeDetect is enabled currently (if at all it is Enabled)
+
+			int Previous_AutoAudioShoeDetectEnabled_HP = BasicLibrary_DAI.AutoAudioShoeDetectEn_Get_HPx ();
+			if (pos == 1)
+			{
+			// Needs to enable AutoAudioShoeDetect for Current HP and disable if already selected for other programs			
+
+				if (Previous_AutoAudioShoeDetectEnabled_HP >= 0 &&
+						Previous_AutoAudioShoeDetectEnabled_HP < 6)
+				{ // Must be a valid HP					
+
+				// Disable AutoAudioShoeDetect for Previous_AutoAudioShoeDetectEnabled_HP  (this restores the Accessable manually for that HP)
+
+					BasicLibrary_DAI.AutoAudioShoeDetectEn_Set_HPx (Previous_AutoAudioShoeDetectEnabled_HP, 0);
+					// Enabled Accessable Manually by RCU & Pushbutton for Previous HP 
+
+					BasicLibrary_AccessibleManually.AccessibleManuallyEn_Set_HPx (Previous_AutoAudioShoeDetectEnabled_HP, 1);
+				} // Enable AutoAudioShoeDetect for Current HP
+ 				BasicLibrary_DAI.AutoAudioShoeDetectEn_Set_HPx (env:Prog, 1); // Disable Accessable Manually by RCU & Pushbutton for Current HP
+
+				BasicLibrary_AccessibleManually.AccessibleManuallyEn_Set_HPx (env:Prog, 0);
+				// Enable Toggle if it was disabled due to AutoAshoeDetect and was selected previously (stored in Software variable)
+
+				if (BasicLibrary_DAI.DAI_ToggleEn_Get_Mode () == 1 &&
+						// Check if Toggle was enabled previously
+ 						High_Level_Library_DAI.DAI_ToggleEn_IsEnabled () == true
+						// and now the Toggle is Enabled due to Automatic Autoshoe checkbox is now checked need to SET the Toggle Functionality ON
+					)
+				{
+					println ('[HAL]High_Level_Library_DAI.AutoAudioShoeDetectEn_Set- Toggle set to ON ');
+					BasicLibrary_DAI.DAI_ToggleEn_Set_Mode (1);
+				}
+			}
+			else
+			{ // Disable AutoAudioShoeDetect for Current HP if already selected							
+
+				BasicLibrary_DAI.AutoAudioShoeDetectEn_Set_HPx (env:Prog, 0);
+				// Enabled Accessable Manually by RCU & Pushbutton for Previous HP 
+
+				BasicLibrary_AccessibleManually.AccessibleManuallyEn_Set_HPx (env:Prog, 1);
+				// Disable Toggle functionality in Hardware
+
+				BasicLibrary_DAI.DAI_ToggleEn_Set_Mode_Only_Hardware (0);
+			}
+		} // Closing High_Level_Library_DAI.AutoAudioShoeDetectEn_Set
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    AutoAudioShoeDetectEn_Get
+//   Input      :  None
+//   Output      :  <int> 1 if the AutoAudioShoeDetect is enabled for the current Hearing program 
+//   Description:  Checks if the AutoAudioShoeDetect is enabled for the Current hearing program and returns 1 if enabled.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int AutoAudioShoeDetectEn_Get () //SIFIT7.3PEERREVIEWED
+		{
+			//  Get the Hearing Program for which the AutoAudioShoeDetect is enabled currently (if at all it is Enabled)			
+			// If the AutoAudioShoeDetect is enabled for the current HP then return the status 'Checked/ticked/enabled' ie 1
+			if (BasicLibrary_DAI.AutoAudioShoeDetectEn_Get_HPx () == env:Prog)
+			{ // env_Prog counts from 0 not from 1 ie HP1 == env_Prog=0
+ 				println ('[HAL]HLIB.AutoAudioShoeDetectEn_Get - GetPos = 1');
+ 				return 1;
+			}
+			else
+			{
+				println ('[HAL]HLIB.AutoAudioShoeDetectEn_Get - GetPos = 0');
+				return 0;
+			}
+		} //Closing High_Level_Library_DAI.AutoAudioShoeDetectEn_Get
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SpeechActivatedFM_En_IsEnabled
+//   Input      :  None
+//   Output      :  <bool> true if the SpeechActivatedFM is not Greyed out for the current Hearing program 
+//   Description:  Checks if the SpeechActivatedFM is Greyed out for the Current hearing program and returns false if Greyed out.
+* 			condition for enabling Speech Activated FM checkbox
+* 					   1) Toggle check box not activated AND
+* 					   2) Tinnitus not pure mode AND
+* 					   3) Mix with microphone is ON
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool SpeechActivatedFM_En_IsEnabled () //SIFIT7.3PEERREVIEWED
+		{ //  Greyout if  ToggleEn is checked 
+			return (BasicLibrary_DAI.DAI_ToggleEn_Get_Mode () != 1 &&
+					BasicLibrary_DAI.DAI_ToggleEn_Get_Mode_By_Hw () != 1 &&
+					BasicLibrary_Noiser.Noiser_IsOnAndPure () != true &&
+					(BasicLibrary_MicrophoneMix.DAI_MixMicrophoneEn_Get_Mode () == 1));
+		} //Closing High_Level_Library_DAI.SpeechActivatedFM_En_IsEnabled
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    DAI_ToggleEn_IsEnabled
+//   Input      :  None
+//   Output      :  <bool> true if the Toggle is not Greyed out for the current Hearing program 
+//   Description:  Checks if the Toggle is Greyed out for the Current hearing program and returns false if Greyed out.   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool DAI_ToggleEn_IsEnabled () //SIFIT7.3PEERREVIEWED
+		{ //  Greyout if  ToggleEn is checked 
+			// Tinnitus Greyout or
+			// Mix Mic Checkbox Greyout or
+			// Automatic Audioshoe Detection Greyout
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure () == true || 
+					(BasicLibrary_MicrophoneMix.DAI_MixMicrophoneEn_Get_Mode () == 0) ||
+					High_Level_Library_DAI.AutoAudioShoeDetectEn_Get () == 0)
+			{
+				println ('[HAL]HLIB.DAI_ToggleEn_IsEnabled FALSE');
+				return false;
+			}
+			else
+			{ // Check if local control or RCU available
+ 				if(Mid_Level_Library_UserControl.Check_Program_Change_UserControl () == false)
+				{
+					println ('[HAL]HLIB.DAI_ToggleEn_IsEnabled FALSE');
+					return false;
+				}
+				else
+				{
+					println ('[HAL]HLIB.DAI_ToggleEn_IsEnabled TRUE');
+					return true;
+				}
+			}
+		} //Closing High_Level_Library_DAI.DAI_ToggleEn_IsEnabled
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    DAI_ToggleEn_Set
+//   Input      :  <int> Position of checkbox 1= Ticked/checked  0= Unticked/UnChecked
+//   Output      :  none 
+//   Description:  Sets Toggle state based managing priority to the SpeechActivatedFM
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void DAI_ToggleEn_Set (int pos) //SIFIT7.3PEERREVIEWED
+		{
+ 			BasicLibrary_DAI.DAI_ToggleEn_Set_Mode (pos);
+			//Toggle and Speech activated FM are mutual exclusive. Toggle high priority. 
+
+			// Therefore, when toggle is active, OFF Speech Activated FM.
+ 			if (pos == 1)
+			{ //Set Speech activated FM = OFF
+ 				println ('[HAL]MM - DAI_ToggleEn - SetPos = ' + pos + ' disable SpeechActivatedFM_En');
+				High_Level_Library_DAI.SpeechActivatedFM_En_Set (0);
+			}
+		} //Closing High_Level_Library_DAI.DAI_ToggleEn_Set
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//   Higher Level PP LIBRARY Function:    SpeechActivatedFM_En_Set
+//   Input      :  <int> Position of checkbox 1= Ticked/checked  0= Unticked/UnChecked
+//   Output      :  none 
+//   Description:  Sets Speech activated FM checkbox and updated the slider for Microphone Level 
+// 					SpeechActFM = On, MicLevel = -9dB
+// 					SpeechActFM = Off, MicLevel = 0dB
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SpeechActivatedFM_En_Set (int pos) //SIFIT7.3PEERREVIEWED
+		{
+			BasicLibrary_DAI.SpeechActivatedFM_En_Set_Mode (pos);
+			
+			if(pos==1){
+				High_Level_Library_MicrophoneMix.Set_MicrophoneLevelSL_CxxPos (Mid_Level_Library_MicrophoneMix.SpeechActFM_Mix_MicLevelSL_Default_pos());
+			}
+			else{
+				 High_Level_Library_MicrophoneMix.Set_MicrophoneLevelSL_CxxPos (Mid_Level_Library_MicrophoneMix.MicrophoneMode_Mix_MicLevelSL_Default_pos());
+			}
+		} //Closing High_Level_Library_DAI.SpeechActivatedFM_En_Set
+
+		/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of High Level LIBRARY Direct Audio Input (DAI)    
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package High_Level_Library_DAI
+
+} //namespace shs.sat

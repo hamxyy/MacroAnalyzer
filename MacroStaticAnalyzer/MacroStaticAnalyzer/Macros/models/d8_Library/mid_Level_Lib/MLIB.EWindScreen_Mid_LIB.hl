@@ -1,0 +1,230 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                                 			Mid_Level_Library EWindScreen
+// Initial Version                                         			:	2011-02-16  Meike Doose
+// Include isVisible functions										:	2011-02-18	Meike Doose
+// Renamed Library Package name					            		:   2011-02-21  Cecil Wilson
+// Added Zero based Slider positions like in CXX  	        		:   2011-02-24  Cecil Wilson
+// Updated Function structure with single Remapping Funct   		:   2011-03-02  Meike Doose
+// Include Cap PricePoint and HiIdentifier							:	2011-03-02	Meike Doose
+// Removed Package LIB workaround 									:   2011-03-03	Cecil Wilson
+// include Cap PP and HiIdentifier workaround						:	2011-03-17	Meike Doose
+// removed cap workarounds											:   2011-05-20  Cecil Wilson
+// delete SL from Default function name for First Fit       		:   2011-06-09  Cecil Wilson
+// removed cap:PricePoint workaround from isVisible function		:   2011-07-07  Cecil Wilson
+// slider for PP300&PP100 default to "med" since not visible		:	2011-12-23  Jenny Lin
+// removed PP dependency for Remapped and MaxPos for SL				:	2012-04-11  Jenny Lin
+// Added En_DefaultPos(), updated SL_DefaultPos()					:	2012-04-16	Nadia Neugeborn
+// Peer review changes												: 2012-06-15 Judith, Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Updated library with SWINE implementation						:	2012-12-10 Mang Yew
+// Peer review changes										:	2013-01-02 Mang Yew
+// Peer review changes update comments						:	2013-01-08 Jenny Lin
+// *********************************************CODE FREEZE For 7.1***********************************************
+// FR60086 - PP300/100 devices now default to Ewindscreen 'min' setting.  : 2013-01-31 Al Manders 
+// EWindScreenEn_IsVisible() altered- PP75 returns false.                 : 2013-02-28 Al Manders
+// Added PP75 code to EWindScreenEn_DefaultPos()- default setting after FF is 'off'.    : 2013-03-06 Al Manders
+// In EWindScreenSL_DefaultPos(), replaced the If statements with a switch-case.        : 2013-03-06 Al Manders
+// Updated EWindScreenSL_Set to add switch WNC max settings								: 2014-01-21 Raymond
+// Added case0 in EWindScreenEn_Set_Remapped_Pos										: 2014-02-05 Mie Mie
+// Added 'else' condition for case 0 in EWindScreenEn_Set_Remapped_Pos					: 2014-02-06 Mie Mie
+// 7.3 Peer Review																				: 2014-04-15 Raymond
+*/
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat {
+	
+	using shs_sat.*;
+	package  Lib Mid_Level_Library_EWindScreen{
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Low Level PP LIBRARY Function:    EWindScreenEn_IsVisible
+//   Input		:  none
+//   Ouput      :  <bool> Returns True if visible; False if Not Visible 
+//   Description:  decides the visibility of the EWindScreenEn 
+-----------------------------------------------------------------------------------------------------------------*/ 	
+		public function bool EWindScreenEn_IsVisible(){ // 7.3 Reviewed
+			bool retval = false;
+			switch(cap:PricePoint){
+				case PricePoint.PP700:{          
+				          retval = true;
+				} 
+				case PricePoint.PP500:{
+						  retval = true;
+				}
+				case PricePoint.PP300:{          
+				          retval = true;
+				} 
+				case PricePoint.PP100:{
+						  retval = true;
+				}
+				default:{          // False for PP75.
+					      retval = false;	
+				}
+			}
+			return retval;
+		} //Closes Mid_Level_Library_EWindScreen.EWindScreenEn_IsVisible
+
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Low Level PP LIBRARY Function:    EWindScreenSL_IsVisible
+//   Input		:  none
+//   Ouput      :  <bool> Returns True if visible; False if Not Visible 
+//   Description:  decides the visibility of the EWindScreen 
+-----------------------------------------------------------------------------------------------------------------*/ 	
+
+		public function bool EWindScreenSL_IsVisible(){ // 7.3 Reviewed
+			bool retval = false;
+			switch(cap:PricePoint){
+
+				case PricePoint.PP700:{          
+				          retval = true;
+				} 
+				case PricePoint.PP500:{
+						  retval = true;
+				}
+				default:{          // For devices which are PP300 and below, SL should not be visible. Therefore
+									// set to default and no change needed in future.
+						  retval = false;	
+				}
+				
+			}
+			return retval;
+		} //Closes Mid_Level_Library_EWindScreen.EWindScreenSL_IsVisible
+    	
+
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    EWindScreenEn_DefaultPos
+//   Input		:  none
+//   Ouput      :  <int> Default position of EWindScreen Checkbox 
+//   Description:  Default position of the checkbox for EWindScreen after FirstFit
+-----------------------------------------------------------------------------------------------------------------*/ 	
+		
+		public function int EWindScreenEn_DefaultPos() { // 7.3 Reviewed
+			int retval = -1;
+
+			switch (cap:PricePoint){	
+				case PricePoint.PP700:{  // Default setting to ON        
+				          retval = 1;
+				}
+				case PricePoint.PP500:{  // Default setting to ON        
+				          retval = 1;
+				}
+				case PricePoint.PP300:{  // Default setting to ON        
+				          retval = 1;
+				}
+				case PricePoint.PP100:{  // Default setting to ON        
+				          retval = 1;
+				}
+				default :{
+					retval = 0;  // Ewindscreen not available for PP75 
+				}               // so set checkbox parameters off.
+			}
+			
+			return retval;
+	
+		} //Closes Mid_Level_Library_EWindScreen.EWindScreenEn_DefaultPos()
+    	
+ /*---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    EWindScreenSL_DefaultPos
+//   Input		:  none
+//   Ouput      :  <int> Default position of the Slider for EWindScreen Slider
+//   Description:  Default Position of the Slider for EWindScreen after FirstFit
+//              :  This position should be used in case there is invalid slider position found in macro
+-----------------------------------------------------------------------------------------------------------------*/ 	
+		
+		public function int EWindScreenSL_DefaultPos() { // 7.3 Reviewed
+			int retval = -1;
+
+		// PP700/PP500 - slider step is MED
+		// PP300/PP100 - slider step is MIN (in background, slider is invisible)
+		// For PP75, where Ewindscreen is not available, this is unimportant as d9FWncEn and d8PSwnEn are set to 'off' anyway.
+		
+		switch (cap:PricePoint){	
+				case PricePoint.PP700:{  // Default WNC slider after FF - MED        
+				          retval = 1;
+				}
+				case PricePoint.PP500:{  // Default WNC slider after FF - MED        
+				          retval = 1;
+				}
+				default :{
+					retval = 0;  // Default WNC slider after FF - MIN, for PP300/100
+				}               
+			}
+					
+			return retval;
+	
+		} //Closes Mid_Level_Library_EWindScreen.EWindScreenSL_DefaultPos
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Low Level PP LIBRARY Function:     EWindScreenEn_Set_Remapped_Pos
+//   Input		:  int
+//   Ouput      :  int
+//   Description:  decides the remapped pos of the enable state of WNC or SWINE
+-----------------------------------------------------------------------------------------------------------------*/ 	
+		public function int EWindScreenEn_Set_Remapped_Pos(int pos){ // 7.3 Reviewed
+			int remapped_pos = -1;
+			switch(pos){
+				case 1:{
+					if(cap:DirMicAvailable == DirMicAvailable.dir){
+						remapped_pos = 11;	// wnc on
+					}
+					else if(cap:DirMicAvailable == DirMicAvailable.omni){
+						remapped_pos = 21;	// swn on
+					}
+				}
+				case 0:{
+					if(Mid_Level_Library_Mic_Mode.MicModeIsBinauralmode() == true){
+						remapped_pos = 11;  //wnc on
+					}
+					else{
+						remapped_pos = 10;	// wnc off & swn off
+					}
+				}
+				default:{
+					println ('[HAL]MLIB - EWindScreenEn - unable to find vaid remapped_pos'); 
+				}
+			}
+			return remapped_pos;
+		} //Closes Mid_Level_Library_EWindScreen. EWindScreenEn_Set_Remapped_Pos
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Low Level PP LIBRARY Function:    EWindScreenSL_Set_Remapped_Pos
+//   Input		:  int
+//   Ouput      :  int
+//   Description:  returns remapped position of the Slider strength of WNC/SWN
+-----------------------------------------------------------------------------------------------------------------*/ 	
+		public function int EWindScreenSL_Set_Remapped_Pos(int pos){ // 7.3 Reviewed
+			int remapped_pos = -1;
+			switch(pos){
+				case 0:{ 
+						remapped_pos = 10;	// For WNC/SWN min
+				}
+				case 1:{
+					if(cap:DirMicAvailable == DirMicAvailable.dir){
+						remapped_pos = 20;	//For WNC med
+					}
+					else if(cap:DirMicAvailable == DirMicAvailable.omni){
+						remapped_pos = 21;	//For SWN med
+					}
+				}
+				case 2:{
+					if(cap:DirMicAvailable == DirMicAvailable.dir){
+						remapped_pos = 21;	//For WNC max
+					}
+					else if(cap:DirMicAvailable == DirMicAvailable.omni){
+						remapped_pos = 30; // For SWN Max
+					}						
+				}
+				default:{
+					remapped_pos = -1;
+				}
+			}
+			return remapped_pos;
+		} //Closes Mid_Level_Library_EWindScreen.EWindScreenSL_Set_Remapped_Pos			
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Middle Level PP LIBRARY    EWindScreen 
+-----------------------------------------------------------------------------------------------------------------*/	 
+ 
+
+	}	//package Mid_Level_Library_EWindScreen
+}	//namespace shs.sat

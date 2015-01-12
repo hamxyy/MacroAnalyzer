@@ -1,0 +1,57 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                           Compression Method Radio Buttons
+------------------------------------------------------------------------------------------------------------------
+// Initial Version (FR53491)														: 2012-07-25 Nadia Neugeborn
+// MaxPos now altered to 2, as Xcelfit should now return the index 2, instead of 1. : 2012-11-23 Al Manders
+// ******SIFIT7.2_PEERREVIEWED: 													: 2013-07-31 Jenny/Judith/Al/Raymond
+// FR68941 to disable CK/CR when tinnitus is ON and Pure, disable Radiobutton 		: 2014-09-02 Mang Yew
+/*---------------------------------------------------------------------------------------------------------------$$*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package MixedMode CompressionMethodRB
+	{
+		application function bool IsVisible ()
+		{
+			bool retVal = true;
+			println ('[HAL]MM - CompressionConceptRB.IsVisible = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			bool retVal = High_Level_Library_Compression.CompressionMethodIsEnabled();				
+	 		println('[HAL]MM - CompressionConceptRB.IsEnabled = ' + retVal);
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			int retVal = 2;
+			println ('[HAL]MM - CompressionConceptRB.MaxPos = ' + retVal);
+			return retVal; // Total number of compression concepts (traditional & ALM/XcelAmp)			
+		}
+		
+		application function bool IsEnabledPos (int pos)
+		{
+			bool retVal = true;
+			println ('[HAL]MM - CompressionConceptRB.IsEnabledPos = ' + retVal);
+			return retVal; // CheckBox has always IsEnabledPos True
+		}
+		
+		application function int GetPos ()
+		{
+			int retval = High_Level_Library_Compression.CompressionMethod_Get ();
+			println ('[HAL]MM - CompressionConceptRB.GetPos = ' + retval);
+			return retval;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MM - CompressionConceptRB.SetPos = ' + pos);
+			High_Level_Library_Compression.CompressionMethod_Set (pos);
+		}
+	}
+}

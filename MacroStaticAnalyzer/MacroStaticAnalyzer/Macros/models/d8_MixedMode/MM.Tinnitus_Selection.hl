@@ -1,0 +1,63 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                       Tinnitus_Selection
+// Initial Version for ER69023				                						    :  2014-10-10   MieMie
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode Tinnitus_Selection
+	{
+
+	     
+	    application function bool IsVisible ()
+		{ 
+ 			bool retVal = true; // ALWAYS TRUE NOT APPLICABLE
+ 			println	('[HAL]MM - Tinnitus_Selection - IsVisible=' + retVal + BasicLibrary_DebugPrint.PrintEnvSettings());
+			return retVal;
+		}
+ 
+ 		application function bool IsEnabled ()
+		{ 
+			bool retVal = true; // NOT APPLICABLE
+			println ('[HAL]MM - Tinnitus_Selection - IsEnabled = ' + retVal + BasicLibrary_DebugPrint.PrintEnvSettings());
+			return retVal;
+		}
+ 
+ 		application function int MaxPos ()
+		{
+	    	int retVal = 3;
+			println ('[HAL]MM - Tinnitus_Selection - MaxPos = '+ retVal);
+			return retVal;
+		}
+ 
+		application function bool IsEnabledPos (int pos)
+		{
+			bool retVal = true;  // ALWAYS TRUE NOT APPLICABLE
+			println ('[HAL]MM - Tinnitus_Selection - IsEnabledPos = ' + retVal + ' for pos=' + pos);
+			return retVal;
+		}
+
+
+/*	 Cxx will use GetPos of Tinnitus Selection to decide whether or not sync between left and right side is needed 
+	 	0 = only one side (left or right side)
+		1 = both the same (both HIs are programmed to be either a) both modulated or b) both static)
+		2 = modulated right (only the right HI is set to modulated, left is static)
+		3 = modulated left (only the left HI is set to modulated, right is static) 
+ 
+*/	
+ 		application function int GetPos ()
+		{
+			int retVal = High_Level_Library_Noiser.Tinnitus_Selection_Get ();
+			println ('[HAL]MM - Tinnitus_Selection - GetPos=' + retVal + BasicLibrary_DebugPrint.PrintEnvSettings());
+			return retVal;
+		}
+ 
+ 		application function void SetPos (int pos)
+		{
+			println ('[HAL]MM - Tinnitus_Selection - SetPos = DO NOTHING!!!');
+			assertion(false, "[HAL]MM - Tinnitus_Selection - SetPos = NOT IMPLEMENTED");
+		}
+
+	} //package MixedMode.Telecoil_SideSelection
+
+} //namespace shs.sat

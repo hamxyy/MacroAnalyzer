@@ -1,0 +1,321 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                           HIGH LEVEL PRICEPOINT LIBRARY   : Sound Smoothing 
+// Initial Version                						     							: 2011-02-11 Cecil Wilson
+// Modified the Package name to proper naming convention 
+// & added comments
+// Updated SoundSmoothing functions                          							: 2011-02-14 Cecil Wilson
+// Renamed and retained Soundsmoothing function alone.       							: 2011-02-17 Cecil Wilson
+// Changed the Switch:'default' positions to invalid (-1)    							: 2011-02-18 Cecil Wilson
+// Renamed Library name due to conflicts in HAL              							: 2011-02-21 Cecil Wilson
+// Updated package/function names,comments 			   
+// Made Slider position zero based like in CXX  	         							: 2011-02-24 Cecil Wilson
+// Updated Function structure with single Remapping Funct   							: 2011-03-01 Cecil Wilson
+// Removed Package LIB workaround & fixed bug in
+// SoundSmoothingSL_Get:replaced while condition'<= with '<' 							: 2011-03-02 Cecil Wilson
+// delete SL from Default function for First Fit             							: 2011-04-15 Nadine Seubert
+// Updated comments and formating, function Default after FF 							: 2011-04-26 Cecil Wilson
+// Add SoundSmoothing_Set_ProgramSelection function			 							: 2011-09-13 Chuah LayYuan
+// Update SoundSmoothing_Set_ProgramSelection function		 							: 2011-11-09 Chuah LayYuan
+// Checks the visibility of the control before setting.		 							: 2011-11-14 Jenny Lin
+// Set,Get changed to HighLevelLib functions,
+// updated SoundSmoothing_Set_ProgramSelection  function	 							: 2011-11-14 Cecil Wilson 
+// Rework SoundSmoothingEn_Set and Get to use remapping function to set the checkbox. 
+// Rework SoundSmoothing_Set_Default to use the MLib functions to set the default.
+// Added printline for the HLIB setpos and getpos function.	 							: 2011-12-09 Jenny Lin
+// Added SoundSmoothingEn_Set_ForPS and SoundSmoothingSL_Set_ForPS for 
+// setting PS and updated the SoundSmoothingEn_Set_ForPS to use and 
+// updated the default after Postfit call to MLIB.										: 2012-03-12 Jenny Lin
+// Updated SoundSmoothingEn_Set_ForPS & SoundSmoothingSL_Set_ForPS 						: 2012-03-26 Jenny Lin
+// Updated SoundSmoothing_Set_Default() to call the right function						: 2012-04-16 Nadia
+// Peer review changes																	: 2012-06-13 Nadine and Frauke
+// Updated based on peer review (ProgramSelection)										: 2012-06-27 Frauke, Jenny and co
+// FirstFit peer review																	: 2012-07-17 Nadia & Judith
+// *********************************************CODE FREEZE*******************************************************
+// CR59134 - Music program now has sound smoothing set to Min.      					: 2012-12-05 Al
+// Sifit 7.2 Peer Review																: 2013-07-31 Jenny, Judith, Raymond
+// Update ID number in Set_ProgramSelection function									: 2013-10-29 Sonia Stasiak
+// Updated comments	for Set_ProgramSelection D9											: 2013-11-01 Sonia Stasiak
+--------------------------------------------------------------------------------------------------------------------
+// Updated for Sifit 7.3																: 2013-11-29 Mang Yew
+// Added initial update for FR64178, where phlfineon should always
+// be ON and strength should set to 0 when SS feture is OFF.							: 2013-12-06 Mang Yew	
+// Added new function to check Hw controls and Set Sw controls							: 2014-01-14 Mang Yew
+// Update Structure for NR and Ss interaction				  							: 2014-02-26 Mang Yew 
+// update on setpos to remove unused return argument									: 2014-03-04 Mang Yew 	
+// Added new programs Telecoil MT and Telecoil T for Set_ProgramSelection (FR64541)		: 2014-02-27 Sonia & Jeline
+// Update Ss default FF to call set SW Macro Control 									: 2014-03-24 Mang Yew
+// Update for Sifit7.3 Peer Review														: 2014-04-22 Mang Yew	
+// PEER REVIEW CXX 7.3	for Program Selection											: 2014-05-06 Sonia, Mie Mie, Jenny
+// FR66756 - Default after First fit for Noise Reduction is 
+// changed to Expanded view. 
+// Therefore need update default function for SS										: 2014-05-06 Mang Yew							
+// ER67475 To set back Phl Fine controls to ON after 
+// BestFit in PostFit_SetDefault for SS.												: 2014-05-26 Jenny
+// Added new Induction Loop (T) program into Set_ProgramSelection function				: 2014-07-30 Sonia
+// Re-write Set_ProgramSelection to call BLib.Is<program>								: 2014-09-16 Sonia
+// Code Clean up																		: 2014-10-01 Mang Yew
+// Sifit 7.4 Peer Review added comments for SoundSmoothing_Set_ProgramSelection,
+// SoundSmoothing_Set_ProgramSelection_Sw_Controls										: 2014-11-19 Nik
+----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package Lib High_Level_Library_SoundSmoothing
+	{
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  Sets the SoundSoothing Slider strength  
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SoundSmoothingSL_Set (int pos)
+		{
+			// Set the actual HI settings using basic library functions
+			BasicLibrary_SoundSmoothing.SoundSmoothingSL_Set_Strength (pos);
+			BasicLibrary_SoundSmoothing.SoundSmoothingSL_Set_Strength_Sw (pos);
+		}
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  Gets SoundSmoothing Slider Position based on Sw Macro Var    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int SoundSmoothingSL_Get ()
+		{ 
+			return BasicLibrary_SoundSmoothing.SoundSmoothingSL_Get_Strength_Sw (); // FR64178
+			
+		}
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  decides the visibility of the SoundSmoothing 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool IsSoundSmoothingSilderVisible()
+		{
+			bool retVal = Mid_Level_Library_SoundSmoothing.SoundSmoothingSL_IsVisible ();
+			return retVal;
+		}
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  decides the enablility of the SoundSmoothing 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool IsSoundSmoothingSLEnabled()
+		{
+			bool retVal = true;					
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure () == true ||
+					High_Level_Library_SoundSmoothing.SoundSmoothingEn_Get () == 0)
+			{
+				retVal = false;
+			}
+			return retVal;
+		}
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  decides the enablility of the SoundSmoothing Checkbox
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool IsSoundSmoothingEnEnabled ()
+		{
+			bool retVal = High_Level_Library_Noiser.IsNoiserNotOnAndPure () ;
+			return retVal;
+		}
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  Sets SoundSmoothing checkbox   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SoundSmoothingEn_Set (int pos)
+		{		
+			// Set the actual HI settings using basic library functions
+			High_Level_Library_SoundSmoothing.SoundSmoothingEn_Set_Hw (pos); //Ss On/Off based on strength value
+			BasicLibrary_SoundSmoothing.SoundSmoothingEn_Set_Sw (pos);
+		}
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  When SS is OFF, d8MFinStart must be set to 0. If SS is ON, d8MFinStart must be restored.  
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SoundSmoothingEn_Set_Hw (int pos)
+		{		
+			if (pos == 0) //FR64178
+			{
+				BasicLibrary_SoundSmoothing.SoundSmoothingSL_Set_Strength (11);
+			}
+			else
+			{
+				BasicLibrary_SoundSmoothing.SoundSmoothingSL_Set_Strength (BasicLibrary_SoundSmoothing.SoundSmoothingSL_Get_Strength_Sw ());
+			}	
+		} 
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  Gets the SoundsSmoothing checkbox position
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int SoundSmoothingEn_Get ()
+		{ 
+		// Get the current position with respect to the Basic function  
+			if (BasicLibrary_SoundSmoothing.SoundSmoothingEn_Get_Sw () == 1) //Get only Sw var due to FR64178
+			{
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  Sets the slider position and CheckBox to the default after FF position for Sw Macro Control only    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SoundSmoothing_Set_Default ()
+		{
+		// Get the default checkbox position from Mid Level Library
+			int default_checkbox_pos = Mid_Level_Library_SoundSmoothing.SoundSmoothingEn_DefaultPostFit_Pos ();
+			
+			// Get the default slider position from Mid Level Library
+			int default_slider_pos = Mid_Level_Library_SoundSmoothing.SoundSmoothingSL_DefaultPostFit_Pos ();
+
+			//after FF is Expanded View => set the HW and SW macro control to default checkbox position 
+			High_Level_Library_SoundSmoothing.SoundSmoothingEn_Set (default_checkbox_pos);
+			
+			//after FF is Expanded View => set the HW and SW macro control to default slider position
+			High_Level_Library_SoundSmoothing.SoundSmoothingSL_Set (default_slider_pos);
+			
+			//ER67475 To set back Phl Fine controls to ON after BestFit.
+			BasicLibrary_SoundSmoothing.SoundSmoothingEn_Set();
+			
+		}
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  If visible, use the remapping function to get set the position. 
+// 					If not visible, will not set the controls.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SoundSmoothingSL_Set_ForPS (int pos)
+		{ 
+			if (Mid_Level_Library_SoundSmoothing.SoundSmoothingSL_IsVisible ())
+			{
+				High_Level_Library_SoundSmoothing.SoundSmoothingSL_Set (pos);
+			}
+			else
+			{
+				println ('[HAL]HLIB.SoundSmoothingSL_Set_ForPS, Same as Universal');
+			}
+			println ('[HAL]HLIB.SoundSmoothingSL_Set_ForPS, pos=' + pos);
+		}
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  If visible, use the remapping function to get set the position. 
+// 					If not visible, will not set the controls.
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SoundSmoothingSL_Set_ForPS_Sw_Controls (int pos)
+		{ 
+			if (Mid_Level_Library_SoundSmoothing.SoundSmoothingSL_IsVisible ())
+			{
+				BasicLibrary_SoundSmoothing.SoundSmoothingSL_Set_Strength_Sw (pos);
+			}
+			else
+			{
+				println ('[HAL]HLIB.SoundSmoothingSL_Set_ForPS, Same as Universal');
+			}
+			println ('[HAL]HLIB.SoundSmoothingSL_Set_ForPS, pos=' + pos);
+		}
+		
+/*---------------------------------------------------------------------------------------------------------*
+//	Description	:	Function is setting Sound Smoothing for all listening situation. 
+/*---------------------------------------------------------------------------------------------------------*/
+		public function void SoundSmoothing_Set_ProgramSelection ()
+		{
+			if (Mid_Level_Library_SoundSmoothing.SoundSmoothingEn_IsVisible ())
+			{
+				println ('[HAL]HLIB.SoundSmoothing_Set_ProgramSelection ID = ' + BasicLibrary_CommUtil.CurrentProg ());
+				
+				if (BasicLibrary_ProgramSelection.IsNoisyEnv() == true ||
+					BasicLibrary_ProgramSelection.IsOutdoorSport() == true)
+				{
+					// SoundSmoothing: checkbox ON, slider set to MED
+					High_Level_Library_SoundSmoothing.SoundSmoothingEn_Set (1);
+					High_Level_Library_SoundSmoothing.SoundSmoothingSL_Set_ForPS (1);	
+				}
+				else if (BasicLibrary_ProgramSelection.IsPhonemT() == true ||
+						 BasicLibrary_ProgramSelection.IsInductionLoopmT() == true ||
+						 BasicLibrary_ProgramSelection.IsPhoneMT() == true ||
+						 BasicLibrary_ProgramSelection.IsPhoneT() == true ||
+						 BasicLibrary_ProgramSelection.IsInductionLoopT() == true)
+				{
+					// SoundSmoothing: checkbox OFF
+					High_Level_Library_SoundSmoothing.SoundSmoothingEn_Set (0);
+				}
+				else if (BasicLibrary_ProgramSelection.IsMusic() == true ||
+						 BasicLibrary_ProgramSelection.IsStreamingAudio() == true)
+				{
+					// SoundSmoothing: checkbox ON, slider set to MIN
+					High_Level_Library_SoundSmoothing.SoundSmoothingEn_Set (1);
+					High_Level_Library_SoundSmoothing.SoundSmoothingSL_Set_ForPS (0);
+				}
+				else if (BasicLibrary_ProgramSelection.IsPrivacy() == true)
+				{
+					// SoundSmoothing: checkbox ON, slider set to MAX
+					High_Level_Library_SoundSmoothing.SoundSmoothingEn_Set (1);
+					High_Level_Library_SoundSmoothing.SoundSmoothingSL_Set_ForPS (2);
+				}
+				else if (BasicLibrary_ProgramSelection.IsStroll() == true)
+				{
+					// SoundSmoothing: checkbox ON, same as Universal (n/a for PP300)
+					High_Level_Library_SoundSmoothing.SoundSmoothingEn_Set (1);
+				}
+				else //(all other programs)
+				// SoundSmoothing same as Universal (do nothing)
+				{
+				
+				}
+
+			}
+		}
+
+/*---------------------------------------------------------------------------------------------------------*
+//	Description	:	Function is setting Sound Smoothing for all listening situation. 
+/*---------------------------------------------------------------------------------------------------------*/
+		public function void SoundSmoothing_Set_ProgramSelection_Sw_Controls ()
+		{
+			if (Mid_Level_Library_SoundSmoothing.SoundSmoothingEn_IsVisible ())
+			{
+				println ('[HAL]HLIB.SoundSmoothing_Set_ProgramSelection ID = ' + BasicLibrary_CommUtil.CurrentProg ());
+				
+				if (BasicLibrary_ProgramSelection.IsNoisyEnv() == true ||
+					BasicLibrary_ProgramSelection.IsOutdoorSport() == true)
+				{
+					// SoundSmoothing: checkbox ON, slider set to MED
+					BasicLibrary_SoundSmoothing.SoundSmoothingEn_Set_Sw (1);
+					High_Level_Library_SoundSmoothing.SoundSmoothingSL_Set_ForPS_Sw_Controls (1);
+				}
+				else if (BasicLibrary_ProgramSelection.IsPhonemT() == true ||
+						 BasicLibrary_ProgramSelection.IsInductionLoopmT() == true ||
+						 BasicLibrary_ProgramSelection.IsPhoneMT() == true ||
+						 BasicLibrary_ProgramSelection.IsPhoneT() == true ||
+						 BasicLibrary_ProgramSelection.IsInductionLoopT() == true)
+				{ 
+					// SoundSmoothing: checkbox OFF
+					BasicLibrary_SoundSmoothing.SoundSmoothingEn_Set_Sw (0);
+				}
+				else if (BasicLibrary_ProgramSelection.IsMusic() == true ||
+						 BasicLibrary_ProgramSelection.IsStreamingAudio() == true)
+				{ 
+					// SoundSmoothing: checkbox ON, slider set to MIN
+					BasicLibrary_SoundSmoothing.SoundSmoothingEn_Set_Sw (1);
+					High_Level_Library_SoundSmoothing.SoundSmoothingSL_Set_ForPS_Sw_Controls (0);
+				}
+				else if (BasicLibrary_ProgramSelection.IsPrivacy() == true)
+				{
+					// SoundSmoothing: checkbox ON, slider set to MAX
+					BasicLibrary_SoundSmoothing.SoundSmoothingEn_Set_Sw (1);
+					High_Level_Library_SoundSmoothing.SoundSmoothingSL_Set_ForPS_Sw_Controls (2);
+				}
+				else if (BasicLibrary_ProgramSelection.IsStroll() == true)
+				{ 
+					// SoundSmoothing: checkbox ON, same as Universal (n/a for PP300)
+					BasicLibrary_SoundSmoothing.SoundSmoothingEn_Set_Sw (1);
+				}
+				else //(all other programs)
+				// SoundSmoothing same as Universal (do nothing)
+				{
+				
+				}
+			} 
+		}					
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Higher Level PP LIBRARY    Sound Smoothing 
+-----------------------------------------------------------------------------------------------------------------*/
+	}
+}

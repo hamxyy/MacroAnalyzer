@@ -1,0 +1,111 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY 	:   AccessibleManually
+// Initial version  	                                       							:  	2011-03-14  Cecil Wilson
+// Updated Accessible manually by Pushbutton control									:   2011-06-27  Cecil Wilson
+// Commented out accessible manually by RCU due to ER49502								:   2011-06-27  Cecil Wilson
+// Added println for debug																:   2011-06-29  Cecil Wilson
+// Removed workaround for ER49502														:   2011-08-02  Cecil Wilson
+// Fixed Error in the control step d8FUctToghpHpEn.HP_valid								:	2011-12-16  Cecil Wilson
+// Updated based on peer review															:	2012-06-21	Mang Yew
+// ******SIFIT7.2_PEERREVIEWED: Changes as per peer review							    :  2013-07-30 Jenny, Judith
+// Added Mini_Tek_Voice_Link to AccessibleManuallyEn_Set_HPx							:  2013-10-18 Jenny
+// updated println statement for debugging.												: 2014-01-10 Jenny
+// FR64463: Split the RCU and Pushbutton (PB) accessible manually  to two if-else statement, 
+// and sets the d8FUctRcuAbsHp1En (in hearing program 0) shall always be enabled.		: 2014-02-19 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// Code cleanup: Updated printlines.												: 2014-10-20 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_AccessibleManually
+	{
+	
+		/*$---------------------------------------------------------------------------------------------------------------
+		   Description:  Return 0 if Off in the HP, On if On in the HP
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function int AccessibleManuallyEn_Get_HPx(int HP)
+		{
+			println ('[HAL]BLIB.BasicLibrary_AccessibleManually.AccessibleManuallyEn_Get_HPx');
+
+ 			if (HP == 0)
+			{ 
+				// For HP0, Accessible manually depends only on RCU 	
+ 				if (hi:d8FUctRcuAbsHpEn [ HP ] == d8FUctRcuAbsHpEn.enable)
+				{
+					return 1;
+				}
+				else
+				{
+					return 0;
+				}
+			}
+			else
+			{
+				// For HP>HP0, Accessible manually depends on Pushbutton (TogHp)
+				if (hi:d8FUctToghpHpEn [ HP - 1 ] == d8FUctToghpHpEn.HP_valid)
+				{
+					return 1;
+				}
+				else
+				{
+					return 0;
+				}
+			}
+		}
+		
+		/*$---------------------------------------------------------------------------------------------------------------
+		  Description: Sets the AccessibleManually for the HearingProgram to  1 = On, 0 = Off
+		/*-----------------------------------------------------------------------------------------------------------------$*/
+		public function void AccessibleManuallyEn_Set_HPx(int HP, int CxxPos)
+		{
+			println ('[HAL]BLIB.BasicLibrary_AccessibleManually.AccessibleManuallyEn_Set_HPx');
+
+			// ~~~~~~~~~~~~~~~~ To set RCU Access ~~~~~~~~~~~~~~~~~~
+			if(HP==0)
+			{
+				// due to FR64463, RCU needs to be enabled for HP1
+				hi:d8FUctRcuAbsHpEn [ HP ] = d8FUctRcuAbsHpEn.enable;
+			}
+			else
+			{
+				if (CxxPos == 1)
+				{
+					// HearingProgram accessible RCU				
+					hi:d8FUctRcuAbsHpEn [ HP ] = d8FUctRcuAbsHpEn.enable;
+				}
+				else
+				{
+					if (hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Tek_d_miniTek ||
+							hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.miniTek_Telecoil ||
+							hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.MiniTek_FM || 
+							hi:d8SwMacroInputModeHp == d8SwMacroInputModeHp.Mini_Tek_Voice_Link)
+					{
+						// For TEK Transmitter, MiniTek SpeechLink, MiniTek FM, MiniTek Tcoil, disable Push Button Access only
+						hi:d8FUctRcuAbsHpEn [ HP ] = d8FUctRcuAbsHpEn.enable;
+					}
+					else
+					{ 
+						//For Bluetooth, Telecoil and DAI input, disable Both Pushbutton and RCU access
+						hi:d8FUctRcuAbsHpEn [ HP ] = d8FUctRcuAbsHpEn.off;
+					}				
+				}
+			}
+			
+			// ~~~~~~~~~~~~~~~~ To set PushButton Access ~~~~~~~~~~~~~~~~~~
+			if (HP > 0)
+			{ 
+				// Hearing Program 1 always accessible by Pushbutton
+				if (CxxPos == 1)
+				{ 
+					// Pushbutton control does not exist for HP1.. so Starts with HP2 ie env:Prog==1  i.e, so HP2 index = [0]  
+ 					hi:d8FUctToghpHpEn [ HP - 1 ] = d8FUctToghpHpEn.HP_valid;
+				}
+				else
+				{
+ 					hi:d8FUctToghpHpEn [ HP - 1 ] = d8FUctToghpHpEn.HP_not_valid;
+				}
+			}
+		}
+	}
+}

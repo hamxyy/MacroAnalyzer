@@ -1,0 +1,35 @@
+//---------------------------------------------------------------------------------------------------------------
+//                           MID LEVEL PRICEPOINT LIBRARY 		 : MicModeSpeechInNoiseEn
+// Initial Version                						  		 :  2013-03-14 Al
+// Added new function, MicModeSpeechInNoiseEn_IsVisible() for PP75.     : 2013-03-14 Al
+// Updated MicModeSpeechInNoiseEn_IsVisible                      :  2014-09-05 Al
+//------------------------------------------------------------------------------------------------------------------
+namespace shs_sat {
+    using shs_sat.*;
+	
+	package  Lib Mid_Level_Library_MicModeSpeechInNoiseEn{
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Mid Level PP LIBRARY Function:    MicModeSpeechInNoiseEn_IsVisible
+//   Input		:  none
+//   Ouput      :  <bool> Returns True if visible; False if Not Visible (PP75 and below)
+//   Description:  decides the visibility of the MicModeSpeechInNoiseEn
+-----------------------------------------------------------------------------------------------------------------$*/ 	
+	public function bool MicModeSpeechInNoiseEn_IsVisible(){
+			
+		if (cap:DirMicAvailable == DirMicAvailable.omni || cap:PricePoint <= PricePoint.PP75)
+		{
+		    return false;
+		}
+		else
+		{
+		    return true;
+		}
+		
+	} //Closes Mid_Level_Library_MicModeSpeechInNoiseEn.MicModeSpeechInNoiseEn_IsVisible
+			
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Mid Level LIBRARY    MicModeSpeechInNoiseEn
+-----------------------------------------------------------------------------------------------------------------*/		
+	}	//package Mid_Level_Library_MicModeSpeechInNoiseEn
+}	//namespace shs.sat

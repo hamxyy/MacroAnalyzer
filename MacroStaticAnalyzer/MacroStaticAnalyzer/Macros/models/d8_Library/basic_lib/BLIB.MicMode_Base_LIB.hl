@@ -1,0 +1,646 @@
+/*---------------------------------------------------------------------------------------------------------------
+//                           BASIC FUNCTION LIBRARY  Mic_Mode
+/*---------------------------------------------------------------------------------------------------------------
+// Initial Version                                        						 		: 2011-03-11 Nadine Seubert
+// reworked Get and Set for SelDir settings               								: 2011-04-05 Nadine Seubert
+// update for Hicoss R3                                    								: 2011-05-20 Nadine Seubert
+// include missing hi:d8PCtrlSelEnable					   								: 2011-06-29 Meike Doose
+// change of HiVar1 to hi:d8SwMacroAutoSpeechFocusEnHP     								: 2011-06-29 Meike Doose
+// Updated the Mic_Mode_Set_RadioButton_Entrie after review the control settings with 
+// Jens and updated the "d8PCtrlMicEnable" under AutoAdap MicMode to be "enabled". 
+// Outstanding to confirm the settings of the "d8PSelOmniThr".							: 2012-02-22 Jenny Lin 
+// Rework the SetPos and GetPos to be independent off the SwMacro variable, Cxx/Hicoss
+// or TestSettings.																		: 2012-03-22 Jenny Lin
+// Updated macros to the state on 2012-02-29   											: 2012-04-13 Jenny Lin
+// Added OmniDual case as 90															: 2012-05-02 Cecil Wilson
+// Added DirStaticHp for PP100 (Fitting) remapped_pos = 55								: 2012-06-29 Jenny and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Fixed ER56075 AutoFix added for PP100												: 2012-08-15 Cecil Wilson
+// Fixed ER57296 macro controlled e2e coupling for SpeechFocus							: 2012-09-04 Cecil Wilson
+// Updated the pos_remapped for BLIB Micmode, and call the BLIB.CarFocus to set the 
+// state of the CarFocus controls and added OmniOpt and changes the Omnidirectional to 
+// above 90.																			: 2012-11-19 Jenny Lin
+// Added assertion message																: 2012-12-14 Jenny Lin
+// Macro Peer review implementation. Removed the else return -1 and replace with the 
+// return of pos_remapped=20 for Mic_Mode_Get_RadioButton_Entrie().				  		: 2012-12-28 Jenny
+// FR55137 The FBC needs to be switched to dual/single mode depending on the mic-mode 	: 09.01.2013 Judith
+// ER58883: Listening situation is not correct realized									: 2013-02-12 Frauke
+// ER63029: Updated Mic_Mode_Set_RadioButton_Entrie to include the remapped_pos 70 & 75.: 2013-08-20 MieMie
+//----------------------------------------------------7.3--------------------------------------------------------
+// Added MicMode_Set function															: 2013-10-31 Raymond
+// Added MicMode_Get function															: 2013-11-01 Raymond
+// Updated MicMode_Get function to use if-else											: 2013-11-04 Raymond
+// Updated MicMode Getters and Setters													: 2013-11-08 Raymond
+// Added Omni mic mode Getters and Setters												: 2013-11-11 Raymond
+// Corrected controls name																: 2013-11-12 Raymond
+// Added assertion call for MicMode Getters and Setters									: 2013-11-14 Raymond
+// Added SideLook Getters and Setters													: 2013-11-28 Raymond
+// Added MicMode_Get_SwMicModeForFOG()                            						: 2013-12-17 Al
+// Old unused D8 code deleted                                      						: 2014-02-06 Al
+// annotation update in SetSlSwEnIsOn                               					: 2014-02-16 Al
+// ER67367: Added Getter function for SwMicModeForOmni									: 2014-05-29 Raymond
+//----------------------------------------------------7.4--------------------------------------------------------
+// Added SetDirSwEnIsOn() and GetSDMdirSwEnIsOn()                   					: 2014-07-02 Al
+// Added the Single Directional Mic control positions to MicMode_Set()    				: 2014-07-02 Al
+// Merge from 7.3 ER68269: Active source code shall only contain needed source code! 
+// Might cause a crash if a older Sifit version (e.g. 7.3)
+//	is used with a higher Cxx version (e.g. 7.4) and a bit value has changed its name 
+// 	(e.g. CicDirOmni to SingleDirOmni) within those versions	AND fixing build break	: 2014-07-03 Frauke
+//  In MicMode_Set and MicMode_Get, updated SwMicMode positions for...
+//  ...7.4 and removed commented-out code.                          					: 2014-07-09 Al
+//  In SetDirSwEnIsOn and GetDirSwEnIsOn, now using d8SwMacroVarEn24...
+//  ...as a temporary measure.                                      					: 2014-07-09 Al
+// Replaced temporary variables with the new SW variables d9SwMacroTestOmniFlagHp and..
+// ..d9SwMacroSdmDirectionalEnHp.                                   					: 2014-08-15 Al
+// Code cleanup with braces and identation												: 2014-09-17 Sultan
+// Fix for ER69062 in GetInvalidOmniMicModeTestSetFlag()                                : 2014-10-06 Al
+*/  
+//--------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package Lib BasicLibrary_Mic_Mode
+	{
+		///*----------------------------------------------------------------------------------------------------------------
+		//   Basic LIBRARY Function:    MicMode_Set
+		//   Input      :   <string> mic mode control to set
+		//   Ouput      :   None
+		//   Description:   Set mic mode controls from the input string
+		//-----------------------------------------------------------------------------------------------------------------*/
+		public function void MicMode_Set (string micMode)
+		{
+			switch (micMode)
+			{
+				case "OmniSingle":
+				{
+					hi:d9SwMicMode = d9SwMicMode.OmniSingle;
+				}
+				case "OmniSingleMbat":
+				{
+					hi:d9SwMicMode = d9SwMicMode.OmniSingleMbat;
+				}
+				case "OmniDual":
+				{
+					hi:d9SwMicMode = d9SwMicMode.OmniDual;
+				}
+				case "SpatialOmni":
+				{
+					hi:d9SwMicMode = d9SwMicMode.SpatialOmni;
+				}
+				case "SingleBinDirOmni":
+				{
+					hi:d9SwMicMode = d9SwMicMode.SingleBinDirOmni;
+				}
+				case "AutoSingleBinDirAdap":
+				{
+				    hi:d9SwMicMode = d9SwMicMode.AutoSingleBinDirAdap;				
+				}
+				case "SingleBinDirAdap":
+				{  
+				    hi:d9SwMicMode = d9SwMicMode.SingleBinDirAdap;				
+				}						
+				case "DirAdapFlat":
+				{
+					hi:d9SwMicMode = d9SwMicMode.DirAdapFlat;
+				}
+				case "DirAdapHP":
+				{					
+					hi:d9SwMicMode = d9SwMicMode.DirAdapHP;
+				
+				}			
+				case "AutoAdap":
+				{
+					hi:d9SwMicMode = d9SwMicMode.AutoAdap;
+				}
+				case "SelDir":
+				{
+					hi:d9SwMicMode = d9SwMicMode.SelDir;
+				}
+				case "AutoSelDir":
+				{
+					hi:d9SwMicMode = d9SwMicMode.AutoSelDir;
+				}
+				case "NfcAdap":
+				{
+					hi:d9SwMicMode = d9SwMicMode.NfcAdap;
+				}
+				case "AutoNfcAdap":
+				{
+					hi:d9SwMicMode = d9SwMicMode.AutoNfcAdap;
+				}
+				case "SlkAdap":
+				{
+					hi:d9SwMicMode = d9SwMicMode.SlkAdap;
+				}
+				case "AutoSlkAdap":
+				{
+					hi:d9SwMicMode = d9SwMicMode.AutoSlkAdap;
+				}
+				case "AutoNfcSlkAdap":
+				{
+					hi:d9SwMicMode = d9SwMicMode.AutoNfcSlkAdap;
+				}
+				case "AutoNfcSelDirAdap":
+				{
+					hi:d9SwMicMode = d9SwMicMode.AutoNfcSelDirAdap;
+				}
+				case "TestDir":
+				{
+					hi:d9SwMicMode = d9SwMicMode.TestDir;
+				}
+				default:
+				{ 					
+					assertion (false,"[MacroError] d9SwMicMode Undefined state");
+				}
+			}
+		} // Closes BasicLibrary_Mic_Mode.MicMode_Set
+	
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    MicMode_Get
+		   Input      :   None
+		   Ouput      :   <string>
+		   Description:   Returns Get mic mode controls in string
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string MicMode_Get ()
+		{
+			if(hi:d9SwMicMode == d9SwMicMode.OmniSingle)
+			{
+				return "OmniSingle";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.OmniSingleMbat)
+			{
+				return "OmniSingleMbat";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.OmniDual)
+			{
+				return "OmniDual";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.SpatialOmni)
+			{
+				return "SpatialOmni";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.SingleBinDirOmni)
+			{	
+			    return "SingleBinDirOmni";	
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.AutoSingleBinDirAdap) 
+			{
+				return "AutoSingleBinDirAdap";    		
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.SingleBinDirAdap) 
+			{
+				return "SingleBinDirAdap";    				
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.DirAdapHP)
+			{
+				return "DirAdapHP";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.DirAdapFlat)
+			{
+				return "DirAdapFlat";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.AutoAdap)
+			{
+				return "AutoAdap";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.SelDir)
+			{
+				return "SelDir";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.AutoSelDir)
+			{
+				return "AutoSelDir";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.NfcAdap)
+			{
+				return "NfcAdap";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.AutoNfcAdap)
+			{
+				return "AutoNfcAdap";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.SlkAdap)
+			{
+				return "SlkAdap";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.AutoSlkAdap)
+			{
+				return "AutoSlkAdap";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.AutoNfcSlkAdap)
+			{
+				return "AutoNfcSlkAdap";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.AutoNfcSelDirAdap)
+			{
+				return "AutoNfcSelDirAdap";
+			}
+			else if(hi:d9SwMicMode == d9SwMicMode.TestDir)
+			{
+				return "TestDir";
+			}
+			else
+			{
+				assertion (true,"[MacroError] d9SwMicMode Undefined state");
+				return "-1";
+			}
+		} // Closes BasicLibrary_Mic_Mode.MicMode_Get
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    MicMode_Get_SwMicModeForFOG
+		   Input      :   None
+		   Ouput      :   <string>
+		   Description:   Returns Get mic mode controls in string
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string MicMode_Get_SwMicModeForFOG ()
+		{	     
+            if(hi:d9SwMicModeForFog == d9SwMicModeForFog.Omni_Single)
+			{
+				return "OmniSingle";
+			}
+			else if(hi:d9SwMicModeForFog == d9SwMicModeForFog.OmniSingleMbat)
+			{
+				return "OmniSingleMbat";
+			}
+			else if(hi:d9SwMicModeForFog == d9SwMicModeForFog.Omni_Dual)
+			{
+				return "OmniDual";
+			}
+            else
+            {
+            	assertion (false,"[MacroError] d9SwMicModeForFog Undefined state");
+				return "-1";
+            }
+            
+        } // Closes BasicLibrary_Mic_Mode.MicMode_Get_SwMicModeForFOG
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    MicMode_Get_SwMicModeForOmni
+		   Input      :   None
+		   Ouput      :   <string>
+		   Description:   Returns Get mic mode controls in string
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function string MicMode_Get_SwMicModeForOmni()
+		{
+			if(hi:d9SwMicModeForOmni == d9SwMicModeForOmni.Omni_Single)
+			{
+				return "OmniSingle";
+			}
+			else if(hi:d9SwMicModeForOmni == d9SwMicModeForOmni.OmniSingleMbat)
+			{
+				return "OmniSingleMbat";
+			}
+			else if(hi:d9SwMicModeForOmni == d9SwMicModeForOmni.Omni_Dual)
+			{
+				return "OmniDual";
+			}
+			else if(hi:d9SwMicModeForOmni == d9SwMicModeForOmni.SpatialOmni)
+			{
+				return "SpatialOmni";
+			}
+			else
+			{
+				assertion (false, "[MacroError] d9SwMicModeForOmni undefined state");
+				return "-1";
+			}
+		} // Closes BasicLibrary_Mic_Mode.MicMode_Get_SwMicModeForOmni
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    SetOmniSwRbIsOn
+		   Input      :   <bool> 
+		   Ouput      :   None
+		   Description:   Set d9SwMacroOmnidirectionalEnHp status
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void SetOmniSwRbIsOn(bool status) 
+		{ 
+			if(status)
+			{
+				hi:d9SwMacroOmnidirectionalEnHp = d9SwMacroOmnidirectionalEnHp.on;
+			}
+			else
+			{
+				hi:d9SwMacroOmnidirectionalEnHp = d9SwMacroOmnidirectionalEnHp.off;
+			}
+		} // Closes BasicLibrary_Mic_Mode.SetOmniSwRbIsOn
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    GetOmniSwRbIsOn
+		   Input      :   None 
+		   Ouput      :   <bool>
+		   Description:   Get d9SwMacroOmnidirectionalEnHp status
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool GetOmniSwRbIsOn()
+		{ // Getter for Omnidirectional
+			return hi:d9SwMacroOmnidirectionalEnHp == d9SwMacroOmnidirectionalEnHp.on;
+		} // Closes BasicLibrary_Mic_Mode.GetDirSwEnIsOn
+		
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    SetDirSwEnIsOn
+		   Input      :   <bool> 
+		   Ouput      :   None
+		   Description:   Set d9SwMacroDirectionalEnHp status
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void SetDirSwEnIsOn(bool status) 
+		{ // Setter for directional
+			if(status)
+			{
+				hi:d9SwMacroDirectionalEnHp = d9SwMacroDirectionalEnHp.on;
+			}
+			else
+			{
+				hi:d9SwMacroDirectionalEnHp = d9SwMacroDirectionalEnHp.off;
+			}
+		} // Closes BasicLibrary_Mic_Mode.SetDirSwEnIsOn
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    SetDirSwEnIsOn
+		   Input      :   <bool> 
+		   Ouput      :   None
+		   Description:   Set d9SwMacroSdmDirectionalEnHp status
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void SetSDMdirSwEnIsOn(bool status) 
+		{ // Setter for directional
+			if(status)
+			{
+				hi:d9SwMacroSdmDirectionalEnHp = d9SwMacroSdmDirectionalEnHp.on;
+			}
+			else
+			{
+				hi:d9SwMacroSdmDirectionalEnHp = d9SwMacroSdmDirectionalEnHp.off;
+			}
+
+		} // Closes BasicLibrary_Mic_Mode.SetSDMdirSwEnIsOn
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    GetSDMdirSwEnIsOn
+		   Input      :   None 
+		   Ouput      :   <bool>
+		   Description:   Get d9SwMacroDirectionalEnHp status
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool GetSDMdirSwEnIsOn()
+		{ 
+			if (hi:d9SwMacroSdmDirectionalEnHp == d9SwMacroSdmDirectionalEnHp.on)
+			{
+			   return true;
+			}
+			else
+			{
+			   return false;
+			}		
+              
+		} // Closes BasicLibrary_Mic_Mode.GetSDMdirSwEnIsOn
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    GetDirSwEnIsOn
+		   Input      :   None 
+		   Ouput      :   <bool>
+		   Description:   Get d9SwMacroDirectionalEnHp status
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool GetDirSwEnIsOn()
+		{ // Getter for Directional
+			if (hi:d9SwMacroDirectionalEnHp == d9SwMacroDirectionalEnHp.on)
+			{
+			   return true;
+			}
+			else
+			{
+			   return false;
+			}
+		} // Closes BasicLibrary_Mic_Mode.GetDirSwEnIsOn
+		
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    SetNfSwEnIsOn
+		   Input      :   <bool> 
+		   Ouput      :   None
+		   Description:   Set d9SwMacroNarrowfocusEnHp status
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void SetNfSwEnIsOn(bool status)
+		{ // Setter for narrow focus
+			if(status)
+			{
+				hi:d9SwMacroNarrowfocusEnHp = d9SwMacroNarrowfocusEnHp.on;
+			}
+			else
+			{
+				hi:d9SwMacroNarrowfocusEnHp = d9SwMacroNarrowfocusEnHp.off;
+			}
+		} // Closes BasicLibrary_Mic_Mode.SetNfSwEnIsOn 
+		
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    GetNfSwEnIsOn
+		   Input      :   None 
+		   Ouput      :   <bool>
+		   Description:   Get d9SwMacroNarrowfocusEnHp status
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool GetNfSwEnIsOn()
+		{ // Getter for Narrow Focus
+			return hi:d9SwMacroNarrowfocusEnHp == d9SwMacroNarrowfocusEnHp.on;
+		} // Closes BasicLibrary_Mic_Mode.GetNfSwEnIsOn
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    SetSfSwEnIsOn
+		   Input      :   <bool> 
+		   Ouput      :   None
+		   Description:   Set d9SwMacroSpeechfocusEnHp status
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void SetSfSwEnIsOn(bool status)
+		{ // Setter for speech focus
+			if(status)
+			{
+				hi:d9SwMacroSpeechfocusEnHp = d9SwMacroSpeechfocusEnHp.on;
+			}
+			else
+			{
+				hi:d9SwMacroSpeechfocusEnHp = d9SwMacroSpeechfocusEnHp.off;
+			}
+		} // Closes BasicLibrary_Mic_Mode.SetSfSwEnIsOn		
+		
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    GetSfSwEnIsOn
+		   Input      :   None
+		   Ouput      :   <bool>
+		   Description:   Get d9SwMacroSpeechfocusEnHp status
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool GetSfSwEnIsOn()
+		{ // Getter for speech focus
+			return hi:d9SwMacroSpeechfocusEnHp == d9SwMacroSpeechfocusEnHp.on;
+		} // Closes BasicLibrary_Mic_Mode.GetSfSwEnIsOn
+		
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    SetSlSwEnIsOn
+		   Input      :   <bool>
+		   Ouput      :   None
+		   Description:   Set d9SwMacroSidelookEnHp status
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void SetSlSwEnIsOn(bool status)
+		{ // Setter for Sidelook
+			
+			if(status)  
+			{
+				hi:d9SwMacroSidelookEnHp = d9SwMacroSidelookEnHp.on; // Step2 = 'on'
+			}
+			else
+			{
+				hi:d9SwMacroSidelookEnHp = d9SwMacroSidelookEnHp.off; // Step1 = 'off'
+			}
+			
+		} // Closes BasicLibrary_Mic_Mode.SetSlSwEnIsOn
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    GetSlSwEnIsOn
+		   Input      :   None
+		   Ouput      :   <bool>
+		   Description:   Get d9SwMacroSidelookEnHp status
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool GetSlSwEnIsOn()
+		{ // Getter for Sidelook
+            
+            if (hi:d9SwMacroSidelookEnHp == d9SwMacroSidelookEnHp.on) // Step 1 = 'off'; Step 2 = 'on'
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+            
+		} // Closes BasicLibrary_Mic_Mode.GetSlSwEnIsOn
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    GetMicModeTvRbPos
+		   Input      :   None
+		   Ouput      :   <bool>
+		   Description:   Get position of mic mode TV radiobutton, based on the SW control.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int GetMicModeTvRbPos()    // To add in IT44
+		{        
+            int retval = -1;
+            
+            if (hi:d9SwMacroMicModeTVprogHp == 0) 
+            {
+                retval = 0; // getpos position 0
+            }
+            else if (hi:d9SwMacroMicModeTVprogHp == 1)
+            {
+                retval = 1; // getpos position 1
+            }
+            else
+            {
+                retval = -1; // undefined control state
+            }
+            assertion (retval >= 0,"[MacroError] GetMicModeTvRbPos. SW control in undefined state");         
+            return retval;          
+                        
+		} // Closes BasicLibrary_Mic_Mode.GetMicModeTvRbPos
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    GetMicModeNoisyEnvRbPos
+		   Input      :   None
+		   Ouput      :   <bool>
+		   Description:   Get position of mic mode Noisy Environment radiobutton, based on the SW control.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function int GetMicModeNoisyEnvRbPos()      // To add in IT44
+		{      
+		    int retval = -1;
+            
+            if (hi:d9SwMacroMicModeNEprogHp == 0) 
+            {
+                retval = 0; // getpos position 0
+            }
+            else if (hi:d9SwMacroMicModeNEprogHp == 1)
+            {
+                retval = 1; // getpos position 1
+            }
+            else
+            {
+                retval = -1; // undefined control state
+            }
+            assertion (retval >= 0,"[MacroError] GetMicModeNoisyEnvRbPos. SW control in undefined state");         
+            return retval;        
+                      
+		} // Closes BasicLibrary_Mic_Mode.GetMicModeNoisyEnvRbPos		
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    SetMMNoisyEnvSwCtrl
+		   Input      :   None
+		   Ouput      :   <bool>
+		   Description:   Set the mic mode Noisy Environment radiobutton SW control, based on Pos.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void SetMMNoisyEnvSwCtrl(int pos)       // To add in IT44
+		{      		 
+		    switch (pos)
+		    {
+		         case 0:
+		         {	         
+		             hi:d9SwMacroMicModeNEprogHp = 0;		         
+		         }
+		         case 1:
+		         {         
+		             hi:d9SwMacroMicModeNEprogHp = 1;		       	         
+		         }
+		         default:
+		         {
+		             assertion (false,"[MacroError] SetMMNoisyEnvSwCtrl. Undefined Rb Pos state");         
+		         }
+		    }                     
+		} // Closes BasicLibrary_Mic_Mode.SetMMNoisyEnvSwCtrl		
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    SetMMTvSwCtrl
+		   Input      :   None
+		   Ouput      :   <bool>
+		   Description:   Set the mic mode Tv radiobutton SW control, based on Pos.
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void SetMMTvSwCtrl(int pos)         // To add in IT44
+		{      		 
+		    switch (pos)
+		    {
+		         case 0:
+		         {	         
+		             hi:d9SwMacroMicModeTVprogHp = 0;		         
+		         }
+		         case 1:
+		         {         
+		             hi:d9SwMacroMicModeTVprogHp = 1;		       	         
+		         }
+		         default:
+		         {
+		             assertion (false,"[MacroError] SetMMTvSwCtrl. Undefined Rb Pos state");         
+		         }
+		    }                     
+		} // Closes BasicLibrary_Mic_Mode.SetMMTvSwCtrl		
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    SetInvalidOmniMicModeTestSetFlag
+		   Input      :   <bool>
+		   Ouput      :   None
+		   Description:   Set d9SwMacroTestOmniFlagHp control
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function void SetInvalidOmniMicModeTestSetFlag(bool pos)
+		{
+		    if (pos)
+		    {	
+		    	hi:d9SwMacroTestOmniFlagHp = d9SwMacroTestOmniFlagHp.on;
+		    }                     
+		    else
+		    {
+		    	hi:d9SwMacroTestOmniFlagHp = d9SwMacroTestOmniFlagHp.off;
+		    }
+		} // Closes BasicLibrary_Mic_Mode.SetInvalidOmniMicModeTestSetFlag
+
+		/*----------------------------------------------------------------------------------------------------------------
+		   Basic LIBRARY Function:    GetInvalidOmniMicModeTestSetFlag
+		   Input      :   <bool>
+		   Ouput      :   None
+		   Description:   Get d9SwMacroTestOmniFlagHp control
+		-----------------------------------------------------------------------------------------------------------------*/
+		public function bool GetInvalidOmniMicModeTestSetFlag()
+		{	
+			return (hi:d9SwMacroTestOmniFlagHp == d9SwMacroTestOmniFlagHp.on ||
+				    opp(hi:d9SwMacroTestOmniFlagHp) == d9SwMacroTestOmniFlagHp.on);
+		} // Closes BasicLibrary_Mic_Mode.GetInvalidOmniMicModeTestSetFlag
+		
+	} //package BasicLibrary_Mic_Mode
+}	

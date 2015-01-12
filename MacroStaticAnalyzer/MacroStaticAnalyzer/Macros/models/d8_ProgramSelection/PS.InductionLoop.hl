@@ -1,0 +1,95 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//									PROGRAM SELECTION - Induction Loop (mT)
+
+// Initial Version		         															: 2011-08-22 Chuah LayYuan
+// Updated the Program ID																	: 2011-11-08 Chuah LayYuan
+// Added Sound Management settings															: 2011-11-08 Frauke Schall
+// Added THI Weight setting in Apply Function                           					: 2011-11-22 Chuah LayYuan
+// Added GetOrderNumber() and IsSingleUse() function.										: 2012-03-19 Jenny Lin
+// Call HLIB for Compression Type															: 2012-03-20 Nadia Neugeborn	
+// Updated GetID from 10 to 11 due to Universal = 1.										: 2012-03-22 Jenny Lin
+// Replaced InputMode SetPos to non-adaptive (no update of WNC/SoundBrilliance)				: 2012-03-27 Cecil Wilson	
+// Updated IsVisible function 																: 2012-04-04 Cecil Wilson
+// Updated to call HLIB.MicMode_Set_ProgramSelection to set the MicMode.					: 2012-04-09 Jenny Lin
+// Update insertion gain modification from ApplyOffsets_ProgramSelection() to 
+// ApplyInsertionGainOffsets_ProgramSelection												: 2012-07-09 Jenny Lin
+// MacroPeerReview: Clean up comments.														: 2012-07-25 Frauke/Jenny
+// *********************************************CODE FREEZE*********************************************************
+// CR57156 - Set CBFS to off for HP2-HP6													: 2012-08-22 Nadia Neugeborn
+// Update WncEn and FBCEn and Mix with Mic to due FR59453. 7.0/7.1 -> WNC FBC Off, 
+// 7.2 -> WNC FBC Universal, MixMicEn ON, MicSlider -6dB									: 2013-05-14 Mang Yew
+// Peer Review Changes 7.2.                                                     			: 2013-08-15 Raymond, MangYew, Judith
+// D8 Program Selection code cleaning, apply function to call H_Lib							: 2013-10-24 Sonia Stasiak
+// Updated IsEnabled to call Mid_Level_Library												: 2013-11-01 Sonia Stasiak
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Updated Apply function with d9SwMacroProgramIdHp, code tuning							: 2013-12-17 Sonia Stasiak
+// PEER REVIEW CXX 7.3																		: 2014-05-06 Sonia, Mie Mie, Jenny
+/*--------------------------------------------- Cxx 7.4 -----------------------------------------------------------*
+// Changed package to MonAppProgramSelection, added ApplyComplementary function				: 2014-07-10 Sonia 
+// Changed GetName to Induction Loop (mT)													: 2014-07-30 Sonia
+// Change Apply function to call BLib.Set<program> to set d9SwmacroProgramIdHp				: 2014-09-16 Sonia
+// Code clean up																			: 2014-09-17 Sonia
+/*-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package MonAppProgramSelection InductionLoop
+	{
+		application function int GetID ()
+		{
+			int retVal = 11;
+			println ('[HAL]PS - InductionLoop.GetID = ' + retVal);
+			return retVal;
+		}
+		
+		application function string GetName ()
+		{
+			string retVal = "Induction Loop (mT)";
+			println ('[HAL]PS - InductionLoop.GetName = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsVisible ()
+		{
+			int ID = 11; // Induction Loop (mT)
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible (ID);
+			println ('[HAL]PS - InductionLoop.IsVisible = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			int ID = 11; // Induction Loop (mT)
+			bool retVal = Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled (ID);
+			println ('[HAL]PS - InductionLoop.IsEnabled = ' + retVal + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			return retVal;
+		}
+		
+		application function void Apply ()
+		{
+			BasicLibrary_ProgramSelection.SetInductionLoopmT();
+			
+			println ('[HAL]PS - InductionLoop.Apply started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - InductionLoop.Apply done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function void ApplyComplementary ()
+		{
+			BasicLibrary_ProgramSelection.SetPrivacy();
+			
+			println ('[HAL]PS - InductionLoop.ApplyComplementary started in HP = ' + BasicLibrary_CommUtil.CurrentProg ());	
+			High_Level_Library_ProgramSelection.Set_ProgramSelection ();
+			println ('[HAL]PS - InductionLoop.ApplyComplementary done in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+		}
+		
+		application function int GetOrderNumber ()
+		{
+			int retVal = 14;
+			println ('[HAL]PS - InductionLoop.GetOrderNumber = ' + retVal);
+			return retVal;
+		}	
+	}
+}
+//------------------------------------ END of PROGRAM SELECTION - Induction Loop (mT) -----------------------------*/

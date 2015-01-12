@@ -1,0 +1,129 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY  MicSpeechFocusEn
+// Initial Version                                         :  2011-03-25   Nadine Seubert
+// change HIVar01hp to HiVarEn05HP                         :  2011-04-18   Nadine Seubert
+// add print lines                                         :  2011-05-12   Nadine Seubert
+// update for new CtrlSelEnable control                    :  2011-06-08   Nadine Seubert
+// update for new Macro Variable                           :  2011-06-08   Nadine Seubert
+// uncomment HiVar lines and CtrlSelEnable				   :  2011-06-15   Meike Doose
+// Updated the SpeechFocusEn_Set after review the control settings with Jens and updated 
+// the "d8PCtrlMicEnable" under AutoAdap MicMode to be "enabled". Outstanding to confirm 
+// the settings of the "d8PSelOmniThr".						:  2012-02-22   Jenny Lin 
+// added d8PSelWlsBypass in SpeechFocusEn_Set for Hannes and Jens	:  2012-05-16  Frauke Schall
+// Peer review changes									   :  2012-06-20 Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Fixed ER57296 macro controlled e2e coupling for SpeechFocus: 2012-09-04   Cecil Wilson
+// Updated SetPos() for Single Mic Devices.
+// Removed d9SwMicMode in the function and added to new function 
+// to accomodate single mic devices when PreFit is performed.	:  2012-10-18 Mang Yew
+// updated the CarFocus checkbox to include the SpeechFocus option in MicMode : 2012-11-19 Jenny
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat {
+	using shs_sat.*;
+
+	package  Lib BasicLibrary_SpeechFocusEn{
+	    // All the functions we need can be added in here
+	
+/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    SpeechFocusEn_Get_Checkbox
+//   Input      :  none 
+//   Ouput      :  <bool> Current State of checkbox 
+//   Description:  Checks if the SpeechFocusEnEn is enabled or not, ie the checkbox is ticked or not 
+* 					Based on SwMacro variable, d8SwMacroAutoSpeechFocusEnHP.
+-----------------------------------------------------------------------------------------------------------------*/		
+    public function bool SpeechFocusEn_Get(){    		
+    	bool is_enabled = true;
+    	 
+    	if (hi:d8SwMacroAutoSpeechFocusEnHP == d8SwMacroAutoSpeechFocusEnHP.on){
+        	println('[HAL]BLIB-SpeechFocusEn_Get return TRUE');
+        	is_enabled = true;
+    	}
+    	else{
+    		println('[HAL]BLIB-SpeechFocusEn_Get return FALSE');
+    		is_enabled = false;
+	 	}
+    	 
+    	return is_enabled;
+    } // Closes	BasicLibrary_SpeechFocusEn.SpeechFocusEn_Get 
+    
+/*----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    SpeechFocusEn_Set
+//   Input      :  <int> Desired State of checkbox 
+//   Ouput      :  none 
+//   Description:  Sets the SpeechFocuseEn feature based on Checkbox selection   
+-----------------------------------------------------------------------------------------------------------------*/  
+    public function void SpeechFocusEn_Set(int CarFocusEn){
+   		println('[HAL]BLIB-SpeechFocusEn_Set  CarFocusEn='+CarFocusEn);
+/* D8-D9 rename ***   		
+   		if (CarFocusEn == 1){	
+   			// Automatic MicMode + CarFocus checkbox = ON
+			hi:d8PCtrlMicEnable = d8PCtrlMicEnable.enabled;
+			hi:d8PCtrlSelEnable = d8PCtrlSelEnable.enabled;
+			hi:d8PSelOmniThr = d8PSelOmniThr._56_dBspl;
+			hi:d8PSelWlsBypass = d8PSelWlsBypass.force_omni_from_firmware; 
+		}
+   		else if (CarFocusEn == 0){
+   			// Automatic MicMode + CarFocus checkbox = OFF (default)
+			hi:d8PCtrlMicEnable = d8PCtrlMicEnable.enabled;
+			hi:d8PCtrlSelEnable = d8PCtrlSelEnable.disabled;
+			// for AutoAdap, d8PSelOmniThr not use.
+			hi:d8PSelWlsBypass = d8PSelWlsBypass.local_force_omni_decision;
+   		}
+   		else{
+	   		// SpeechFocus MicMode
+			// do not reset the d8SwMacroAutoSpeechFocusEnHP state as it shall
+			// show the state when "Automatic Microphone" mode is reselected.
+			hi:d8PCtrlMicEnable = d8PCtrlMicEnable.disabled;
+			hi:d8PCtrlSelEnable = d8PCtrlSelEnable.disabled;
+			hi:d8PSelOmniThr = d8PSelOmniThr._44_dBspl;
+			hi:d8PSelWlsBypass = d8PSelWlsBypass.local_force_omni_decision;
+   		} */
+ 	} // Closes	BasicLibrary_SpeechFocusEn.SpeechFocusEn_Set
+
+///*----------------------------------------------------------------------------------------------------------------
+////   BASIC LIBRARY Function:    SpeechFocusEn_SetSW                                        DELETE? control no longer used.
+////   Input      :  <int> Desired State of checkbox via remapped_pos (10: off,20: on)
+////   Ouput      :  none 
+////   Description:  Sets the SpeechFocuseEn feature based on Checkbox selection   
+//-----------------------------------------------------------------------------------------------------------------*/  
+//    public function void SpeechFocusEn_SetSW(int CxxPos){
+//   		println('[HAL]BLIB-SpeechFocusEn_SetSW  remapped_pos='+CxxPos);
+//   		switch(CxxPos){
+//   			case 1:{	// Automatic MicMode + CarFocus checkbox = ON
+//				hi:d8SwMacroAutoSpeechFocusEnHP = d8SwMacroAutoSpeechFocusEnHP.on;
+//   			}
+//   			default:{	// Automatic MicMode + CarFocus checkbox = OFF
+//   				hi:d8SwMacroAutoSpeechFocusEnHP = d8SwMacroAutoSpeechFocusEnHP.off;
+//   			}  		
+//   		}
+//	} // Closes	BasicLibrary_SpeechFocusEn.SpeechFocusEn_SetSW
+//
+
+///* NOT USE ANYMORE - CALLING BLIB.MICMODESET. */
+///*----------------------------------------------------------------------------------------------------------------
+////   BASIC LIBRARY Function:    SpeechFocusEn_Mic_Mode_Set
+////   Input      :  <int> Desired SwMicMode Type
+////   Ouput      :  none 
+////   Description:  Sets the SpeechFocuseEn Checkbox Mic Mode Type. Checkbox On sets to SelDir, Off sets to AutoAdap  
+//-----------------------------------------------------------------------------------------------------------------*/
+//
+//	public function void SpeechFocusEn_Mic_Mode_Set(int pos){
+//			string micmode = '';
+//	   		println('[HAL]BLIB-SpeechFocusEn_Mic_Mode_Set  pos='+pos);
+//	   		
+//		    	if(pos==1){
+//					hi:d9SwMicMode = d9SwMicMode.SelDir;
+//					micmode = 'SelDir';
+//				}	
+//				else{
+//					hi:d9SwMicMode = d9SwMicMode.AutoAdap;
+//					micmode = 'AutoAdap';
+//				}	
+//				println('[HAL]BLIB-SpeechFocusEn_Mic_Mode_Set  = '+micmode);
+//				
+//	} // Closes	BasicLibrary_SpeechFocusEn.SpeechFocusEn_Mic_Mode_Set
+/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY     
+-----------------------------------------------------------------------------------------------------------------*/			
+	}	//package BasicLibrary_SpeechFocusEn
+}	//namespace shs.sat

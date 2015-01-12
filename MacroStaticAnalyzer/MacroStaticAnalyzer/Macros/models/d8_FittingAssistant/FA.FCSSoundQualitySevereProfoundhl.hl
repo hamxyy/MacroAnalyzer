@@ -1,0 +1,79 @@
+// First Draftbased on FA.AATemplateFitAss.hl 		   									:2013-04-18 Raymond
+// Updated Package Name																	:2013-05-06 Judith
+// Updated proposal name																:2013-05-10 Raymond
+// Updated builtin functions name														:2013-05-13 Raymond
+// Added empty SelectProposal2 and ApplyProposal2 for there is no code completion       :2013-05-21 Judith
+// Update setApply2IsVisible to true													:2013-05-30 Raymond
+// Add pricepoint dependency for sub question											:2013-06-11 Raymond
+// Added FA_P_FCOon to proposal1														:2013-06-27 Raymond
+// Added missing else keyword															:2013-06-28 Raymond
+// Update due to CR62325																:2013-07-02 Judith
+// Update due FA_P_ActivateFCO instead of FCO on due to optimization					:2013-07-02 Judith
+//FR62273: FIAS - Display propsal cannot be applied text for Tinnitus ear side          :2013-07-05 Judith
+//----------------------------------------------------------- 7.3 ---------------------------------------------------
+// Clean up comments and refractor method argument										:2013-12-13 Raymond
+/*------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package FittingAssistent FCSoundQualitySevereProfoundhl
+	{
+		application function bool IsVisible ()
+		{
+			return Mid_Level_Library_FCO.Fco_IsAvailable();
+		} //cleaning FCSoundQualitySevereProfoundhl.IsVisible
+		application function bool IsEnabled ()
+		{
+			return Mid_Level_Library_FCO.Fco_IsAvailable();
+		} //closing FCSoundQualitySevereProfoundhl.IsEnabled
+		application function void SelectProposal1 ()
+		{	
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure())
+			{
+				setApply1IsVisible (false);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_P_Tinnitus");
+			}
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_ActivateFCO"))
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (true);
+				setProposalTextID1 ("FA_P_ActivateFCO");			
+			}
+			else if (cap:PricePoint == PricePoint.PP75)
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_X_ActivateFCO");
+			}
+			else if (High_Level_Library_FitAssApplicable.FitAssIsProposalApplicable ("FA_P_FCOIncfmax"))
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (true);
+				setProposalTextID1 ("FA_P_FCOIncfmax");
+			}
+			else
+			{
+				setApply1IsVisible (true);
+				setApply1IsEnabled (false);
+				setProposalTextID1 ("FA_N_FCOIncfmax");
+			}
+		} //closing FCSoundQualitySevereProfoundhl.SelectProposal1
+		application function void ApplyProposal1 ()
+		{
+			High_Level_Library_FitAssApply.ApplyProposal (getProposalTextID1 ());
+		} //closing FCSoundQualitySevereProfoundhl.ApplyProposal1
+		application function void SelectProposal2 ()
+		{
+			setApply2IsVisible (false);
+			setApply2IsEnabled (false);
+			setProposalTextID2 ("");
+		} //closing FCSoundQualitySevereProfoundhl.SelectProposal2
+		application function void ApplyProposal2 ()
+		{
+			// do nothing
+		} //closing FCSoundQualitySevereProfoundhl.ApplyProposal2
+		
+	} //package FitAss FCSoundQualitySevereProfoundhl
+
+} //namespace shs_sat

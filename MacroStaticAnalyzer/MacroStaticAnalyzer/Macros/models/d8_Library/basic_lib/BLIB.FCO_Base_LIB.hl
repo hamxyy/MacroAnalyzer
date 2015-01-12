@@ -1,0 +1,377 @@
+/*----------------------------------------------------------------------------------------------------------------
+//                                 BASIC FUNCTION LIBRARY  FCO
+// Initial Version                                         				:	2011-08-03 	Chuah LayYuan
+// Macro code Cleanup													:   2012-02-14  Cecil Wilson
+// Peer review changes												: 2012-06-20 Nadine and Frauke
+// *********************************************CODE FREEZE*******************************************************
+// Added FminIncApplicable, FminDecApplicable, FMin_IncDec				: 2013-05-30 Raymond
+// Remove FminIncApplicable, FminDecApplicable and added 
+// FCOFMinSL_Get_Strength											: 2013-05-31 Raymond
+// Added draft code for FCOFMaxSL_Get_Strength & FCOFMax_IncDec		: 2013-05-31 Raymond
+// Uncommented FMax proposal										: 2013-06-10 Raymond
+// CR61177:Added SwMacroFCOHpEn setter and getter functions			: 2013-07-08 Raymond
+// CR61177:Updated temp variable d8SwMacroVar9Hp to d8SwMacroFcoEn	: 2013-07-16 Raymond
+// Added Comment due to peer review                                 : 2013-08-14 Raymond, Judith
+// Revert prefix from D9 to D8 for SwFcoFreqCutoff, SwFcoFreqDestination.	: 2013-10-24 Jenny
+// Sifit7.3 Peer review	(except FitAsst).							: 2014-04-21 Jenny, Jeline
+---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package Lib BasicLibrary_FCO
+	{
+
+	/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FCOEn_Get
+//   Input      :  none 
+//   Output      :  <bool> Current State of checkbox 
+//   Description:  Checks if the FCO is enabled or not, ie the checkbox is ticked or not    
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function bool FCOEn_Get () //SIFIT7.3PEERREVIEWED
+		{
+			if (hi:d8PFcoSpcEn == d8PFcoSpcEn.on)
+			{
+				println ('[HAL]BLIB:FCOEn_Get = true (d8PFcoSpcEn.on)' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				return true;
+			}
+			else
+			{
+				println ('[HAL]BLIB:FCO_GetEn = false (d8PFcoSpcEn.off)' + ' in HP = ' + BasicLibrary_CommUtil.CurrentProg());
+				return false;
+			}
+		} // Closes	BasicLibrary_FCO.FCOEn_Get
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FCOEn_Set
+//   Input      :  <int> Desired State of checkbox 
+//   Output      :  none 
+//   Description:  Sets the FCO feature based on Checkbox selection   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FCOEn_Set (int pos) //SIFIT7.3PEERREVIEWED
+		{
+			if (pos == 1)
+			{
+				hi:d8PFcoSpcEn = d8PFcoSpcEn.on;
+				println ('[HAL]BLIB:FCOEn_Set = d8PFcoSpcEn.on');
+			}
+			else
+			{
+				hi:d8PFcoSpcEn = d8PFcoSpcEn.off;
+				println ('[HAL]BLIB:FCOEn_Set = d8PFcoSpcEn.off');
+			}
+		} // Closes	BasicLibrary_FCO.FCOEn_Set
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FCOFMinSL_Get_Strength
+//   Input      :  none
+//   Output      :  <int> remapped int of UI position
+//   Description:  Compares the HI settings and returns the remapped pos of UI position   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int FCOFMinSL_Get_Strength ()
+		{
+			int remapped_pos = -1;
+			if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._1500Hz) //d8SwFcoFreqCutoff == Fmin
+			{
+				remapped_pos = 10; // For ._1500Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._1750Hz)
+			{
+				remapped_pos = 20; // For ._1750Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._2000Hz)
+			{
+				remapped_pos = 30; // For ._2000Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._2250Hz)
+			{
+				remapped_pos = 40; // For ._2250Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._2500Hz)
+			{
+				remapped_pos = 50; // For ._2500Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._2750Hz)
+			{
+				remapped_pos = 60; // For ._2750Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._3000Hz)
+			{
+				remapped_pos = 70; // For ._3000Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._3250Hz)
+			{
+				remapped_pos = 80; // For ._3250Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._3500Hz)
+			{
+				remapped_pos = 90; // For ._3500Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._3750Hz)
+			{
+				remapped_pos = 100; // For ._3750Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._4000Hz)
+			{
+				remapped_pos = 110; // For ._4000Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._4250Hz)
+			{
+				remapped_pos = 120; // For ._4250Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._4500Hz)
+			{
+				remapped_pos = 130; // For ._4500Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._4750Hz)
+			{
+				remapped_pos = 140; // For ._4750Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._5000Hz)
+			{
+				remapped_pos = 150; // For ._5000Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._5250Hz)
+			{
+				remapped_pos = 160; // For ._5250Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._5500Hz)
+			{
+				remapped_pos = 170; // For ._5500Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._5750Hz)
+			{
+				remapped_pos = 180; // For ._5750Hz
+
+			}
+			else if (hi:d8SwFcoFreqCutoff == d8SwFcoFreqCutoff._6000Hz)
+			{
+				remapped_pos = 190; // For ._6000Hz
+
+			}
+			else
+			{
+				println ('[HAL]:BLIB.FCOFMinSL_Get_Strength !!Error: Slider position out of SPEC/Range!! ');
+				remapped_pos = -1;
+			} // default close
+			println ('[HAL]:BLIB.FCOFMinSL_Get_Strength, remapped_pos = ' + remapped_pos);
+			assertion (remapped_pos >= 0, "[MacroError] Undefined state of FMin Slider!");
+			return remapped_pos;
+		} // Close BasicLibrary_FCO.FCOFMinSL_Get_Strength
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FCOFMaxSL_Get_Strength
+//   Input      :  none
+//   Output      :  <int> remapped int of UI position
+//   Description:  Compares the HI settings and returns the remapped pos of UI position   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int FCOFMaxSL_Get_Strength ()
+		{
+			int remapped_pos = -1;
+			if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._2250Hz)  //d8SwFcoFreqDestination == Fmax
+			{
+				remapped_pos = 10;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._2500Hz)
+			{
+				remapped_pos = 20;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._2750Hz)
+			{
+				remapped_pos = 30;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._3000Hz)
+			{
+				remapped_pos = 40;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._3250Hz)
+			{
+				remapped_pos = 50;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._3500Hz)
+			{
+				remapped_pos = 60;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._3750Hz)
+			{
+				remapped_pos = 70;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._4000Hz)
+			{
+				remapped_pos = 80;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._4250Hz)
+			{
+				remapped_pos = 90;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._4500Hz)
+			{
+				remapped_pos = 100;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._4750Hz)
+			{
+				remapped_pos = 110;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._5000Hz)
+			{
+				remapped_pos = 120;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._5250Hz)
+			{
+				remapped_pos = 130;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._5500Hz)
+			{
+				remapped_pos = 140;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._5750Hz)
+			{
+				remapped_pos = 150;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._6000Hz)
+			{
+				remapped_pos = 160;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._6250Hz)
+			{
+				remapped_pos = 170;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._6500Hz)
+			{
+				remapped_pos = 180;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._6750Hz)
+			{
+				remapped_pos = 190;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._7000Hz)
+			{
+				remapped_pos = 200;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._7250Hz)
+			{
+				remapped_pos = 210;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._7500Hz)
+			{
+				remapped_pos = 220;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._7750Hz)
+			{
+				remapped_pos = 230;
+			}
+			else if (hi:d8SwFcoFreqDestination == d8SwFcoFreqDestination._8000Hz)
+			{
+				remapped_pos = 240;
+			}
+			else
+			{
+				println ('[HAL]:BLIB.FCOFMaxSL_Get_Strength !!Error: Slider position out of SPEC/Range!!');
+				remapped_pos = -1;
+			} // default close
+			println ('[HAL]:BLIB.FCOFMaxSL_Get_Strength, remapped_pos = ' + remapped_pos);
+			assertion (remapped_pos >= 0, "[MacroError] Undefined state of FMax Slider!");
+			return remapped_pos;
+		} // Close BasicLibrary_FCO.FCOFMaxSL_Get_Strength
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FMin_IncDec
+//   Input      :  int pos = how many steps to adjust, isIncrease - true = increase, false = decrease
+//   Output      :  none
+//   Description:  Increase or decrease the fmin control   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FCOFMin_IncDec (int pos, bool isIncrease)
+		{
+			if (isIncrease)
+			{
+				hi:d8SwFcoFreqCutoff >> pos; // Increase FMin position by pos
+
+			}
+			else
+			{
+				hi:d8SwFcoFreqCutoff << pos; // Decrease FMin position by pos
+
+			}
+		} // Close BasicLibrary_FCO.FCOFMin_IncDec
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:    FCOFMax_IncDec
+//   Input      :  int pos = how many steps to adjust, isIncrease - true = increase, false = decrease
+//   Output      :  none
+//   Description:  Increase or decrease the fmax control   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void FCOFMax_IncDec (int pos, bool isIncrease)
+		{
+			if (isIncrease)
+			{
+				hi:d8SwFcoFreqDestination >> pos; // Increase FMax position by pos
+
+			}
+			else
+			{
+				hi:d8SwFcoFreqDestination << pos; // Decrease FMax position by pos
+
+			}
+		} // Close BasicLibrary_FCO.FCOFMax_IncDec
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:   SwMacroFCOEn_Set
+//   Input      :  int :FCO settings
+//   Output      :  none 
+//   Description:  Set the FCO setting after PostFit()   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SwMacroFCOEn_Set (int pos) //SIFIT7.3PEERREVIEWED
+		{
+			if (pos == 1)
+			{
+				println ('[HAL]BLIB:SWFCOEn_Set = On');
+				hi:d8SwMacroFcoEn = d8SwMacroFcoEn.on;
+			}
+			else
+			{
+				println ('[HAL]BLIB:SWFCOEn_Set = Off');
+				hi:d8SwMacroFcoEn = d8SwMacroFcoEn.off;
+			}
+		} // Close BasicLibrary_FCO.SwMacroFCOEn_Set
+
+		/*$----------------------------------------------------------------------------------------------------------------
+//   BASIC LIBRARY Function:   SwMacroFCOEn_Get
+//   Input      :  none
+//   Output      :  none 
+//   Description:  Get the FCO setting after PostFit()   
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function int SwMacroFCOEn_Get () //SIFIT7.3PEERREVIEWED
+		{
+			if (hi:d8SwMacroFcoEn == d8SwMacroFcoEn.on)
+			{
+				println ('[HAL]BLIB:SWFCOEn_Get = On');
+				return 1;
+			}
+			else
+			{
+				println ('[HAL]BLIB:FCOEn_Get = Off');
+				return 0;
+			}
+		} // Close BasicLibrary_FCO.SwMacroFCOEn_Get
+		/*----------------------------------------------------------------------------------------------------------------
+// 								  END Of BASIC FUNCTION  LIBRARY     
+-----------------------------------------------------------------------------------------------------------------*/
+	} //package BasicLibrary_FCO
+
+} //namespace shs.sat

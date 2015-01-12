@@ -1,0 +1,649 @@
+/*---------------------------------------------------------------------------------------------------------------*
+//                           HIGH LEVEL PRICEPOINT LIBRARY : SpeechNoiseMgmnt 
+// Initial Version  (Get function not finalized!)              						    : 2011-02-23 Meike Doose and Frauke Schall
+// Include zero based counting in Get and Set function and initialize Get function	 	: 2011-02-28 Meike Doose
+// Include Cap PricePoint and Cap HiIdentifier											: 2011-02-28 Meike Doose
+// Updated Function structure with single Remapping Funct  								: 2011-03-02 Meike Doose
+// include Set_Default function															: 2011-03-02 Meike Doose
+// Removed Package LIB workaround & fixed bug in
+// SpeechNoiseMgmntSL_Get :replaced while condition'<=' with '<'  				 	    : 2011-03-03 Cecil Wilson
+// rename Basic function (strength)														: 2011-03-16 Meike Doose							
+// Updated SpeechNoiseMgmnt_Set_Default													: 2011-07-07 Nadia Neugeborn
+// Added new function SpeechInNoiseEn_Set_Default 										: 2011-07-20 Nadia Neugeborn
+// Add SpeechInNoise_Set_ProgramSelection function			                            : 2011-09-13 Chuah LayYuan
+// Updated Program selection ID													        : 2011-11-09 Chuah LayYuan
+// Updated PS_Privacy settings in SpeechInNoise_Set_ProgramSelection					: 2011-11-14 Jenny Lin
+// Updated Setting for miniTekTelecoil Program											: 2011-11-14 Chuah LayYUan
+// Updated PS_Privacy to set SL to min.													: 2011-11-14 Jenny Lin
+// Updated PS:Phone acoustically  														: 2011-11-14 Cecil Wilson 
+// Updated PS:TV 																		: 2011-11-15 Nadia Neugeborn
+// Updated PS:Outdoor/Sports 															: 2011-11-15 Ma Mie Mie Thein
+// Updated PS:Outdoor/Sports for SNM slider to Med if SNM checkbox is off				: 2011-12-07 Ma Mie Mie Thein
+// Updated descriptions and added new functions SpeechNoiseMgmntEn_Set, SpeechNoiseMgmntDd1-4_Set,
+// SpeechNoiseMgmntRb_Set_ForPS and included the setting of the mew function, Set_PhlNruSpassMode.
+// Updated PS function to call the HLIB for the setting of the SNM checkbox and radiobutton. : 2012-03-05 Jenny Lin
+// Added call to Set_PhlNruSpassMode for SpeechNoiseMgmntDd set function				: 2012-04-03 Jenny Lin
+// Call SpeechNoiseMgmntSL_MedPos() instead of DefaultPos()								: 2012-04-12 Nadia
+// Updated macros to the state on 2011-12-21   											: 2012-04-13 Jenny Lin
+// Set default slider pos after FirstFit to MIN											: 2012-04-17 Nadia
+// Removed SpeechInNoiseEn_Set_Default, incorporated into SpeechNoiseMgmnt_Set_Default(): 2012-04-17 Nadia
+// Updated Ps_Privacy to get the min pos by call MLIB then set the slider				: 2012-04-24 Jenny Lin
+// Updated SpeechNoiseMgmnt_Set_Default()												: 2012-05-09 Nadia
+// 'SpeechNoiseMgmntEn_Set' function output style set to void, as doesn't return anything. : 2012-06-11 Alastair.
+// The BLIB function called by SpeechNoiseMgmntDd1,2,3,4_Set now passed directly to return. : 2012-06-13 Alastair 
+// SpeechNoiseMgmntDd1,2,3,4_Set now set to void, i.e. function returns nothing.        : 2012-06-13 Alastair
+// Updated based on peer review (ProgramSelection)										: 2012-06-27 Frauke, Jenny and co
+// Updated based on peer review (ProgramSelection)										: 2012-07-19 Jenny, MieMie
+// Updated comments for SpeechNoiseMgmnt_Set_ProgramSelection. 							: 2012-07-20 Cecil, Jenny
+// FirstFit peer review updates: SpeechNoiseMgmnt_Set_Default()							: 2012-07-20 Nadia & Judith
+// *********************************************CODE FREEZE*******************************************************
+// FR57346: Noisy environment program - SNM slider set to med, instead of max.          : 2012-12-05 Al
+// FR57350: TV program - SNM slider set to min, instead of med                          :  2012-12-05 Al
+// FR59582: SpeechNoiseMgmntSL_IsVisiblePhysicalPos(int physicalPos) altered. For Pp100 and 300, 
+//         slider position 0 is now equivalent to position 0 of Pp500. (Previously, it was equivalent to
+//          position 2 of Pp500).                                                       : 2013-01-08 Al
+// FR59582: Added new functions SpeechNoiseMgmntDD1_Get(), SpeechNoiseMgmntDD2_Get(), SpeechNoiseMgmntDD3_Get()
+//          and SpeechNoiseMgmntDD4_Get()                                               : 2013-01-11 Al
+// Refractor common getter method based on peer review							:2013-07-29 Raymond
+// Update ID number in Set_ProgramSelection function									:	2013-10-29 Sonia Stasiak
+// Updated comments	for Set_ProgramSelection D9											:	2013-11-01 Sonia Stasiak
+// Sifit 7.3 Updates																	: 	2013-11-29 Mang Yew
+// Update ProgramSelection or OutdoorSports to check for Snm SwMacro Var.				: 2014-01-14	Mang Yew
+// Added function to check for Hw controls and set Sw controls for Snm feature			: 2014-01-21 Mang Yew
+// update on setpos to remove unused return argument							: 2014-03-04 Mang Yew
+// Added new programs Telecoil MT and Telecoil T for Set_ProgramSelection (FR64541)	: 2014-03-19 Sonia & Jeline
+// Update Snm default FF to call set SW Macro Control for checkbox, RB and Slider		: 2014-03-24 Mang Yew
+// Update for Sifit7.3 Peer Review														: 2014-04-22 Mang Yew
+// PEER REVIEW CXX 7.3	for Program Selection										:	2014-05-06 Sonia, Mie Mie, Jenny	
+// FR66756 - Default after First fit for Noise Reduction is changed to Expanded view.
+// Therefore need update default function for SnM										: 2014-05-06 Mang Yew
+// FR67585 SnM Pp300 and Pp100 to set default to Med									: 2014-05-28 Mang Yew
+// Added new Induction Loop (T) program into Set_ProgramSelection function				: 2014-07-30 Sonia
+// Re-write Set_ProgramSelection to call BLib.Is<program>								: 2014-09-16 Sonia
+// Clean up																				: 2014-10-10 Mang Yew
+// FR69523- Amended IsSpeechNoiseMgmntSpeechInNoiseEnabled() to check for  	
+*  SpeechInNoiseEn_IsEnabledForNarrowFocusSPASS()								 	 	: 2014-10-27 Sultan
+// Sifit 7.4 Peer Review Code cleanup													: 2014-11-14 Mang Yew
+// Sifit 7.4 Peer Review 
+  -- Renamed SpeechInNoiseEn_IsEnabledForNarrowFocusSPASS() to 
+     SpeechInNoiseEn_IsActivatedForNarrowFocusSPASS										: 2014-11-19 Sultan/MieMie
+// Cxx 7.4 Peer Review for Program Selection (only)									: 2014-11-20 Sonia, Jenny, Niklas
+/*----------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat
+{
+	using shs_sat.*;
+	
+	package Lib High_Level_Library_SpeechNoiseMgmnt
+	{
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Sets Snm slider strength and Sw macro control    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SpeechNoiseMgmntSL_Set (int pos)
+		{
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Set_Strength 
+			(Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Remapping (pos));
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Set_Sw(pos);
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  sets  checkbox ;     
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SpeechNoiseMgmntEn_Set (int pos)
+		{
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set (pos);
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set_Sw (pos);
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Set the position of the dropdown menu based on Cxx position.
+* 			For dropdown menu 1, additionally require to set the d8PhlNruSpassMode
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SpeechNoiseMgmntDd1_Set (int pos)
+		{
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt1DD_Set_Entry 
+			(Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDD_Remapping (pos));
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Set the position of the dropdown menu based on Cxx position.     
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SpeechNoiseMgmntDd2_Set (int pos)
+		{
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt2DD_Set_Entry 
+			( Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDD_Remapping (pos));
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Set the position of the dropdown menu based on Cxx position.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SpeechNoiseMgmntDd3_Set (int pos)
+		{
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt3DD_Set_Entry 
+			(Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDD_Remapping (pos));
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Set the position of the dropdown menu based on Cxx position.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SpeechNoiseMgmntDd4_Set (int pos)
+		{
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt4DD_Set_Entry 
+			(Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDD_Remapping (pos));
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  sets checkbox ;     
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SpeechNoiseMgmntBroadbandRB_Set (int pos)
+		{
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntBroadbandRB_Set_Entry (pos);
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntBroadbandRB_Set_Entry_Sw (pos);
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  sets  checkbox ;     
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SpeechNoiseMgmnt_SpeechInNoiseEn_Set (int pos)
+		{
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set (pos);
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set_Sw (pos);
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  get snm slider sw control    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntSL_Get ()
+		{
+			return BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Get_Sw ();
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  BACKMAPING  Slider positions;   Reverse of Price point and Family resolving function.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntSL_Get_Hw ()
+		{
+			int pos = -1;
+			int a = -1;
+			int pos_wrt_basic_fcn = BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Get_Strength ();
+			int maxstep = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_MaxPos ();
+			
+				while (a < maxstep)
+				{ //  Test each position from 0 to maximum available for this device
+					++ a; // a=a+1
+					if (pos_wrt_basic_fcn == Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Remapping (a))
+					{
+						pos = a;
+						break;
+					}
+				}
+			return pos;
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Get position of the checkbox.     
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SpeechNoiseMgmntEn_Get ()
+		{
+			return BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Get_Sw();
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  BACKMAPING DD menu positions;   Reverse of Price point and Family resolving function.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntDD1_Get ()
+		{
+			int pos_wrt_basic_fcn = BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt1DD_Get_Entry ();
+			return SpeechNoiseMgmntDD_CommonGet (pos_wrt_basic_fcn);
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  BACKMAPING DD menu positions;   Reverse of Price point and Family resolving function.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntDD2_Get ()
+		{ 
+			int pos_wrt_basic_fcn = BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt2DD_Get_Entry ();
+			return SpeechNoiseMgmntDD_CommonGet (pos_wrt_basic_fcn);
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  BACKMAPING DD menu positions;   Reverse of Price point and Family resolving function.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntDD3_Get ()
+		{ 
+			int pos_wrt_basic_fcn = BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt3DD_Get_Entry ();
+			return SpeechNoiseMgmntDD_CommonGet (pos_wrt_basic_fcn);
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  BACKMAPING DD menu positions;   Reverse of Price point and Family resolving function.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntDD4_Get ()
+		{
+			int pos_wrt_basic_fcn = BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt4DD_Get_Entry ();
+			return SpeechNoiseMgmntDD_CommonGet (pos_wrt_basic_fcn);
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  BACKMAPING DD menu positions;   Reverse of Price point and Family resolving function.    
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntDD_CommonGet (int pos_wrt_basic_fcn)
+		{
+			int pos = -1;
+			int a = -1;
+			int maxstep = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDD_MaxPos ();
+			
+			while (a < maxstep)
+			{ //  Test each position from 0 to maximum available for this device
+				++ a; // a=a+1
+				if (pos_wrt_basic_fcn == Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDD_Remapping (a))
+				{
+					pos = a;
+					break;
+				}
+			}
+			return a;
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Get position of the checkbox.     
+-----------------------------------------------------------------------------------------------------------------*/
+		public function int SpeechNoiseMgmntBroadbandRB_Get ()
+		{
+			return BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntBroadbandRB_Get_Entry_Sw ();
+			
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Get position of the checkbox.     
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SpeechNoiseMgmnt_SpeechInNoiseEn_Get ()
+		{
+			return BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Get_Sw();
+			
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Checks the Visiblility of Speech and Noise Management Slider based on Radiobutton and PricePoint.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsSpeechNoiseMgmntSliderVisible ()
+		{
+			bool retVal = false;
+			
+			if (BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntBroadbandRB_Get_Entry () == 1)
+			{
+				retVal = false;
+			}
+			else
+			{	
+				retVal = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_IsVisible ();
+			}		
+
+			return retVal;			
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Checks the Visiblility of Speech and Noise Management DropDown Menu based on PricePoint.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsSpeechNoiseMgmntDdVisible ()
+		{
+			bool retVal = false;
+			
+			if (BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntBroadbandRB_Get_Entry ()== 0)
+			{
+				retVal = false;
+			}
+			else
+			{	
+				retVal = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDD_IsVisible ();
+			}		
+
+			return retVal;		
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:   Decides the visibility of the individual entries in the list
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool SpeechNoiseMgmntSL_IsVisiblePhysicalPos (int physicalPos)
+		{
+			bool retval = false;
+			switch (physicalPos)
+			{
+				case 0:{ // slider pos 1   (Changed 2013-01-08. FR58582)
+					retval = true;
+				}
+				case 1:{ // slider pos 2 - only 700 and 500 pricepoints can see this step
+					if (cap:PricePoint == PricePoint.PP700 ||
+							cap:PricePoint == PricePoint.PP500)
+					{
+						retval = true;
+					}
+					else
+					{
+						retval = false;
+					}
+				}
+				case 2:{ // slider pos 3 - only 700 and 500 pricepoints can see this step. (Changed 2013-01-08. FR58582)
+					if (cap:PricePoint == PricePoint.PP700 ||
+							cap:PricePoint == PricePoint.PP500)
+					{
+						retval = true;
+					}
+					else
+					{
+						retval = false;
+					}
+				}
+				case 3:{ // slider pos 4
+					if (cap:PricePoint == PricePoint.PP700)
+					{
+						retval = true;
+					}
+					else
+					{
+						retval = false;
+					}
+				}
+				case 4:{ // slider pos 5
+					retval = true;
+				}
+				case 5:{ // slider pos 6
+					if (cap:PricePoint == PricePoint.PP700)
+					{
+						retval = true;
+					}
+					else
+					{
+						retval = false;
+					}
+				}
+				case 6:{ // slider pos 7
+					retval = true;
+				}
+				default:{
+					retval = false;
+				}
+
+			}
+			            	 			
+			return retval;
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Set the default positions for all features within Speech and Noise Management System 
+// 					to the default after FF position for Sw Macro Control only except Snm Dd sets Hw controls  
+-----------------------------------------------------------------------------------------------------------------*/
+		public function void SpeechNoiseMgmnt_Set_Default () //Sifit 7.3 Reviewed
+		{
+			int posSL = -1;
+			int posDD = -1;
+			int posSinNoise = -1;
+
+			posSL = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_DefaultPos ();
+
+			posDD = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDd_DefaultPos ();
+
+			posSinNoise = Mid_Level_Library_SpeechNoiseMgmnt.SpeechInNoiseEn_DefaultPos ();
+			if (posSL != -1)
+			{
+				// default after FF is NR Expanded View => Set Speech and Noise Management checkbox to ON
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set (1); // Sifit 7.3
+
+				if (Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntRb_IsVisible () == true)
+				{
+					// default after FF is NR Expanded View => Set to Broadband 
+					High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntBroadbandRB_Set (0); // sifit 7.3
+
+					High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDd1_Set (posDD);
+					High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDd2_Set (posDD);
+					High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDd3_Set (posDD);
+					High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntDd4_Set (posDD);
+				}
+
+				// default after FF is NR Expanded View => Set broadband slider
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Set (posSL); // sifit 7.3
+				println ("[HAL] - HLIB: SpeechNoiseMgmnt_Set_Default Slider set" + posSL);
+
+				// default after FF is NR Expanded View => Set Speech in Noise only checkbox
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmnt_SpeechInNoiseEn_Set (posSinNoise); // sifit 7.3
+				println ("[HAL] - HLIB: SpeechNoiseMgmnt_Set_Default SpeechInNoiseEn set to " + posSinNoise);
+			}
+			else
+			{
+				// default after FF is NR Expanded View =>  Set all to OFF (Speech and Noise Management checkbox to OFF) 
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set (0);
+			}
+		}
+
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  If visible, use the position from the PS function
+// 					If not visible, default to pos=0 (broadband). 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SpeechNoiseMgmntRb_Set_ForPS (int pos)
+		{
+			int pos_wrt_basic_fcn = -1;
+			
+			if (Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntRb_IsVisible ())
+			{
+				pos_wrt_basic_fcn = pos;
+			}
+			else
+			{
+				pos_wrt_basic_fcn = 0;
+			}
+
+			High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntBroadbandRB_Set (pos_wrt_basic_fcn); // sifit 7.3
+			println ('[HAL]HLIB-SpeechNoiseMgmntRb_Set_ForPS, pos=' + pos + ' (' + pos_wrt_basic_fcn);
+		}
+		
+/*$---------------------------------------------------------------------------------------------------------------*
+//   Description:  If visible, use the position from the PS function
+// 					If not visible, default to pos=0 (broadband). 
+-----------------------------------------------------------------------------------------------------------------$*/
+		public function void SpeechNoiseMgmntRb_Set_ForPS_Sw_Controls (int pos)
+		{
+			int pos_wrt_basic_fcn = -1;
+			if (Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntRb_IsVisible ())
+			{
+				pos_wrt_basic_fcn = pos;
+			}
+			else
+			{
+				pos_wrt_basic_fcn = 0;
+			}
+			
+			BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntBroadbandRB_Set_Entry_Sw (pos_wrt_basic_fcn); // sifit 7.3
+			println ('[HAL]HLIB-SpeechNoiseMgmntRb_Set_ForPS_Sw_Controls, pos=' + pos + ' (' + pos_wrt_basic_fcn);
+		}
+		
+/*---------------------------------------------------------------------------------------------------------*
+//	Description	:	Function is setting Speech and Noise Management for all listening situation. 
+/*---------------------------------------------------------------------------------------------------------*/
+		public function void SpeechNoiseMgmnt_Set_ProgramSelection ()
+		{
+			println ('[HAL]HLIB.SpeechNoiseMgmnt_Set_ProgramSelection ID = ' + BasicLibrary_CommUtil.CurrentProg ());
+			
+			int slPos = 0;
+
+			if (BasicLibrary_ProgramSelection.IsNoisyEnv() == true || 
+				BasicLibrary_ProgramSelection.IsPhoneAcoustically() == true ||
+				BasicLibrary_ProgramSelection.IsPhonemT() == true ||
+				BasicLibrary_ProgramSelection.IsPhoneMT() == true ||
+				BasicLibrary_ProgramSelection.IsPhoneT() == true)
+			// SNM set to ON, Broadband, slider set to MED
+			{ 
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set (1);
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntRb_Set_ForPS (0);
+					
+				slPos = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_MedPos (); // retrieve MED position
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Set (slPos); // set slider to MED
+			}
+
+			else if (BasicLibrary_ProgramSelection.IsMusic() == true)
+			// SNM set to OFF
+			{ 
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set (0);
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsTV() == true ||
+					 BasicLibrary_ProgramSelection.IsPrivacy() == true ||
+					 (BasicLibrary_ProgramSelection.IsOutdoorSport() == true &&
+					 	BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Get_Sw () == false)) // If SNM checkbox is unticked in Universal
+			 // SNM set to ON, Broadband, slider set to MIN
+			 { 		 
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set (1);
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntRb_Set_ForPS (0);
+					
+				slPos = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_MinPos (); // retrieve MIN position
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Set (slPos); // set slider to MIN
+			}
+			else if (BasicLibrary_ProgramSelection.IsInductionLoopmT() == true ||
+ 				   	 BasicLibrary_ProgramSelection.IsInductionLoopT() == true)
+ 			// SNM set to ON, Broadband, slider set to MAX	   	 
+			{ 		 
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set (1);
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntRb_Set_ForPS (0);
+					
+				slPos = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_MaxPos (); // retrieve MAX position
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Set (slPos); // set slider to MAX
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsStroll() == true)
+			// SNM set to ON, type of adjustment and slider position same as Universal
+			{
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set (1);
+			}
+			
+			else // (all other programs)
+			// SNM same as Universal (do nothing)
+			{
+
+			}	
+
+		}
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Checks Tinnitus Noiser. Not Enabled if Noiser if set to On and Pure.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsSpeechNoiseMgmntEnEnabled ()
+		{	
+			if (BasicLibrary_Noiser.Noiser_IsOnAndPure () == true)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}	
+		
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Checks Tinnitus Noiser and Speech and Noise Management Checkbox. Not Enabled if either Noiser 
+//					if set to On and Pure or Speech and Noise Management Checkbox is not activated.   
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsSnmSliderDdRbEnabled ()
+		{	
+			if (High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Get() == false || 
+				BasicLibrary_Noiser.Noiser_IsOnAndPure() == true)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}	
+
+/*---------------------------------------------------------------------------------------------------------------*
+//   Description:  Checks Tinnitus Noiser, Speech and Noise Management Checkbox, Classifier control for noise 
+//					reduction and Binaural Mic mode. Not enabled when Tinnitus is set to On and Pure or 
+//					Speech and Noise Management is not activated or Classifier control is not enabled or 
+//					Binaural Mic Mode is activated.
+-----------------------------------------------------------------------------------------------------------------*/
+		public function bool IsSpeechNoiseMgmntSpeechInNoiseEnabled ()
+		{	
+			if (High_Level_Library_SpeechNoiseMgmnt.IsSnmSliderDdRbEnabled () == false ||
+				BasicLibrary_InputMode.GetNoiseReductionClassifierControls ()!= 1 || 
+				Mid_Level_Library_Mic_Mode.MicModeIsBinauralmode () == true ||
+				High_Level_Library_MicModeSpeechInNoiseEn.SpeechInNoiseEn_IsActivatedForNarrowFocusSPASS() == true)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}	
+		
+/*---------------------------------------------------------------------------------------------------------*
+//	Description	:	Function is setting Speech and Noise Management for all listening situation. 
+/*---------------------------------------------------------------------------------------------------------*/
+		public function void SpeechNoiseMgmnt_Set_ProgramSelection_Sw_Controls ()
+		{		
+			println ('[HAL]HLIB.SpeechNoiseMgmnt_Set_ProgramSelection in HP = ' + BasicLibrary_CommUtil.CurrentProg ());
+			
+			int slPos = 0;
+
+			if (BasicLibrary_ProgramSelection.IsNoisyEnv() == true || 
+				BasicLibrary_ProgramSelection.IsPhoneAcoustically() == true ||
+				BasicLibrary_ProgramSelection.IsPhonemT() == true ||
+				BasicLibrary_ProgramSelection.IsPhoneMT() == true ||
+				BasicLibrary_ProgramSelection.IsPhoneT() == true)
+			// SNM set to ON, Broadband, slider set to MED
+			{ 	
+				BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set_Sw (1);
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntRb_Set_ForPS_Sw_Controls (0);
+									
+				slPos = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_MedPos (); // retrieve MED position
+				BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Set_Sw (slPos); // set slider to MED
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsMusic() == true)
+			// SNM set to OFF
+			{
+				BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set_Sw (0);
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsTV() == true ||
+					 BasicLibrary_ProgramSelection.IsPrivacy() == true ||
+					 (BasicLibrary_ProgramSelection.IsOutdoorSport() == true && 
+					 	BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Get_Sw () == false)) // If SNM checkbox is unticked in Universal
+			// SNM set to ON, Broadband, slider set to MIN
+			{ 			
+				BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set_Sw (1);
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntRb_Set_ForPS_Sw_Controls (0);
+									
+				slPos = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_MinPos (); // retrieve MIN position
+				BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Set_Sw (slPos); // set slider to MIN
+			}
+ 			else if (BasicLibrary_ProgramSelection.IsInductionLoopmT() == true ||
+ 				   	 BasicLibrary_ProgramSelection.IsInductionLoopT() == true)
+ 	  		// SNM set to ON, Broadband, slider set to MAX
+ 	  		{ 
+				BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set_Sw (1);
+				High_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntRb_Set_ForPS_Sw_Controls (0);
+									
+				slPos = Mid_Level_Library_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_MaxPos (); // retrieve MAX position
+				BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntSL_Set_Sw (slPos); // set slider to MAX
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsStroll() == true)
+			// SNM set to ON, type of adjustment and slider position same as Universal
+			{ 
+				BasicLibrary_SpeechNoiseMgmnt.SpeechNoiseMgmntEn_Set_Sw (1);
+			}
+
+			else // (all other programs)
+			// SNM same as Universal (do nothing)
+			{
+
+			}	
+		}
+		
+/*---------------------------------------------------------------------------------------------------------------*
+// 								  END Of Higher Level PP LIBRARY    SpeechNoiseMgmnt
+-----------------------------------------------------------------------------------------------------------------*/
+	}
+
+}

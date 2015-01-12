@@ -1,0 +1,345 @@
+/*-----------------------------------------------------------------------------------------------------------------*
+//                                 MID LEVEL LIBRARY - Program Selection
+
+// Initial version  	                                       								:	2012-04-03 Cecil Wilson
+// Updated criteria for Autophone devices and comments										:	2012-04-04 Cecil Wilson
+// Updated Ps:Tinnitus visibility															:	2012-04-04 Cecil Wilson
+// Updated general programs visibility (Cxx to take care of HP2-6)							:	2012-04-16 Cecil Wilson
+// Updated based on Cxx7 requirements,no more automatic 
+// program based additional Listening situations											:	2012-04-19 Cecil Wilson
+// updated the ProgramSelection_IsVisible for AudioshoeAvailable to none and return false.	:	2012-04-23 Jenny Lin 
+// Updated based on peer review																:	2012-06-27 Frauke, Jenny and co
+// *********************************************CODE FREEZE*******************************************************
+// Updated ProgramSelection_IsVisible for custom devices									:	2012-10-15 Mang Yew
+// Updated ProgramSelection IsVisible for custom devices									:	2012-11-20 Mang Yew
+// Updated ProgramSelection due to peer review												:	2013-01-02 Mang Yew
+// ProgramID changed in respect to GetID of program, update comments						:	2013-10-23 Sonia Stasiak
+// Added IsEnabled function																	:	2013-11-01 Sonia Stasiak
+/*-------------------------------------------------------D9--------------------------------------------------------*
+// Updated comments																			:	2013-11-01 Sonia Stasiak
+// Updated isVisible for GeneralProgram with cap: instead of calling function				:	2013-12-05 Sonia Stasiak
+// Added IsVisible and IsEnabled for new Tcoil programs										:   2014-02-19 Sonia & Jeline
+// Updated Afternoon stroll program visibility code.                                        :   2014-03-05 Al
+// Removed binaural-omni dirmic check from Afternoon stroll prg. IsVisible                  :   2014-04-11 Al
+// Added IsEnabled checks for Tcoil programs for Cxx 7.4 MPV to handle LCM 					:	2014-07-29 Sonia
+// Added new Induction Loop (T) program														:	2014-07-30 Sonia
+// Reverted back the calls to function IsWirelessCapable in 
+// ProgramSelection_GeneralProgram_IsVisible to check for e2eRCU or RCU						:   2014-08-07 Sultan
+// Updated ProgramSelection_IsEnabled - Audioinput to check for Ashoe cap for LCM.			:   2014-08-25 Jenny
+/*-----------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat 
+{
+	using shs_sat.*;
+	package  Lib Mid_Level_Library_ProgramSelection
+	{
+	/*---------------------------------------------------------------------------------------------------------*
+	//	MID LEVEL LIBRARY - ProgramSelection_GeneralProgram_IsVisible
+	//	Input		:	-
+	//	Output		:	<bool> true = visible; false = not visible
+	//	Description	:	Function decides about visibility of general listening situation based on device category.
+	//	General Programs	:   
+	//					- Noisy Environment		- Outdoor/Sport		
+	//					- Music					- Privacy
+	//					- TV 
+	/*---------------------------------------------------------------------------------------------------------*/
+		public function bool ProgramSelection_GeneralProgram_IsVisible() //PEER REVIEWED CXX7.3
+		{
+			// Visible if HICategory is not ITE. 
+			// If HICategory = ITE, visible if device capable with pushbutton or RCU.		
+			bool retval = false;	
+														 
+			if(cap:HICategory == HICategory.ITE)
+			{
+				if((cap:UserControl != UserControl.NoUserCtrl && cap:UserControl != UserControl.RockerSwt) || 
+					cap:WlsUserControl == WlsUserControl.e2eRCU || 
+				 	cap:WlsUserControl == WlsUserControl.RCU)			
+				 {
+				 	retval = true;		 		
+				 }
+			}
+			else
+			{
+				retval = true;
+			}
+			
+			return retval;
+		} // closes Mid_Level_Library_ProgramSelection.ProgramSelection_GeneralProgram_IsVisible
+
+
+	/*---------------------------------------------------------------------------------------------------------*
+	//	MID LEVEL LIBRARY - ProgramSelection_IsVisible
+	//	Input		:	<int> ProgramID 
+	//	Output		:	<bool> true = visible; false = not visible
+	//	Description	:	Function decides about visibility of listening situation based on device capabilities. 
+	//	Program ID	:   
+	//				:	ID02 = Noisy Environment	ID08 = Outdoor/Sport		ID14 = miniTek Telecoil		ID20 = Phone T	
+	//				:	ID03 = Phone (Acoustically)	ID09 = Privacy				ID15 = Audio Input			ID21 = Induction Loop (T)
+	//				:	ID04 = Phone mT				ID10 = Tinnitus				ID16 = Stroll	
+	//				:	ID05 = Bluetooth Phone		ID11 = Induction Loop (mT)	ID17 = Streaming Audio
+	//				:	ID06 = Music				ID12 = Tek/miniTek			ID18 = easyTek FM
+	//				:	ID07 = TV					ID13 = miniTek FM			ID19 = Phone MT
+	//	Comments	:	Variable int (ProgramID) starts with ID 2, respectively to ID of each program.
+	//				:	From Cxx 7.3 onwards Program ID 12, 13, 14 are no longer supported. Code removed.
+	/*---------------------------------------------------------------------------------------------------------*/		
+		public function bool ProgramSelection_IsVisible(int ProgramID) //PEER REVIEWED CXX7.3
+		{
+			bool retval = false;
+			  
+			switch(ProgramID)
+			{
+				case 2: // Noisy Environment
+				{
+					// Visible if HICategory is not ITE. If HICategory = ITE, visible if device capable with pushbutton or RCU.					 
+					retval = Mid_Level_Library_ProgramSelection.ProgramSelection_GeneralProgram_IsVisible();
+				}
+				
+				case 3: // Phone (Acoustically)
+				{
+					// Visible if HICategory is not ITE. If HICategory = ITE, visible if device capable with pushbutton or RCU or Autocoil.
+  					 if(Mid_Level_Library_ProgramSelection.ProgramSelection_GeneralProgram_IsVisible() || 
+  					 	cap:AutocoilAvailable == AutocoilAvailable.exists)
+  					 {
+  					 	retval = true;
+  					 }
+				}
+				
+				case 4: // Phone mT
+				{
+					// Visible if Telecoil exist.
+					 if(cap:TelecoilAvailable == TelecoilAvailable.exists)
+					 {
+					 	retval = true;  
+					 }				  
+				}
+					
+				case 5: // Bluetooth Phone
+				{
+					// Visible if Wireless Phone exist.
+					 if(cap:WlsPhone == WlsPhone.exists)
+					 {
+					 	retval = true;
+					 } 
+				}
+				
+				case 6: // Music
+				{
+					// Visible if HICategory is not ITE. If HICategory = ITE, visible if device capable with pushbutton or RCU.
+					 retval = Mid_Level_Library_ProgramSelection.ProgramSelection_GeneralProgram_IsVisible();
+				}
+				
+				case 7: // TV
+				{
+					// Visible if HICategory is not ITE. If HICategory = ITE, visible if device capable with pushbutton or RCU.
+					  retval = Mid_Level_Library_ProgramSelection.ProgramSelection_GeneralProgram_IsVisible();
+				}
+				
+				case 8: // Outdoor Sport
+				{
+					// Visible if HICategory is not ITE. If HICategory = ITE, visible if device capable with pushbutton or RCU.
+					  retval = Mid_Level_Library_ProgramSelection.ProgramSelection_GeneralProgram_IsVisible();
+				}
+				
+				case 9: // Privacy
+				{
+					// Visible if HICategory is not ITE. If HICategory = ITE, visible if device capable with pushbutton or RCU.
+					 retval = Mid_Level_Library_ProgramSelection.ProgramSelection_GeneralProgram_IsVisible();
+				}
+				
+				case 10: // Tinnitus
+				{
+					// Visible if Tinnitus masker available.
+					// Visible if HICategory is not ITE. If HICategory = ITE, visible if device capable with pushbutton or RCU.
+					if(cap:TinMaskerAvailable == TinMaskerAvailable.MaskerAvailable && 
+						Mid_Level_Library_ProgramSelection.ProgramSelection_GeneralProgram_IsVisible())
+					{
+						retval = true;
+					}
+				}
+				
+				case 11: // Induction Loop (mT)
+				{
+					// Visible if Telecoil exist.
+					 if(cap:TelecoilAvailable == TelecoilAvailable.exists)
+					 {
+					 	retval = true;  
+					 }
+				}
+
+				case 15: // Audio Input
+				{
+					// Visible if Audio Shoe exist.
+					if(cap:AudioshoeAvailable == AudioshoeAvailable.exists)
+					{
+						retval = true; 					
+					}
+				}
+				
+				case 16: // Stroll
+				{
+					// Visible for Directional PP700 and PP500 devices only.
+					if(cap:PricePoint >= PricePoint.PP500 && 
+                       cap:DirMicAvailable == DirMicAvailable.dir) 	
+					{
+						retval = true;
+					}
+				}
+				
+				case 17: // Streaming Audio
+				{
+					// Visible if WlsAudio exist.
+					 if(cap:WlsAudio == WlsAudio.exists)
+					 {
+					 	retval = true;
+					 }  
+				}
+				
+				case 18: // easyTek FM
+				{
+					// Visible if WlsAudio exist.
+					if (cap:WlsAudio == WlsAudio.exists)
+					{
+						retval = true;
+					}
+				}
+				case 19: // Phone MT
+				{
+					// Visible if Telecoil exist.
+					if(cap:TelecoilAvailable == TelecoilAvailable.exists)
+					{
+						retval = true;  
+					}				  
+				}
+				case 20: // Phone T
+				{
+					// Visible if Telecoil exist.
+					if(cap:TelecoilAvailable == TelecoilAvailable.exists)
+					{
+					 	retval = true;  
+					}				  
+				}
+				
+				case 21: // Induction Loop (T)
+				{
+					// Visible if Telecoil exist.
+					if(cap:TelecoilAvailable == TelecoilAvailable.exists)
+					{
+					 	retval = true;  
+					}
+				}
+				default:
+				{
+					println('[HAL]: MLIB ProgramSelection_IsVisible - no valid program ID!');
+				}
+			} // closes switch(ProgramID) 
+			 	 			
+			return retval;
+	 	} // closes Mid_Level_Library_ProgramSelection.ProgramSelection_IsVisible
+	 	
+	/*---------------------------------------------------------------------------------------------------------*
+	//	MID LEVEL LIBRARY - ProgramSelection_IsEnabled
+	//	Input		:	<int> ProgramID 
+	//	Output		:	<bool> true = enabled; false = not enabled (greyed-out)
+	//	Description	:	Function decides about enabling of listening situation based on device capabilities. 
+	//	Program ID	:   
+	//				:	ID02 = Noisy Environment	ID08 = Outdoor/Sport		ID14 = miniTek Telecoil		ID20 = Phone T	
+	//				:	ID03 = Phone (Acoustically)	ID09 = Privacy				ID15 = Audio Input			ID21 = Induction Loop (T)
+	//				:	ID04 = Phone mT				ID10 = Tinnitus				ID16 = Stroll	
+	//				:	ID05 = Bluetooth Phone		ID11 = Induction Loop (mT)	ID17 = Streaming Audio
+	//				:	ID06 = Music				ID12 = Tek/miniTek			ID18 = easyTek FM
+	//				:	ID07 = TV					ID13 = miniTek FM			ID19 = Phone MT
+	//	Comments	:	Variable int (ProgramID) starts with ID 2, respectively to ID of each program.
+	//				:	From Cxx 7.3 onwards Program ID 12, 13, 14 are no longer supported. Code removed.
+	/*---------------------------------------------------------------------------------------------------------*/	 	
+		public function bool ProgramSelection_IsEnabled (int ProgramID) //PEER REVIEWED CXX7.3
+		{
+			bool retval = false;
+			switch (ProgramID)
+			{
+				case 4: // Phone mT
+				{ 
+					// Enabled if Telecoil exist --> for Cxx 7.4 MPV to handle is enabled for LCM when only one side capable of Tcoil
+					if(cap:TelecoilAvailable == TelecoilAvailable.exists)
+					{
+						retval = true;  
+					}				  
+				}
+				
+				case 5: // Bluetooth Phone
+				{ 
+					// Enabled if easyTek connected and program not selected in any HP
+					retval = Mid_Level_Library_InputMode.Is_available_Inputmode_BluetoothPhone ();
+				}
+				
+				case 11: // Induction Loop (mT)
+				{ 
+					// Enabled if Telecoil exist --> for Cxx 7.4 MPV to handle is enabled for LCM when only one side capable of Tcoil
+					if(cap:TelecoilAvailable == TelecoilAvailable.exists)
+					{
+						retval = true;  
+					}
+				}
+				
+				case 15: // Audio Input
+				{ 
+					// Enabled if Audioshoe exist --> for Cxx 7.4 MPV to handle is enabled for LCM when only one side capable of Ashoe
+					if(cap:AudioshoeAvailable == AudioshoeAvailable.exists)
+					{
+						retval = true; 					
+					}
+				}
+				
+				case 17: // Streaming Audio
+				{
+					// Enabled if easyTek connected and program not selected in any HP
+					retval = Mid_Level_Library_InputMode.Is_available_Inputmode_StreamingAudio ();
+				}
+				
+				case 18: // easyTek FM
+				{
+					// Enabled if easyTek connected and program not selected in any HP
+					retval = Mid_Level_Library_InputMode.Is_available_Inputmode_EasyTekFM ();
+				}
+				
+				case 19: // Phone MT
+				 {
+				 	// Enabled if Telecoil exist --> for Cxx 7.4 MPV to handle is enabled for LCM when only one side capable of Tcoil
+					if(cap:TelecoilAvailable == TelecoilAvailable.exists)
+					{
+						retval = true;  
+					}				  
+				}
+				
+				case 20: // Phone T
+				{
+					// Enabled if Telecoil exist --> for Cxx 7.4 MPV to handle is enabled for LCM when only one side capable of Tcoil
+					if(cap:TelecoilAvailable == TelecoilAvailable.exists)
+					{
+						retval = true;  
+					}				  
+				}
+				
+				case 21: // Induction Loop (T)
+				{
+					// Enabled if Telecoil exist --> for Cxx 7.4 MPV to handle is enabled for LCM when only one side capable of Tcoil
+					if(cap:TelecoilAvailable == TelecoilAvailable.exists)
+					{
+						retval = true;  
+					}
+				}
+				
+				default:
+				{
+					// For Program ID 2, 3, 6, 7, 8, 9, 10, 11, 16, IsEnabled is TRUE
+					retval = true;
+				}
+			}
+			return retval;
+				
+		}	// closes Mid_Level_Library_ProgramSelection.ProgramSelection_IsEnabled
+				
+} // closes package Mid_Level_Library_ProgramSelection
+	
+} // closes namespace shs.sat
+/*------------------------------------------------------------------------------------------------------------------
+// 								  END of MID LEVEL  LIBRARY  - Program Selection 
+-------------------------------------------------------------------------------------------------------------------*/

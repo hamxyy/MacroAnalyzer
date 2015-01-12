@@ -1,0 +1,1032 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        CL_CurveLibrary
+// first draft                                          			: 2011-08-18  Chuah LayYuan
+// Added for Tinnitus curve											: 2011-11-02  Chuah LayYuan
+// Added ApplyMultipleOffsets_LowAndMed_Partial						: 2012-02-01  Frauke Schall
+// Added ApplyMultipleOffsets_MedAndHigh_Partial					: 2012-02-01  Frauke Schall
+// Added Direct sound modifications									: 2012-02-06  Cecil Wilson 
+// Changed ApplyMultipleOffsets_LowAndMed_Partial to ...Complete	: 2012-02-08  Frauke Schall
+// Removed commented codes and added comments						: 2012-02-13  Cecil Wilson
+// Added ApplyMultipleOffsets_LowMedHigh_Partial and ApplyMultipleOffsets_LowMedHigh_Complete
+// for setting 3 different curve for 3 differnt level.				: 2012-03-19  Jenny Lin
+// Updated the ApplyMultipleOffsets_LowMedHigh_Partial/Complete 
+// to apply the curve to Level_High.								: 2012-04-23 	Jenny
+// Updated based on peer review (ProgramSelection)					: 2012-06-27    Frauke, Jenny and co
+// Added code to case2 of ApplyOffsets_ProgramSelection, to apply curves for vent closed or open.  : 2012-07-04 Alastair
+// Peer Review: Change the ApplyOffsets_ProgramSelection to ApplyInsertionGainOffsets_ProgramSelection and
+// Added in the ApplyDirectSoundModification_ProgramSelection for Program Selections : 2012-07-09 Jenny
+// Updated comments in ApplyOffset_Direct_Sound_Modifications 		: 2012-07-12 Cecil, Jenny
+// Updated ApplyInsertionGainOffsets_ProgramSelection for PA		: 2012-07-12 Frauke, Al
+// *********************************************CODE FREEZE*******************************************************
+// ER57297 MicMode dependency for ApplyOffset PS_NoisyEnv_LevAll    : 2012-08-29 Judith     
+// FR57352 In the privacy Program, gain offset curve used for Gmax < 80dB instruments was altered from -9dB to -7dB. : 2012-10-01 Alastair
+// ER58455: Program Phone acoustically does not apply any offset    : 2012-10-10 Nadine 
+// FR57242 - New gain offset added for Phone Telecoil program, 
+// so a 'case 3' has been added to ApplyInsertionGainOffsets_ProgramSelection(int ID)  :  2012-11-29 Al Manders
+// ERER63029: added DirAdapFlat & DirStaticFlat check for Noisy Environment program ApplyInsertionGainOffsets : 2013-08-20 Mie Mie
+// Update ID number in Set_ProgramSelection function									:	2013-10-29 Sonia Stasiak
+/*-------------------------------------------------------D9--------------------------------------------------------*/
+// Updated comments, ID numbers, and omni controls in ProgramSelection					:	2013-11-01 Sonia Stasiak
+// Added new Programs in set_PS															:	2013-11-04 Sonia Stasiak
+// Updated Set_Program Selection with d9SwMacroProgramIdHp control instead of ID		:	2013-12-17 Sonia Stasiak
+// Added new programs Telecoil MT and Telecoil T for Set_ProgramSelection (FR64541)		: 2014-03-19 Sonia & Jeline
+// PEER REVIEW CXX 7.3																	:	2014-05-06 Sonia, Mie Mie, Jenny
+// ER67310 Bug in Direct Sound Optimization corrected									:	2014-05-15 Meike 
+/*-------------------------------------------------------7.4--------------------------------------------------------*/
+// first draft of optimized direct sound optimization (extend the frequency range up to 1250Hz)		:	2014-06-18 Meike Steinbuss
+// From 7.4 onwards programs ID18 shall no longer use Direct Sound Modification 			: 2014-06-25 Meike Steinbuss
+// change criterion of direct sound optimization from 3dB above 0dB to 6dB/4dB above 0dB    : 2014-07-02 Meike Steinbuss
+// add ApplyOffset_Direct_Sound_Modifications_Moderate                                          : 2014-07-25 Meike Steinbuss
+// Added new Induction Loop (T) program into Set_ProgramSelection function					: 2014-07-30 Sonia
+// In ApplyDirectSoundModification_ProgramSelection, replaced d9SwMacroProgramIdHp 5,17,18 
+// with IsWirelessProgramSetInCurrentSide function											: 2014-08-25 MieMie 
+// finalize DSO with frequencies and values as tried out by Rosa-Linde						: 2014-09-10 Meike
+// Re-write Set_ProgramSelection to call BLib.Is<program>									: 2014-09-16 Sonia
+// change of naming for PS_DirectSound_MediumSoundsUp3dB to PS_DirectSound_MedSoundsUp3dB   : 2014-09-17 Meike
+// Cxx 7.4 Peer Review for Program Selection (only)											: 2014-11-19 Sonia, Jenny, Niklas
+/*---------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat {
+	using shs_sat.*;
+
+	package  Lib CL_CurveLibrary uselib builtins {
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_LevAll_Complete
+//   Input      :  curveName 
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//                Only applied, if it can be completely applied.  
+//                Applied to all levelDependedt gains.
+-----------------------------------------------------------------------------------------------------------------*/	
+	public function void ApplyOffset_LevAll_Complete(stringID curveName) {	
+		//Gain modification applied for All Input Levels
+		if(isOffsetApplicable(curveName, ToSubject.LevALL,Apply.Complete)){
+			applyOffset(curveName, ToSubject.LevALL, Apply.Complete);
+			println("[HAL]: CL-ApplyOffset_LevAll_Complete for -- ");
+			println(curveName);
+		}
+		else{
+		    println("[HAL]: CL-ApplyOffset_LevAll_Complete FAIL for -- ");
+			println(curveName);
+		}
+	}//closes CL_CurveLibrary.ApplyOffset_LevAll_Complete
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_LevLow_Complete
+//   Input      :  curveName 
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//                Only applied, if it can be completely applied.  
+//                Only applied to level dependent gain, Low input..
+-----------------------------------------------------------------------------------------------------------------*/	
+	public function void ApplyOffset_LevLow_Complete(stringID curveName){	
+		//Gain modification applied for Low Input Levels
+		if(isOffsetApplicable(curveName, ToSubject.LevLow,Apply.Complete)){
+			applyOffset(curveName, ToSubject.LevLow, Apply.Complete);
+			println("[HAL]: CL-ApplyOffset_LevLow_Complete for -- ");
+			println(curveName);
+		}
+		else{
+		    println("[HAL]: CL-ApplyOffset_LevLow_Complete FAIL for -- ");
+			println(curveName);
+		}
+	}//closes CL_CurveLibrary.ApplyOffset_LevLow_Complete
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_LevMed_Complete
+//   Input      :  curveName 
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//                Only applied, if it can be completely applied.  
+//                Only applied to level dependent gain, Med input..
+-----------------------------------------------------------------------------------------------------------------*/		
+	public function void ApplyOffset_LevMed_Complete(stringID curveName){	
+		//Gain modification applied for Med Input Levels 
+		if(isOffsetApplicable(curveName, ToSubject.LevMed,Apply.Complete)){
+			applyOffset(curveName, ToSubject.LevMed, Apply.Complete);
+			println("[HAL]: CL-ApplyOffset_LevMed_Complete for -- ");
+			println(curveName);
+		}
+		else{
+		    println("[HAL]: CL-ApplyOffset_LevMed_Complete FAIL for -- ");
+			println(curveName);
+		}
+	}//closes CL_CurveLibrary.ApplyOffset_LevMed_Complete
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_LevHigh_Complete
+//   Input      :  curveName 
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//                Only applied, if it can be completely applied.  
+//                Only applied to level dependent gain, High input..
+-----------------------------------------------------------------------------------------------------------------*/	
+	public function void ApplyOffset_LevHigh_Complete(stringID curveName){
+		//Gain modification applied for Loud Input Levels
+		if(isOffsetApplicable(curveName, ToSubject.LevHigh,Apply.Complete)){
+			applyOffset(curveName, ToSubject.LevHigh, Apply.Complete);
+			println("[HAL]: CL-ApplyOffset_LevHigh_Complete for -- ");
+			println(curveName);
+		}
+		else{
+		    println("[HAL]: CL-ApplyOffset_LevHigh_Complete FAIL for -- ");
+			println(curveName);
+		}
+	}//closes CL_CurveLibrary.ApplyOffset_LevHigh_Complete
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_LevAll_Partial
+//   Input      :  curveName 
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//                Only applied, if it can be partially applied.  
+//                Applied to all levelDependedt gains.
+-----------------------------------------------------------------------------------------------------------------*/	
+	public function void ApplyOffset_LevAll_Partial(stringID curveName){	
+		//Gain modification applied for All Input Levels
+		if(isOffsetApplicable(curveName, ToSubject.LevALL,Apply.Partial)){
+			applyOffset(curveName, ToSubject.LevALL, Apply.Partial);
+			println("[HAL]: CL-ApplyOffset_LevAll_Partial for -- ");
+			println(curveName);
+		}
+		else{
+		    println("[HAL]: CL-ApplyOffset_LevAll_Partial FAIL for -- ");
+			println(curveName);
+		}
+	}//closes CL_CurveLibrary.ApplyOffset_LevAll_Partial
+
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_LevLow_Partial
+//   Input      :  curveName 
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//                Only applied, if it can be partially applied.  
+//                Only applied to level dependent gain, Low input.
+-----------------------------------------------------------------------------------------------------------------*/	
+	public function void ApplyOffset_LevLow_Partial(stringID curveName){
+		//Gain modification applied for Low Input Levels
+		if(isOffsetApplicable(curveName, ToSubject.LevLow,Apply.Partial)){
+			applyOffset(curveName, ToSubject.LevLow, Apply.Partial);
+			println("[HAL]: CL-ApplyOffset_LevLow_Partial for -- ");
+			println(curveName);
+		}
+		else{
+		    println("[HAL]: CL-ApplyOffset_LevLow_Partial FAIL for -- ");
+			println(curveName);
+		}
+	}//closes CL_CurveLibrary.ApplyOffset_LevLow_Partial
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_LevMed_Partial
+//   Input      :  curveName 
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//                Only applied, if it can be partially applied.  
+//                Only applied to level dependent gain, Med input.
+-----------------------------------------------------------------------------------------------------------------*/	
+	public function void ApplyOffset_LevMed_Partial(stringID curveName){
+		//Gain modification applied for Med Input Levels 
+		if(isOffsetApplicable(curveName, ToSubject.LevMed,Apply.Partial)){
+			applyOffset(curveName, ToSubject.LevMed, Apply.Partial);
+			println("[HAL]: CL-ApplyOffset_LevMed_Partial for -- ");
+			println(curveName);
+		}
+		else{
+		    println("[HAL]: CL-ApplyOffset_LevMed_Partial FAIL for -- ");
+			println(curveName);
+		}
+	}//closes CL_CurveLibrary.ApplyOffset_LevMed_Partial
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_LevHigh_Partial
+//   Input      :  curveName 
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//                Only applied, if it can be partially applied.  
+//                Only applied to level dependent gain, High input.
+-----------------------------------------------------------------------------------------------------------------*/		  
+	public function void ApplyOffset_LevHigh_Partial(stringID curveName){
+		//Gain modification applied for Loud Input Levels
+		if(isOffsetApplicable(curveName, ToSubject.LevHigh,Apply.Partial)){
+			applyOffset(curveName, ToSubject.LevHigh, Apply.Partial);
+			println("[HAL]: CL-ApplyOffset_LevHigh_Partial for -- ");
+			println(curveName);
+		}
+		else{
+		    println("[HAL]: CL-ApplyOffset_LevHigh_Partial FAIL for -- ");
+			println(curveName);
+		}
+	}// closes CL_CurveLibrary.ApplyOffset_LevHigh_Partial
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyMultipleOffsets_LowAndMed_Complete
+//   Input      :  curveNameLow, curveNameMed
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//					First try to apply LevLow first, then LevMed.
+//					If LevLow could not be applied, apply LevMed first, then check again if LevLow can be applied
+//                Only applied, if it can be completely applied.  
+//                Only applied to level dependent gain, low and med input.
+-----------------------------------------------------------------------------------------------------------------*/		
+	public function void ApplyMultipleOffsets_LowAndMed_Complete(stringID curveNameLow, stringID curveNameMed){
+		println("[HAL]: CL-ApplyMultipleOffsets_LowAndMed_Complete started");
+	
+		if(isOffsetApplicable(curveNameLow, ToSubject.LevLow, Apply.Complete)){
+			println("[HAL]: CL-ApplyMultipleOffsets_LowAndMed_Complete: apply LevLow first, then try LevMed");
+			// Level Low can be applied, so it will be applied
+			applyOffset(curveNameLow, ToSubject.LevLow, Apply.Complete);
+			println("[HAL]: CL-ApplyMultipleOffsets_LowAndMed_Complete for LevLow -- ");
+			println(curveNameLow);
+			
+			// Now check if Level Med can be applied as well
+			if(isOffsetApplicable(curveNameMed, ToSubject.LevMed, Apply.Complete)){
+				// Level Med can be applied so it will be applied
+				applyOffset(curveNameMed, ToSubject.LevMed, Apply.Complete);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowAndMed_Complete LevMed for -- ");
+				println(curveNameMed);
+			}
+			else{
+		    	println("[HAL]: CL-ApplyMultipleOffsets_LowAndMed_Complete LevMed FAIL for -- ");
+				println(curveNameMed);
+			}
+		}
+		else{
+			println("[HAL]: CL-ApplyMultipleOffsets_LowAndMed_Complete: try to apply LevMed, then try again with LevLow");
+			// Level Low was not able to be applied, so check if Level Med can be applied
+			if(isOffsetApplicable(curveNameMed, ToSubject.LevMed, Apply.Complete)){
+				// Level Med can be applied so it will be applied
+				applyOffset(curveNameMed, ToSubject.LevMed, Apply.Complete);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowAndMed_Complete LevMed for -- ");
+				println(curveNameMed);
+			}
+			else{
+		    	println("[HAL]: CL-ApplyMultipleOffsets_LowAndMed_Complete LevMed FAIL for -- ");
+				println(curveNameMed);
+			}
+			
+			// Now check again if Level Low can be applied
+			if(isOffsetApplicable(curveNameLow, ToSubject.LevLow,Apply.Complete)){
+				// Level Low can be applied so it will be applied
+				applyOffset(curveNameLow, ToSubject.LevLow, Apply.Complete);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowAndMed_Complete LevLow for -- ");
+				println(curveNameLow);
+			}
+			else{
+		    	println("[HAL]: CL-ApplyMultipleOffsets_LowAndMed_Complete LevLow FAIL for -- ");
+				println(curveNameLow);
+			}
+		}
+	} // closes CL_CurveLibrary.ApplyMultipleOffsets_LowAndMed_Complete	
+
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyMultipleOffsets_MedAndHigh_Partial
+//   Input      :  curveNameMed, curveNameHigh
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//					First try to apply LevMed first, then LevHigh.
+//					If LevMed could not be applied, apply LevHigh first, then check again if LevMed can be applied
+//                Only applied, if it can be partially applied.  
+//                Only applied to level dependent gain, low and med input.
+-----------------------------------------------------------------------------------------------------------------*/		
+	public function void ApplyMultipleOffsets_MedAndHigh_Partial(stringID curveNameMed, stringID curveNameHigh){
+		println("[HAL]: CL-ApplyMultipleOffsets_MedAndHigh_Partial started");
+	
+		if(isOffsetApplicable(curveNameMed, ToSubject.LevMed, Apply.Partial)){
+			println("[HAL]: CL-ApplyMultipleOffsets_MedAndHigh_Partial: apply LevMed first, then try LevHigh");
+			// Level Med can be applied, so it will be applied
+			applyOffset(curveNameMed, ToSubject.LevMed, Apply.Partial);
+			println("[HAL]: CL-ApplyMultipleOffsets_MedAndHigh_Partial for LevMed -- ");
+			println(curveNameMed);
+			
+			// Now check if Level High can be applied as well
+			if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh, Apply.Partial)){
+				// Level High can be applied so it will be applied
+				applyOffset(curveNameHigh, ToSubject.LevHigh, Apply.Partial);
+				println("[HAL]: CL-ApplyMultipleOffsets_MedAndHigh_Partial LevHigh for -- ");
+				println(curveNameHigh);
+			}
+			else{
+		    	println("[HAL]: CL-ApplyMultipleOffsets_MedAndHigh_Partial LevHigh FAIL for -- ");
+				println(curveNameHigh);
+			}
+		}
+		else{
+			println("[HAL]: CL-ApplyMultipleOffsets_MedAndHigh_Partial: try to apply LevHigh, then try again with LevMed");
+			// Level Med was not able to be applied, so check if Level High can be applied
+			if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh, Apply.Partial)){
+				// Level Med can be applied so it will be applied
+				applyOffset(curveNameHigh, ToSubject.LevHigh, Apply.Partial);
+				println("[HAL]: CL-ApplyMultipleOffsets_MedAndHigh_Partial LevHigh for -- ");
+				println(curveNameHigh);
+			}
+			else{
+		    	println("[HAL]: CL-ApplyMultipleOffsets_MedAndHigh_Partial LevHigh FAIL for -- ");
+				println(curveNameHigh);
+			}
+			// Now check again if Level Med can be applied
+			if(isOffsetApplicable(curveNameMed, ToSubject.LevMed, Apply.Partial)){
+				// Level Low can be applied so it will be applied
+				applyOffset(curveNameMed, ToSubject.LevMed, Apply.Partial);
+				println("[HAL]: CL-ApplyMultipleOffsets_MedAndHigh_Partial LevMed for -- ");
+				println(curveNameMed);
+			}
+			else{
+		    	println("[HAL]: CL-ApplyMultipleOffsets_MedAndHigh_Partial LevMed FAIL for -- ");
+				println(curveNameMed);
+			}
+		}
+	} // closes CL_CurveLibrary.ApplyMultipleOffsets_MedAndHigh_Partial	
+
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyMultipleOffsets_LowMedHigh_Partial
+//   Input      :  curveNameLow, curveNameMed, curveNameHigh
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//				 Path 1: 	Med, Low, High
+//				 Path 2: 	Med, High, Low
+//				 Path 3: 	Low, Med, High
+//				 Path 4: 	Low, High, Med
+//				 Path 5: 	High, Med, Low
+//				 Path 6: 	High, Low, Med
+-----------------------------------------------------------------------------------------------------------------*/		
+	public function void ApplyMultipleOffsets_LowMedHigh_Partial(stringID curveNameLow, stringID curveNameMed, stringID curveNameHigh) {
+		println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial started");
+	
+		if(isOffsetApplicable(curveNameMed, ToSubject.LevMed, Apply.Partial)){
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial: try to apply LevMed, then try again with LevLow");
+			// Level Med can be applied so it will be applied
+			applyOffset(curveNameMed, ToSubject.LevMed, Apply.Partial);
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevMed for -- ");
+			println(curveNameMed);
+	
+			//Now check again if Level Low can be applied
+			if(isOffsetApplicable(curveNameLow, ToSubject.LevLow,Apply.Partial)){
+				// Level Low can be applied so it will be applied
+				applyOffset(curveNameLow, ToSubject.LevLow, Apply.Partial);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevLow for -- ");
+				println(curveNameLow);
+				
+				if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh,Apply.Partial)){
+					applyOffset(curveNameHigh, ToSubject.LevHigh,Apply.Partial);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevHigh for -- ");
+					println(curveNameHigh);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> 1 <<<<<<<<");
+					}
+				else{
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevHigh FAIL for -- ");
+					println(curveNameHigh);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> FAILED (1) <<<<<<<<");
+				}
+			}
+			//Else check again if Level High can be applied
+			else if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh,Apply.Partial)){
+				// Level High can be applied so it will be applied
+				applyOffset(curveNameHigh, ToSubject.LevHigh, Apply.Partial);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevHigh for -- ");
+				println(curveNameHigh);
+				
+				if(isOffsetApplicable(curveNameLow, ToSubject.LevLow,Apply.Partial)){
+					applyOffset(curveNameLow, ToSubject.LevLow,Apply.Partial);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevLow for -- ");
+					println(curveNameLow);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> 2 <<<<<<<<");
+				}
+				else{
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevLow FAIL for -- ");
+					println(curveNameLow);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> FAILED (2) <<<<<<<<");
+				}
+			}
+		}
+		else if(isOffsetApplicable(curveNameLow, ToSubject.LevLow,Apply.Partial)){
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial: try to apply LevLow, then try again with LevMed");
+			// Level Low can be applied so it will be applied
+			applyOffset(curveNameLow, ToSubject.LevLow, Apply.Partial);
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevLow for -- ");
+			println(curveNameLow);
+	
+			//Now check again if Level Med can be applied
+			if(isOffsetApplicable(curveNameMed, ToSubject.LevMed,Apply.Partial)){
+				// Level Low can be applied so it will be applied
+				applyOffset(curveNameMed, ToSubject.LevMed, Apply.Partial);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevMed for -- ");
+				println(curveNameMed);
+				
+				if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh,Apply.Partial)){
+					applyOffset(curveNameHigh, ToSubject.LevHigh,Apply.Partial);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevHigh for -- ");
+					println(curveNameHigh);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> 3 <<<<<<<<");
+				}
+				else{
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevHigh FAIL for -- ");
+					println(curveNameHigh);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> FAILED (3) <<<<<<<<");
+				}
+			}
+			//Else check again if Level High can be applied
+			else if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh,Apply.Partial)){
+				// Level High can be applied so it will be applied
+				applyOffset(curveNameHigh, ToSubject.LevHigh, Apply.Partial);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevHigh for -- ");
+				println(curveNameHigh);
+				
+				if(isOffsetApplicable(curveNameMed, ToSubject.LevMed,Apply.Partial)){
+					applyOffset(curveNameMed, ToSubject.LevMed,Apply.Partial);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevMed for -- ");
+					println(curveNameMed);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> 4 <<<<<<<<");
+				}
+				else{
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevMed FAIL for -- ");
+					println(curveNameMed);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> FAILED (4) <<<<<<<<");
+				}
+			}
+		}		
+		else if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh,Apply.Partial)){
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial: try to apply LevHigh, then try again with LevMed");
+			// Level Med can be applied so it will be applied
+			applyOffset(curveNameHigh, ToSubject.LevHigh, Apply.Partial);
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevHigh for -- ");
+			println(curveNameHigh);
+	
+			//Now check again if Level Med can be applied
+			if(isOffsetApplicable(curveNameMed, ToSubject.LevMed,Apply.Partial)){
+				// Level Low can be applied so it will be applied
+				applyOffset(curveNameMed, ToSubject.LevMed, Apply.Partial);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevMed for -- ");
+				println(curveNameMed);
+				
+				if(isOffsetApplicable(curveNameLow, ToSubject.LevLow,Apply.Partial)){
+					applyOffset(curveNameLow, ToSubject.LevLow,Apply.Partial);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevLow for -- ");
+					println(curveNameLow);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> 5 <<<<<<<<");
+				}
+				else{
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevLow FAIL for -- ");
+					println(curveNameLow);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> FAILED (5) <<<<<<<<");
+				}
+			}
+			//Else check again if Level High can be applied
+			else if(isOffsetApplicable(curveNameLow, ToSubject.LevLow,Apply.Partial)){
+				// Level Low can be applied so it will be applied
+				applyOffset(curveNameLow, ToSubject.LevLow, Apply.Partial);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevLow for -- ");
+				println(curveNameLow);
+				
+				if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh,Apply.Partial)){
+					applyOffset(curveNameHigh, ToSubject.LevHigh,Apply.Partial);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevHigh for -- ");
+					println(curveNameHigh);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> 6 <<<<<<<<");
+				}
+				else{
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial LevHigh FAIL for -- ");
+					println(curveNameHigh);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> FAILED (6) <<<<<<<<");
+				}
+			}
+		}		
+		else{
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial OFFSETS CANNOT BE APPLIED!!! ");
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Partial PATH >>>>>>> FAILED ALL CASES (-1) <<<<<<<<");
+		}
+		
+	} // closes CL_CurveLibrary.ApplyMultipleOffsets_LowMedHigh_Partial	
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyMultipleOffsets_LowMedHigh_Complete
+//   Input      :  curveNameLow, curveNameMed, curveNameHigh
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//				 Path 1: 	Med, Low, High
+//				 Path 2: 	Med, High, Low
+//				 Path 3: 	Low, Med, High
+//				 Path 4: 	Low, High, Med
+//				 Path 5: 	High, Med, Low
+//				 Path 6: 	High, Low, Med
+-----------------------------------------------------------------------------------------------------------------*/		
+	public function void ApplyMultipleOffsets_LowMedHigh_Complete(stringID curveNameLow, stringID curveNameMed, stringID curveNameHigh){
+		println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete started");
+	
+		if(isOffsetApplicable(curveNameMed, ToSubject.LevMed, Apply.Complete)){
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete: try to apply LevMed, then try again with LevLow");
+			// Level Med can be applied so it will be applied
+			applyOffset(curveNameMed, ToSubject.LevMed, Apply.Complete);
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevMed for -- ");
+			println(curveNameMed);
+	
+			//Now check again if Level Low can be applied
+			if(isOffsetApplicable(curveNameLow, ToSubject.LevLow,Apply.Complete)){
+				// Level Low can be applied so it will be applied
+				applyOffset(curveNameLow, ToSubject.LevLow, Apply.Complete);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevLow for -- ");
+				println(curveNameLow);
+				
+				if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh,Apply.Complete)){
+					applyOffset(curveNameHigh, ToSubject.LevHigh,Apply.Complete);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevHigh for -- ");
+					println(curveNameHigh);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> 1 <<<<<<<<");
+					}
+				else{
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevHigh FAIL for -- ");
+					println(curveNameHigh);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> FAILED (1) <<<<<<<<");
+				}
+			}
+			//Else check again if Level High can be applied
+			else if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh,Apply.Complete)){
+				// Level High can be applied so it will be applied
+				applyOffset(curveNameHigh, ToSubject.LevHigh, Apply.Complete);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevHigh for -- ");
+				println(curveNameHigh);
+				
+				if(isOffsetApplicable(curveNameLow, ToSubject.LevLow,Apply.Complete)){
+					applyOffset(curveNameLow, ToSubject.LevLow,Apply.Complete);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevLow for -- ");
+					println(curveNameLow);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> 2 <<<<<<<<");
+				}
+				else{
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevLow FAIL for -- ");
+					println(curveNameLow);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> FAILED (2) <<<<<<<<");
+				}
+			}
+		}
+		else if(isOffsetApplicable(curveNameLow, ToSubject.LevLow,Apply.Complete)){
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete: try to apply LevLow, then try again with LevMed");
+			// Level Low can be applied so it will be applied
+			applyOffset(curveNameLow, ToSubject.LevLow, Apply.Complete);
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevLow for -- ");
+			println(curveNameLow);
+	
+			//Now check again if Level Med can be applied
+			if(isOffsetApplicable(curveNameMed, ToSubject.LevMed,Apply.Complete)){
+				// Level Low can be applied so it will be applied
+				applyOffset(curveNameMed, ToSubject.LevMed, Apply.Complete);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevMed for -- ");
+				println(curveNameMed);
+				
+				if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh,Apply.Complete)){
+					applyOffset(curveNameHigh, ToSubject.LevHigh,Apply.Complete);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevHigh for -- ");
+					println(curveNameHigh);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> 3 <<<<<<<<");
+				}
+				else{
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevHigh FAIL for -- ");
+					println(curveNameHigh);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> FAILED (3) <<<<<<<<");
+				}
+			}
+			//Else check again if Level High can be applied
+			else if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh,Apply.Complete)){
+				// Level High can be applied so it will be applied
+				applyOffset(curveNameHigh, ToSubject.LevHigh, Apply.Complete);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevHigh for -- ");
+				println(curveNameHigh);
+				
+				if(isOffsetApplicable(curveNameMed, ToSubject.LevMed,Apply.Complete)){
+					applyOffset(curveNameMed, ToSubject.LevMed,Apply.Complete);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevMed for -- ");
+					println(curveNameMed);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> 4 <<<<<<<<");
+				}
+				else{
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevMed FAIL for -- ");
+					println(curveNameMed);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> FAILED (4) <<<<<<<<");
+				}
+			}
+		}		
+		else if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh,Apply.Complete)){
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete: try to apply LevHigh, then try again with LevMed");
+			// Level Med can be applied so it will be applied
+			applyOffset(curveNameHigh, ToSubject.LevHigh, Apply.Complete);
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevHigh for -- ");
+			println(curveNameHigh);
+	
+			//Now check again if Level Med can be applied
+			if(isOffsetApplicable(curveNameMed, ToSubject.LevMed,Apply.Complete)){
+				// Level Low can be applied so it will be applied
+				applyOffset(curveNameMed, ToSubject.LevMed, Apply.Complete);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevMed for -- ");
+				println(curveNameMed);
+				
+				if(isOffsetApplicable(curveNameLow, ToSubject.LevLow,Apply.Complete)){
+					applyOffset(curveNameLow, ToSubject.LevLow,Apply.Complete);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevLow for -- ");
+					println(curveNameLow);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> 5 <<<<<<<<");
+				}
+				else{
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevLow FAIL for -- ");
+					println(curveNameLow);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> FAILED (5) <<<<<<<<");
+				}
+			}
+			//Else check again if Level High can be applied
+			else if(isOffsetApplicable(curveNameLow, ToSubject.LevLow,Apply.Complete)){
+				// Level Low can be applied so it will be applied
+				applyOffset(curveNameLow, ToSubject.LevLow, Apply.Complete);
+				println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevLow for -- ");
+				println(curveNameLow);
+				
+				if(isOffsetApplicable(curveNameHigh, ToSubject.LevHigh,Apply.Complete)){
+					applyOffset(curveNameHigh, ToSubject.LevHigh,Apply.Complete);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevHigh for -- ");
+					println(curveNameHigh);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> 6 <<<<<<<<");
+				}
+				else{
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete LevHigh FAIL for -- ");
+					println(curveNameHigh);
+					println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> FAILED (6) <<<<<<<<");
+				}
+			}
+		}		
+		else{
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete OFFSETS CANNOT BE APPLIED!!! ");
+			println("[HAL]: CL-ApplyMultipleOffsets_LowMedHigh_Complete PATH >>>>>>> FAILED ALL CASES (-1) <<<<<<<<");
+		}
+		
+	} // closes CL_CurveLibrary.ApplyMultipleOffsets_LowMedHigh_Complete	
+
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_Tinnitus_Partial
+//   Input      :  curveName 
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//                Only applied, if it can be partially applied.  
+//                Only applied to Tinnitus.
+-----------------------------------------------------------------------------------------------------------------*/		  
+	public function void ApplyOffset_Tinnitus_Partial(stringID curveName){
+		//Gain modification applied for Tinnitus
+		if(isOffsetApplicable(curveName, ToSubject.SwTinnitus,Apply.Partial)){
+			applyOffset(curveName, ToSubject.SwTinnitus, Apply.Partial);
+			println("[HAL]: CL-ApplyOffset_Tinnitus_Partial for -- ");
+			println(curveName);
+		}
+		else{
+		    println("[HAL]: CL-ApplyOffset_Tinnitus_Partial FAIL for -- ");
+			println(curveName);
+		}
+	}//closes CL_CurveLibrary.ApplyOffset_Tinnitus_Partial
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_Tinnitus_Complete
+//   Input      :  curveName 
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//                Only applied, if it can be Completely applied.  
+//                Only applied to Tinnitus.
+-----------------------------------------------------------------------------------------------------------------*/		  
+	public function void ApplyOffset_Tinnitus_Complete(stringID curveName) {
+		//Gain modification applied for Tinnitus
+		if(isOffsetApplicable(curveName, ToSubject.SwTinnitus,Apply.Complete)){
+			applyOffset(curveName, ToSubject.SwTinnitus, Apply.Complete);
+			println("[HAL]: CL-ApplyOffset_Tinnitus_Complete for -- ");
+			println(curveName);
+		}
+		else{
+		    println("[HAL]: CL-ApplyOffset_Tinnitus_Complete FAIL for -- ");
+			println(curveName);
+		}
+	}// closes CL_CurveLibrary.ApplyOffset_Tinnitus_Complete
+
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_Direct_Sound_Modifications
+//   Input      :  <void>
+//   Ouput      :  <void>
+//   Description: Add the Direct sound offset curves from dataBase(AudCustomCurve.hxml) if necessary until IG <1250hz is back to 0dB (4-6dB)
+-----------------------------------------------------------------------------------------------------------------*/		  
+	public function void ApplyOffset_Direct_Sound_Modifications(){	
+		println('[HAL] Direct Sound Modifications Function triggered');
+		
+		int j=0;  
+		// Frequency points
+		int curve_index_250hz = 21; // Frequency array Index for 250Hz with respect to the 228 points curve representations(as in AudCustomCurve.hxml)
+		int curve_index_500hz = 36; // Same as above for 500Hz
+		int curve_index_760hz = 45; // Same as above for 760Hz	
+		int curve_index_1000hz = 51; // Same as above for 1000Hz
+		int curve_index_1250hz = 56; // Same as above for 1250Hz
+
+		bool apply_directsound_below1250 = false; // Boolean values stores whether Direct sound modification can be applied to current IG or not for frequencies below 1250Hz
+		bool apply_directsound_below1000 = false; // Same as above for 1000Hz
+		bool apply_directsound_below760 = false; // Same as above for 760Hz
+		bool apply_directsound_below500 = false; // Same as above for 500Hz
+		bool apply_directsound_below250 = false; // Same as above for 250Hz
+	
+		int maximum_loop_limit = 5;   // Maximum direct sound modification = 5 loops x 1-3dB (frequency dependent)
+
+		int loopcount=0;
+		
+		//Direct sound correction for frequencies below 1250Hz		
+ 		while( loopcount < maximum_loop_limit){
+			j=0;
+			apply_directsound_below1250 = true;
+			
+			// Check if the IG below 1250hz is below 0dB (currently 6dB)
+			while( j < curve_index_1250hz ){			
+			    if(levelcrv:IG[j]->g_med > 6){			// check that the current IG Medium curve point is above 6dB
+			    	apply_directsound_below1250 = false; // No need to apply direct sound modifications
+			    }
+			    ++j;
+		    }
+		  if(apply_directsound_below1250==true){
+		  	println('[HAL]:Direct sound correction below 1250hz applied  '); 
+		  	CL_CurveLibrary.ApplyOffset_LevAll_Partial("PS_DirectSoundOffset3db_1250hz");
+		  }
+		  else{
+		  	break;
+		  }
+		 ++loopcount;	
+		}
+		
+		//Direct sound correction for frequencies below 1000Hz
+		loopcount=0;  // ER67310		
+ 		while( loopcount < maximum_loop_limit){
+			j=0;
+			apply_directsound_below1000 = true;
+			
+			// Check if the IG below 1000hz is below 0dB (currently 6dB)
+			while( j < curve_index_1000hz ){			
+			    if(levelcrv:IG[j]->g_med > 6){			// check that the current IG Medium curve point is above 6dB
+			    	
+			    	apply_directsound_below1000 = false; // No need to apply direct sound modifications
+			    }
+			    ++j;
+		    }
+		  if(apply_directsound_below1000==true){
+		  	println('[HAL]:Direct sound correction below 1000hz applied  '); 
+		  	CL_CurveLibrary.ApplyOffset_LevAll_Partial ("PS_DirectSoundOffset3db_1000hz");
+		  }
+		  else{
+		  	break;
+		  }
+		 ++loopcount;	
+		}
+
+		//Direct sound correction for frequencies below 760Hz
+		loopcount=0;  // ER67310		
+ 		while( loopcount < maximum_loop_limit){
+			j=0;
+			apply_directsound_below760 = true;
+			
+			// Check if the IG below 760hz is below 0dB (currently 6dB)
+			while( j < curve_index_760hz ){			
+			    if(levelcrv:IG[j]->g_med > 6){			// check that the current IG Medium curve point is above 6dB
+			    	
+			    	apply_directsound_below760 = false; // No need to apply direct sound modifications
+			    }
+			    ++j;
+
+		    }
+		  if(apply_directsound_below760==true){
+		  	println('[HAL]:Direct sound correction below 760hz applied  '); 
+		  	CL_CurveLibrary.ApplyOffset_LevAll_Partial("PS_DirectSoundOffset3db_760hz");
+		  }
+		  else{
+		  	break;
+		  }
+		 ++loopcount;	
+		}
+
+	//  Direct sound correction for frequencies below 500Hz	
+		loopcount=0;  // ER67310
+		while( loopcount < maximum_loop_limit){    // Try the direct sound modification loop for maximum 3 times
+			j=0; 
+			apply_directsound_below500 = true;     // Initilize variable to true
+			
+			// Loop to check if the IG below 500hz is below 0dB (currently 6dB)
+			while( j < curve_index_500hz ){             			
+			    if(levelcrv:IG[j]->g_med > 6){  	// check that the current IG Medium curve point is above 6dB
+			    
+			    	apply_directsound_below500 = false;  // No need to apply direct sound modifications  	     	
+			    }
+			    ++j;	
+	    
+		    }
+		  if(apply_directsound_below500==true){  
+		  	println('[HAL]:Direct sound correction below 500hz applied  '); 
+		  	CL_CurveLibrary.ApplyOffset_LevAll_Partial("PS_DirectSoundOffset3db_500hz");
+		  }
+		  else{
+		  	break;
+		  }
+		 ++loopcount;	
+		}
+		
+	//  Direct sound correction for frequencies below 250Hz
+		loopcount=0;  // ER67310		
+		while( loopcount < maximum_loop_limit){// Try the direct sound modification loop for maximum 3 times
+			j=0;
+			apply_directsound_below250 = true; // Initilize variable to true
+			
+			// Loop to check if the IG below 250hz is below 0dB (currently 4dB)
+			while( j < curve_index_250hz ){			
+			    if(levelcrv:IG[j]->g_med > 4){ 			 // check that the current IG Medium curve point is above 4dB
+			    	
+			    	apply_directsound_below250 = false;	 // No need to apply direct sound modifications    	
+			    }
+			    ++j;
+
+		    }
+		  if(apply_directsound_below250==true){
+		  	println('[HAL]:Direct sound correction below 250hz applied  '); 
+		  	CL_CurveLibrary.ApplyOffset_LevAll_Partial("PS_DirectSoundOffset3db_250hz");
+		  }
+		  else{
+		  	break;
+		  }
+		 ++loopcount;	
+		}
+
+		// spread 50dB and 80 dB curve
+		CL_CurveLibrary.ApplyOffset_LevLow_Partial("PS_DirectSound_SoftSoundsUp");
+		CL_CurveLibrary.ApplyOffset_LevHigh_Partial("PS_DirectSound_LoudSoundsDown");
+		
+		
+	}// closes CL_CurveLibrary.ApplyOffset_Direct_Sound_Modifications
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_Direct_Sound_Modifications_Moderate
+//   Input      :  <void>
+//   Ouput      :  <void>
+//   Description: Add the Direct sound offset curves from dataBase(AudCustomCurve.hxml) if necessary for closed fittings in moderate path of BinaxFit (PP>75, Gmax<80,BinaxFit)
+-----------------------------------------------------------------------------------------------------------------*/		  
+	public function void ApplyOffset_Direct_Sound_Modifications_Moderate(){	
+		println('[HAL] Direct Sound Modifications Moderate Function triggered');
+		
+		// offset of 6dB up to 1250 Hz for IG50
+		CL_CurveLibrary.ApplyOffset_LevLow_Partial("PS_DirectSound_SoftSoundsUp6dB");
+		// offset of 3dB up to 1250 Hz for IG65
+		CL_CurveLibrary.ApplyOffset_LevMed_Partial("PS_DirectSound_MedSoundsUp3dB");
+		
+		
+	}// closes CL_CurveLibrary.ApplyOffset_Direct_Sound_Modifications_Moderate
+
+
+/*----------------------------------------------------------------------------------------------------------------
+//   Curve LIBRARY Function:    ApplyOffset_LevLow_AMAP
+//   Input      :  curveName 
+//   Ouput      :  NA. 
+//   Description: Add the offset curve(curveName)from dataBase(AudCustomCurve.hxml) to subject with below condition:
+//                Only applied, if it can be partially applied.  
+//                Only applied to level dependent gain, Low input.
+-----------------------------------------------------------------------------------------------------------------*/	
+	public function void ApplyOffset_LevLow_AMAP(stringID curveName){
+		//Gain modification applied for Low Input Levels
+		if(isOffsetApplicable(curveName, ToSubject.LevLow,Apply.Amap)){
+			applyOffset(curveName, ToSubject.LevLow, Apply.Partial);
+			println("[HAL]: CL-ApplyOffset_LevLow_Partial for -- ");
+			println(curveName);
+		}
+		else{
+		    println("[HAL]: CL-ApplyOffset_LevLow_Partial FAIL for -- ");
+			println(curveName);
+		}
+	}//closes CL_CurveLibrary.ApplyOffset_LevLow_AMAP
+	
+/*---------------------------------------------------------------------------------------------------------*
+//	HIGH LEVEL LIBRARY - ApplyInsertionGainOffsets_ProgramSelection
+//	Description	:	Function is applying Insertion Gain offsets for all listening situation. 
+/*---------------------------------------------------------------------------------------------------------*/
+		public function void ApplyInsertionGainOffsets_ProgramSelection()
+		{
+			println('[HAL]HLIB.ApplyInsertionGainOffsets_ProgramSelection ID = '+ BasicLibrary_CommUtil.CurrentProg ());
+			
+			if (BasicLibrary_ProgramSelection.IsNoisyEnv() == true)
+			// IG modification apply partially to all levels only if Omnidirectional MicMode selected.
+			{  
+				if (Mid_Level_Library_Mic_Mode.MicModeIsOmni() == true)
+ 
+				{
+					ApplyOffset_LevAll_Partial("PS_NoisyEnv_LevAll");
+					println('[HAL]:PS - NoiseEnv - IG Offset - Offset curve applied');
+				}
+				else 
+				{
+				    println('[HAL]:PS - NoiseEnv - IG Offset - Offset curve not applied');			
+			    }
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsPhoneAcoustically() == true)
+			// IG modification apply partially with different strength for open and closed vents.
+			{
+				if (BasicLibrary_Curves.VentOutisOpen() == true) 
+				{	    	
+			    	ApplyOffset_LevAll_Partial("PS_PA_Open_LevAll");
+					println('[HAL]:PS - PhoneAcoustically - IG Offset - curve applied (Open Vent)');		       	
+				}
+
+				else 
+				{ 
+			       	ApplyOffset_LevLow_Partial("PS_PAClose_LevLow");  
+			       	ApplyOffset_LevMed_Partial("PS_PAClose_LevMed"); 
+					println('[HAL]:PS - PhoneAcoustically - IG Offset - curve applied (Closed Vent)');
+				}
+			}
+			else if (BasicLibrary_ProgramSelection.IsPhonemT() == true ||
+					 BasicLibrary_ProgramSelection.IsPhoneMT() == true ||
+					 BasicLibrary_ProgramSelection.IsPhoneT() == true)	 
+			// Insertion Gain offset apply partially to all levels.
+			{ 
+				ApplyOffset_LevAll_Partial("PS_PhoneTelecoil");
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsMusic() == true)
+			// Insertion Gain offset apply partially to all levels.
+			{ 
+				ApplyOffset_LevAll_Partial("PS_Music_LevAll");
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsTV() == true)
+			// Insertion Gain offset apply completely to all levels.
+			{ 
+				ApplyOffset_LevAll_Complete("PS_Tv");
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsOutdoorSport() == true)
+			// Insertion Gain offset apply completely to all levels.
+			{
+				ApplyOffset_LevAll_Complete("PS_OutdoorSports");
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsPrivacy() == true)
+			// Insertion Gain offset apply partially to all levels depends on GMax.
+			{
+				if(cap:GMax >= 80) 
+				{
+					ApplyOffset_LevAll_Partial("PS_Privacy_M6dB");
+				   	println('[HAL]:PS - Privacy - IG Offset - curve applied (GMax >= 80)');
+				}
+				
+				else 
+				{
+				   	ApplyOffset_LevAll_Partial("PS_Privacy_M7dB");
+				   	println('[HAL]:PS - Privacy - IG Offset - curve applied (GMax < 80)');
+				}
+			}
+			
+			else if (BasicLibrary_ProgramSelection.IsInductionLoopmT() == true ||
+					 BasicLibrary_ProgramSelection.IsInductionLoopT() == true)
+			// Insertion Gain offset apply as much as possible to low level and partially to medium level.
+			{ 
+				ApplyOffset_LevMed_Partial("PS_InductionLoop_LevMed");
+			    ApplyOffset_LevLow_AMAP("PS_InductionLoop_LevLow");
+			}
+
+			else //(all other programs) 
+			// Insertion Gain offset not applied
+			{	
+				
+			}
+		} // closes CL_CurveLibrary.ApplyInsertionGainOffsets_ProgramSelection
+		
+/*---------------------------------------------------------------------------------------------------------*
+//	HIGH LEVEL LIBRARY - ApplyDirectSoundModification_ProgramSelection
+//	Description	:	Function is applying Direct Sound Modification for all listening situation. 
+/*---------------------------------------------------------------------------------------------------------*/
+		public function void ApplyDirectSoundModification_ProgramSelection() 
+		{
+			println('[HAL]:HLIB ApplyDirectSoundModification_ProgramSelection ID = '+ BasicLibrary_CommUtil.CurrentProg ());
+			
+			if(BasicLibrary_ProgramSelection.IsWirelessProgramSetInCurrentSide()==true)
+			// Bluetooth Phone, Streaming Audio, easyTek FM
+			// Direct Sound modification apply for open vents with different strength.	
+			{  					
+				if (BasicLibrary_Curves.VentOutisOpen())
+				{
+				    CL_CurveLibrary.ApplyOffset_Direct_Sound_Modifications();
+				    println('[HAL]:PS - WirelessProgram - Direct Sound Modifications applied');
+				}
+				    
+				else if (fit:SelectableFormula == SelectableFormula.BinaxFit &&
+						 cap:PricePoint > PricePoint.PP75 && 
+						 cap:GMax < 80)
+				{
+				    CL_CurveLibrary.ApplyOffset_Direct_Sound_Modifications_Moderate();
+				    println('[HAL]:PS - WirelessProgram - Direct Sound Modifications Moderate applied');
+				}		
+			} 
+			 
+			else // (all other programs) 
+			// Direct Sound Modification not applied
+			{	
+			
+			}	
+		} //closes CL_CurveLibrary.ApplyDirectSoundModification_ProgramSelection
+					
+	}//closes CL_CurveLibrary
+}//shs_sat

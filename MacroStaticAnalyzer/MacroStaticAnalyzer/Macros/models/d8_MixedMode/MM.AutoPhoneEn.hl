@@ -1,0 +1,63 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                           AutoPhone Enable  Checkbox
+// Initial Version                						                              :  2011-02-21   Cecil Wilson
+// Updated all functions, added dependencies to InputMode 					          :  2011-03-09   Cecil Wilson		
+// Added greyout in case of Tinnitus												  :  2011-03-30   Cecil Wilson	
+// Added println																	  :  2011-07-28	  Jenny Lin
+// Add println for MPV testing														  :  2011-09-22   Jenny Lin
+// Macro code Cleanup														          :  2012-02-14   Cecil Wilson
+// Deleted comments above application functions that descibe what the functions do  :  Alastair Manders 2012-06-5 
+// call HLIB of Tinnitus noiser for IsEnabled()										  :  2012-07-02   Jenny, Cecil
+// ******SIFIT7.2_PEERREVIEWED: No changes required									  :  2013-07-30   Jenny, Judith
+// refractor: Optimize code									: 2013-12-02 Jenny
+// updated println statement for debugging.											: 2014-01-15 Jenny
+// Sifit7.3 Peer review																: 2014-04-15 Jenny, Judith
+// ****** SIFIT7.4 ******
+// Updated SetPos to PrintEnvSettings to test SideSelection macro.  				:  2014-08-25   Jenny
+// Updated IsVisible to call BLIB instead of MLIB. Code cleanup: Updated printlines.	: 2014-10-21 Jenny
+/*---------------------------------------------------------------------------------------------------------------$$*/
+namespace shs_sat
+{
+	using shs_sat.*;
+	package MixedMode AutoPhoneEn
+	{
+		application function bool IsVisible ()
+		{
+			println ('[HAL]MixedMode.AutoPhoneEn.IsVisible'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+
+			bool retVal = Mid_Level_Library_AutoPhone.AutoPhoneEn_IsVisible ();
+			return retVal;
+		}
+		
+		application function bool IsEnabled ()
+		{
+			println ('[HAL]MixedMode.AutoPhoneEn.IsEnabled');
+
+			bool retVal = (BasicLibrary_Noiser.Noiser_IsOnAndPure () == false);
+			return retVal;
+		}
+		
+		application function int MaxPos ()
+		{
+			println ('[HAL]MixedMode.AutoPhoneEn.MaxPos');
+
+			int retVal = 1;
+			return retVal;
+		}
+
+		application function int GetPos ()
+		{
+			println ('[HAL]MixedMode.AutoPhoneEn.GetPos');
+
+			int retVal = High_Level_Library_AutoPhone.AutoPhoneEn_Get ();
+			return retVal;
+		}
+		
+		application function void SetPos (int pos)
+		{
+			println ('[HAL]MixedMode.AutoPhoneEn.SetPos'+ BasicLibrary_DebugPrint.PrintEnvSettings());
+			
+			High_Level_Library_AutoPhone.AutoPhoneEn_Set (pos);
+		}
+	}
+}

@@ -1,0 +1,1025 @@
+/*---------------------------------------------------------------------------------------------------------------*
+// CXX UI:                        First Fit Wizard - TargetSelection and Target Processing
+// Initial Version                						                :  2011-04-08  Nadine Seubert
+// add d8SwMacroVar14En for connexx Fit                                 :  2011-04-28  Nadine Seubert
+// first draft for post target processing Macro                         :  2011-05-11  Nadine Seubert
+// update to reduce OLG for open fitting                                :  2011-06-07  Nadine Seubert
+// binaural trade off is not working yet                                :  2011-06-08  Nadine Seubert
+// bugfix for multi and add mixed up                                    :  2011-06-10  Nadine Seubert
+// change d8SwMacroVar14En into d8SwMacroConnexxFitEn					:  2011-06-15  Meike Doose
+// few comments for debugging purpose included and binaural tradeoff excluded from if-loop : 2011-06-22 Meike Doose
+// add Acc level for traditional formula nal nl 1                       :  2011-07-15  Nadine Seubert
+// adjustments for OPEN formular added                                  :  2011-07-18  Nadine Seubert
+// add Acc level for traditional formula open                           :  2011-07-19  Nadine Seubert
+// change modifications for Acc level in order to multiply at first and afterwards add a value  : 2011-07-28 Nadine Seubert
+// updated isDefined for curves crv:HL									:  2011-08-05  Cecil Wilson
+// updated GMax values for CxxFit and d8SwMacroConnexxFitEn				:  2011-08-12  Nadia Neugeborn
+// Moved the access of Hearing Loss curve into SelectableFormula check in TGS	:  2011-08-17  Jenny Lin
+// PostTargetProcessing (CxxFit,Exp,Acc3) multCurveToTG for all level	:  2011-08-17  Jenny Lin
+// Added 2 new curves for CxxFit, Acc1	(based on D7)					:  2011-08-29  Nadia Neugeborn
+// Removed binaural workaround for env:DetHi							:  2011-09-12  Cecil Wilson 
+// Reduce target gain if cutting FOG (CR51521)							:  2011-10-04  Nadia Neugeborn	
+// Reduce target gain if cutting OLG, incl. closed domes (CR36652)		:  2011-10-10  Nadia Neugeborn		
+// Include XcelFit (Fig6)												:  2012-02-03  Meike Steinbuss	
+// Delete println of ConnexxFit && Open									:  2012-02-03  Meike Steinbuss
+// Add fit:CalculationFormula = CalculationFormula.NalBall to Vent open is true because of SP path : 2012-02-03 Meike Steinbuss
+// adjust AudcustomCurve names of XcelFit								:  2012-02-13  Meike Steinbuss
+// PostTargetProcessing for NalBall uncommented and NalBallAcc3 for XCEl included (different from NalBall Acc3 ConnexxFit): 2012-03-21 Meike Steinbuss
+// Inlcude in PostTargetProcessing Fig6 Acc1 and Acc3 new sections for closed and open dome/tip : 2012-03-22 Meike Steinbuss
+// old ConnexxFit deleted (saved as backup in G:\Projects\AE_Projekte\AUD_Platform_Projects\Audiology08\Sifit7.0\Macros\OldCxxFit_Code : 2012-04-02 Meike Steinbuss
+// include VentOpenLoop for OLG --> right now, OLG opt only for Open	: 2012-04-05  Meike Steinbuss
+// Stimulus.ShortTimeSpeech introduced but commented out for now		: 2012-05-09  Nadia Neugeborn
+// Added double tip/dome check for OLG and Target check					: 2012-05-17  Nadia Neugeborn
+// Uncommented out Stimulus.ShortTimeSpeech for ALMfit					: 2012-06-12  Nadia Neugeborn
+// Macro Peer Review Updates - SelectTargetFormula()					: 2012-07-10  Nadia Neugeborn
+// Macro Peer Review Updates - PostTargetProcessing()					: 2012-07-11  Nadia & Judith
+// Implemented CR55821: AUD FIRSTFIT: Implement HiFi modifications		: 2012-07-16  Nadia & Judith
+/**********************************************CODE FREEZE********************************************************/
+// CR56046 - Added curves                                               : 2012-07-18  Nadine, Nadia & Judith: 
+// Added curves for Xcel                                                : 2012-07-27  Judith
+// Deleted fit:Stimulus = Stimulus.ShortTimeSpeech;                     : 2012-07-30  Judith
+// CR57142 - NAL-NL2 shall not apply -3dB offset for binaural fitting	: 2012-08-22  Nadia Neugeborn
+// FR58214 - FIFI - Crit.Gain M. is not used for FF with ACP's <=1.6 mm : 2012-10-04  Judith
+// ER58456 - Renamed curves that are >30 characters, with new names that are <30 characters. Curve names changed were: 
+// XcelFIG6Acc1Multi65dBUnExCLOSED, XcelFIG6Acc1Multi50dBUnExCLOSED, XcelFIG6Acc1Multi80dBUnExCLOSED, 
+// XcelFIG6Acc3Multi65dBUnExCLOSED, XcelFIG6Acc3Multi50dBUnExCLOSED, XcelFIG6Acc3Multi80dBUnExCLOSED. : 2012-11-14 Al Manders 
+// only apply "binaural trade off" for CxxFit and NAL-NL1				: 2012-11-29 Frauke
+// CR59113 - SelectTargetFormula() and PostTargetProcessing() have been changed. Pp300 now uses ALMFIT (Pp100 still uses Xcelfit). : 2013-01-08 Al Manders
+// FR59404 - Nitro devices (SP-devices) to use NAL-BALL or NAL-RP + AccLevel 4	: 2013-01-09 Frauke
+// Added Terzo fit as comments in SelectTargetFormula()					: 2013-03-19  Raymond 
+// Uncomment the Nitro Paths for NAL-RP Acc4 since the FR59404 is fixed and remove the 
+// lines of code for NAL-BALL Acc4 Unexperienced target processing.		: 2013-04-10 Jenny
+// FR61464 - Added code and annotation for PP75 devices (SirionFit).                  : 2013-04-18 Al
+// New variables are now defined at the start of SelectTargetFormula () and PostTargetProcessing ()...
+// ...which are: 'VentOutisOpen' and 'VentOutisOpenOpen'. In order to increase efficiency, calls to...
+// ...the functions 'BasicLibrary_Curves.VentOutisOpen()' and 'BasicLibrary_Curves.VentOutisOpen()'...
+// ...have been replaced by these two variables.                        : 2013-04-24 Al
+// Added Xcel Fit path for PP100 Nitro BTE devices (GMax >=80)			: 2013-05-07 Sonia
+// Correct SelectFormula parameter for Terzo fit						: 2013-05-15 Raymond
+// Added GMax <80 for Open Vent path									: 2013-06-10 Sonia
+// Updated the Sirion Fit Closed path. Removed the duplicated offsets multiplied to the Sirion Closed path : 2013-07-05 Jenny
+// Added DSL v5 and ShortTimeSpeech set for the PP100/75 that it shall be disabled.	: 2013-07-11 Jenny
+// ER62927: In post target processing, restructured traditional formula modification...
+// ... for PP75 Sirion fit Open.                                        : 2013-08-13 Al
+//------------------------------------------------7.3-------------------------------------------------------------------------
+// FR64913: Replace ConnexxFit with BinaxFit									:2014-02-27 Raymond
+//------------------------------------------------7.4------------------------------------------------------------------------------
+// // 7.4 added 3rd Experience  - Feature Stopped by SW for 7.4, Commented out, Waiting for new Control     :  2014-05-07 Judith  
+// comment in 3rd Experience                                                                                :  2014-07-08 Judith
+// Updated to correct curve names to XcelFIG6Acc1MultiXXdBSuExCL,XcelFIG6Acc3MultiXXdBSuExCL curves         :  2014-08-20 Jeline   
+// Addded Acc5 for Sirion closed path 3rd Exp. Level                                                        :  2014-08-29 Judith
+// Updated Traditional Formula Modification, Nal-NL1*,from SelectableFormula from ConnexxFit to BinaxFit	:  2014-09-02 Jeline 
+/*--------------------------------------------------------------------------------------------------------------------------------*/
+namespace shs_sat
+{
+	using builtins.*;
+	using shs_sat.*;
+	package TargetSelection TGS uselib builtins
+	{
+
+	/*---------------------------------------------------------------------------------------------------------------*
+//	TargetSelection():	Called after Connexx-user has chosen Acc Level and TargetFormula
+//						The TargetSelection macro has to choose the final TargetFormula
+//						The TargetSelection macro is called ONCE for each Side
+//	Exception:			If throwing exception, the FirstFit will be cancelled   
+-----------------------------------------------------------------------------------------------------------------*/
+		application function void SelectTargetFormula ()
+		{
+			println ('[HAL] TARGETS: START of SelectTargetFormula() macro');
+
+			// Define bool variable that indicates whether the fit is open or closed
+			bool VentOutisOpen = BasicLibrary_Curves.VentOutisOpen ();
+
+			// Adjustments for BinaxFit
+			if (fit:SelectableFormula == SelectableFormula.BinaxFit &&
+					(cap:PricePoint > PricePoint.PP75 ||
+						(cap:PricePoint == PricePoint.PP75 &&
+							VentOutisOpen == true)))
+			{ //If ALMfit, XCELfit or SirionFit 'Open'.
+
+			// Checking of hearing loss curve for BinaxFit
+			// -200 is invalid initial value 
+				gain HL500 = -200;
+				gain HL1000 = -200;
+				gain HL2000 = -200;
+				gain HL4000 = -200;
+				// variable for calculating Steeply Sloping Hearing Loss
+				gain difference = -200;
+
+				// This for loop is needed to find out which curve point is on a specific frequency
+				if (isDefined (crv:HL))
+				{ //checks if the HL curve is available here 							
+					foreach (curvepoint cp in crv:HL)
+					{
+						if (cp->f == 500)
+						{
+							HL500 = cp->g;
+						}
+						if (cp->f == 1000)
+						{
+							HL1000 = cp->g;
+						}
+						if (cp->f == 2000)
+						{
+							HL2000 = cp->g;
+						}
+						if (cp->f == 4000)
+						{
+							HL4000 = cp->g;
+						}
+					}
+				} // closes isDefined(crv:HL)     
+
+
+				//Different CalculationFormula and AccLevel is set based on GMax
+				if (cap:GMax < 70)
+				{
+				// Initialise the controls when in BinaxFit
+					fit:CalculationFormula = CalculationFormula.Fig6;
+					fit:AccLevel = AccLevel.Acc2;
+					println ('[HAL] TARGETS: SelectableFormula is BinaxFit, CalculationFormula is Fig6, Acc2');
+				}
+				// select a different ACC Level for 'P' and 'HP' instruments which have the maximum Gain higher or equal to 70 dB and smaller than 80
+				else if (cap:GMax >= 70 &&
+					cap:GMax < 80)
+				{
+					fit:CalculationFormula = CalculationFormula.NalBall;
+					fit:AccLevel = AccLevel.Acc3;
+					println ('[HAL] TARGETS: SelectableFormula is BinaxFit, CalculationFormula is NalBall, Acc3');
+				}
+				// select different Tagret Formula and ACC Level for 'SP' instruments which have the maximum Gain higher or equal than 80 dB
+				else if (cap:GMax >= 80 &&
+					fit:ExpLevel == ExpLevel.experienced)
+				{
+					fit:CalculationFormula = CalculationFormula.NalBall;
+					fit:AccLevel = AccLevel.Acc4;
+					println ('[HAL] TARGETS: SelectableFormula is BinaxFit, CalculationFormula is NAL BALL, Acc4');
+					println ('[HAL] TARGETS: because cap:GMax >= 80 && fit:ExpLevel == ExpLevel.experienced');
+				}
+				else if (cap:GMax >= 80 &&
+					fit:ExpLevel == ExpLevel.unexperienced)
+				{
+					fit:CalculationFormula = CalculationFormula.NalRp; // add once NAL-RP is available FR59404
+					fit:AccLevel = AccLevel.Acc4;
+					println
+					('[HAL] TARGETS: SelectableFormula is BinaxFit, CalculationFormula should be NAL RP but we still use NAL BALL, Acc4');
+					println ('[HAL] TARGETS: because cap:GMax >= 80 && fit:ExpLevel == ExpLevel.unexperienced');
+				}
+				if (isDefined (crv:VentOut) &&
+						isDefined (crv:HL))
+				{
+				// if conclusion only for open Ventings and GMax < 80 dB
+					if (VentOutisOpen == true &&
+							cap:GMax < 80)
+					{
+					// for open fitted devices the ACC Level should be adjusted to ACC 1 and the formula back to Fig6 (incase of NalNl2)
+						fit:CalculationFormula = CalculationFormula.Fig6;
+						fit:AccLevel = AccLevel.Acc1;
+						println
+						('[HAL] TARGETS: SelectableFormula is BinaxFit, CalculationFormula is Fig6, Acc1 - open fitting');
+						//
+						// the following code verifies if the Hearing loss is a Steeply Sloping
+						if (HL500 < 30 &&
+								HL4000 > 50)
+						{
+							difference = HL4000 - HL1000; // subtract the HearinglosPoint from 4000Hz with 1000Hz to verify if the distance is higher or equal than 40dB
+							if (difference >= 40)
+							{
+								fit:CalculationFormula = CalculationFormula.Fig6;
+								fit:AccLevel = AccLevel.Acc3;
+								println
+								('[HAL] TARGETS: SelectableFormula is BinaxFit, CalculationFormula is Fig6, Acc3, SkiSloping HL');
+							}
+							difference = HL2000 - HL500;
+							if (difference >= 40)
+							{
+								fit:CalculationFormula = CalculationFormula.Fig6;
+								fit:AccLevel = AccLevel.Acc3;
+								println
+								('[HAL] TARGETS: SelectableFormula is BinaxFit, CalculationFormula is Fig6, Acc3, SkiSloping HL');
+							}
+						} // end of the calculation for Steeply Sloping HL                   
+
+					} // closes vent if conclusion
+
+				} // closes if isDefined(crv:VentOut) && isDefined(crv:HL) for BinaxFit
+
+			} // end of BinaxFit
+
+			// Adjustments for traditional Formulas
+			if (fit:SelectableFormula == SelectableFormula.NalNl1X ||
+					(fit:SelectableFormula == SelectableFormula.BinaxFit &&
+						cap:PricePoint == PricePoint.PP75 &&
+						VentOutisOpen == false))
+			{ // If either NalNl1 is selected, OR if SirionFit 'closed' is selected.
+				fit:CalculationFormula = CalculationFormula.NalNl1X;
+				println ('[HAL] TARGETS: SelectableFormula is set to NALNL1');
+			}
+			if (fit:SelectableFormula == SelectableFormula.NalNl2Orig)
+			{ // If NalNl2 is selected.
+				fit:CalculationFormula = CalculationFormula.NalNl2Orig;
+				println ('[HAL] TARGETS: SelectableFormula is set to NALNL2');
+			}
+			if (fit:SelectableFormula == SelectableFormula.Gain3)
+			{
+				fit:CalculationFormula = CalculationFormula.Gain3;
+				println ('[HAL] TARGETS: SelectableFormula is set to Terzo');
+			}
+			if (fit:SelectableFormula == SelectableFormula.DSLmioOrig)
+			{
+				fit:CalculationFormula = CalculationFormula.DSLmioOrig;
+				println ('[HAL] TARGETS: SelectableFormula is set to DSL v5');
+			}
+			
+			// Different stimulus type is used for ALM compression concept (for PP700 & PP500 & PP300)
+			if (fit:SelectableFormula == SelectableFormula.BinaxFit &&
+					cap:PricePoint >= PricePoint.PP300)
+			{
+				fit:ShortTimeSpeech = ShortTimeSpeech.enabled;
+				println ('[HAL] TARGETS: ShortTimeSpeech is enabled for PP700, PP500 & PP300');
+			}
+			else{
+				fit:ShortTimeSpeech = ShortTimeSpeech.disabled;
+				println ('[HAL] TARGETS: ShortTimeSpeech is disabled for PP100 & PP75.');
+			}
+			println ('[HAL] TARGETS: END of SelectTargetFormula() macro');
+		} // Closes TGS.SelectTargetFormula()
+
+
+		/*$---------------------------------------------------------------------------------------------------------------*
+//	PostTargetProcessing():	The PostTargetProcessing macro is called after execution of TargetSelection, TargetSync
+//							and TargetGain calculation
+//	Exception:				If throwing exception, the FirstFit will be cancelled  
+-----------------------------------------------------------------------------------------------------------------$*/
+		application function void PostTargetProcessing ()
+		{
+			println ('[HAL] TARGETS: START of PostTargetProcessing() macro');
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~BinaxFit Target Modifications~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ALMfit target curve modifications~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+			// Define bool variable that indicates whether the fit is open or closed
+			bool VentOutisOpen = BasicLibrary_Curves.VentOutisOpen ();
+			// Define bool variable that indicates whether the fit is 'open open' or not.
+			bool VentOutisOpenOpen = BasicLibrary_Curves.VentOutisOpenOpen ();
+
+			//ALMfit only applicable for PP700, PP500 and PP300 
+			if (cap:PricePoint == PricePoint.PP700 ||
+					cap:PricePoint == PricePoint.PP500 ||
+					cap:PricePoint == PricePoint.PP300)
+			{
+
+			//SelectableFormula = BinaxFit and CalculationFormula = NalBall			
+				if (fit:SelectableFormula == SelectableFormula.BinaxFit &&
+						fit:CalculationFormula == CalculationFormula.NalBall)
+				{
+				if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.superexperienced
+							)
+					{
+						multCurveToTG ('BALLAcc3Multi65dBSuEx', ToSubject.LevMed);
+						multCurveToTG ('BALLAcc3Multi80dBSuEx', ToSubject.LevHigh);
+						multCurveToTG ('BALLAcc3Multi50dBSuEx', ToSubject.LevLow);
+						addCurveToTG ('BALLAcc3add65dBSuEx', ToSubject.LevMed);
+						addCurveToTG ('BALLAcc3add80dBSuEx', ToSubject.LevHigh);
+						addCurveToTG ('BALLAcc3add50dBSuEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit NalBall Acc 3 SuperExperienced');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.experienced)
+					{
+						multCurveToTG ('BALLAcc3Multi65dBEx', ToSubject.LevMed);
+						multCurveToTG ('BALLAcc3Multi80dBEx', ToSubject.LevHigh);
+						multCurveToTG ('BALLAcc3Multi50dBEx', ToSubject.LevLow);
+						addCurveToTG ('BALLAcc3add65dBEx', ToSubject.LevMed);
+						addCurveToTG ('BALLAcc3add80dBEx', ToSubject.LevHigh);
+						addCurveToTG ('BALLAcc3add50dBEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit NalBall Acc 3 Experienced');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.unexperienced)
+					{
+						multCurveToTG ('BALLAcc3Multi65dBUnEx', ToSubject.LevMed);
+						multCurveToTG ('BALLAcc3Multi80dBUnEx', ToSubject.LevHigh);
+						multCurveToTG ('BALLAcc3Multi50dBUnEx', ToSubject.LevLow);
+						addCurveToTG ('BALLAcc3add65dBUnEx', ToSubject.LevMed);
+						addCurveToTG ('BALLAcc3add80dBUnEx', ToSubject.LevHigh);
+						addCurveToTG ('BALLAcc3add50dBUnEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit NalBall Acc 3 UnExperienced');
+					}
+					//-> experienced = "more compressive" acc level: FR59404
+					if (fit:AccLevel == AccLevel.Acc4 &&
+							fit:ExpLevel == ExpLevel.experienced)
+					{ //for GMax >= 80 && fit:ExpLevel == ExpLevel.experienced => "more compressive" acc level for SP-Fit
+						multCurveToTG ('BALLAcc4Multi65dBEx', ToSubject.LevMed);
+						multCurveToTG ('BALLAcc4Multi80dBEx', ToSubject.LevHigh);
+						multCurveToTG ('BALLAcc4Multi50dBEx', ToSubject.LevLow);
+						addCurveToTG ('BALLAcc4add65dBEx', ToSubject.LevMed);
+						addCurveToTG ('BALLAcc4add80dBEx', ToSubject.LevHigh);
+						addCurveToTG ('BALLAcc4add50dBEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit NalBall Acc 4 Experienced');
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit NalBall Acc 4 Experienced should only work for GMax >= 80');
+					}
+				} //Closes SelectableFormula = BinaxFit and CalculationFormula = NAL-BALL
+
+				//SelectableFormula = BinaxFit and CalculationFormula = NAL-RP -> "more linear" acc level: FR59404
+				if (fit:SelectableFormula == SelectableFormula.BinaxFit &&
+						fit:CalculationFormula == CalculationFormula.NalRp)
+				{
+					if (fit:AccLevel == AccLevel.Acc4 &&
+							fit:ExpLevel == ExpLevel.unexperienced)
+					{ //check FR59404- if excepted this shall be used for GMax >= 80 && fit:ExpLevel == ExpLevel.unexperienced => "more linear" acc level for SP-Fit
+						multCurveToTG ('RPAcc4Multi65dBUnEx', ToSubject.LevMed);
+						multCurveToTG ('RPAcc4Multi80dBUnEx', ToSubject.LevHigh);
+						multCurveToTG ('RPAcc4Multi50dBUnEx', ToSubject.LevLow);
+						addCurveToTG ('RPAcc4add65dBUnEx', ToSubject.LevMed);
+						addCurveToTG ('RPAcc4add80dBUnEx', ToSubject.LevHigh);
+						addCurveToTG ('RPAcc4add50dBUnEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit NalRp Acc 4 UnExperienced');
+					}
+				} //Closes SelectableFormula = BinaxFit and CalculationFormula = NAL-RP
+
+				//SelectableFormula = BinaxFit and CalculationFormula = Fig6
+				if (fit:SelectableFormula == SelectableFormula.BinaxFit &&
+						fit:CalculationFormula == CalculationFormula.Fig6)
+				{
+				if (fit:AccLevel == AccLevel.Acc1 &&
+							
+							fit:ExpLevel == ExpLevel.superexperienced   &&
+							
+							VentOutisOpenOpen == true)
+					{
+						multCurveToTG ('FIG6Acc1Multi65dBSuExOPEN', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc1Multi80dBSuExOPEN', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc1Multi50dBSuExOPEN', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc1add65dBSuExOPEN', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc1add80dBSuExOPEN', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc1add50dBSuExOPEN', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 1 SuperExperienced for OPEN TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc1 &&
+							fit:ExpLevel == ExpLevel.experienced &&
+							VentOutisOpenOpen == true)
+					{
+						multCurveToTG ('FIG6Acc1Multi65dBExOPEN', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc1Multi80dBExOPEN', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc1Multi50dBExOPEN', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc1add65dBExOPEN', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc1add80dBExOPEN', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc1add50dBExOPEN', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 1 Experienced for OPEN TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc1 &&
+							fit:ExpLevel == ExpLevel.unexperienced &&
+							VentOutisOpenOpen == true)
+					{
+						multCurveToTG ('FIG6Acc1Multi65dBUnExOPEN', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc1Multi80dBUnExOPEN', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc1Multi50dBUnExOPEN', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc1add65dBUnExOPEN', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc1add80dBUnExOPEN', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc1add50dBUnExOPEN', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 1 UnExperienced for OPEN TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc1  &&
+							fit:ExpLevel == ExpLevel.superexperienced   
+							 &&
+							VentOutisOpenOpen == false)
+					{
+						multCurveToTG ('FIG6Acc1Multi65dBSuExCLOSED', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc1Multi80dBSuExCLOSED', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc1Multi50dBSuExCLOSED', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc1add65dBSuExCLOSED', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc1add80dBSuExCLOSED', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc1add50dBSuExCLOSED', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 1 Experienced for CLOSED TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc1 &&
+							fit:ExpLevel == ExpLevel.experienced &&
+							VentOutisOpenOpen == false)
+					{
+						multCurveToTG ('FIG6Acc1Multi65dBExCLOSED', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc1Multi80dBExCLOSED', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc1Multi50dBExCLOSED', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc1add65dBExCLOSED', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc1add80dBExCLOSED', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc1add50dBExCLOSED', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 1 Experienced for CLOSED TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc1 &&
+							fit:ExpLevel == ExpLevel.unexperienced &&
+							VentOutisOpenOpen == false)
+					{
+						multCurveToTG ('FIG6Acc1Multi65dBUnExCLOSED', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc1Multi80dBUnExCLOSED', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc1Multi50dBUnExCLOSED', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc1add65dBUnExCLOSED', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc1add80dBUnExCLOSED', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc1add50dBUnExCLOSED', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 1 UnExperienced for CLOSED TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc2  &&
+							fit:ExpLevel == ExpLevel.superexperienced
+							)
+					{
+						multCurveToTG ('FIG6Acc2Multi65dBSuEx', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc2Multi80dBSuEx', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc2Multi50dBSuEx', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc2add65dBSuEx', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc2add80dBSuEx', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc2add50dBSuEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 2 SuperExperienced');
+					}
+					if (fit:AccLevel == AccLevel.Acc2 &&
+							fit:ExpLevel == ExpLevel.experienced)
+					{
+						multCurveToTG ('FIG6Acc2Multi65dBEx', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc2Multi80dBEx', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc2Multi50dBEx', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc2add65dBEx', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc2add80dBEx', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc2add50dBEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 2 Experienced');
+					}
+					if (fit:AccLevel == AccLevel.Acc2 &&
+							fit:ExpLevel == ExpLevel.unexperienced)
+					{
+						multCurveToTG ('FIG6Acc2Multi65dBUnEx', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc2Multi80dBUnEx', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc2Multi50dBUnEx', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc2add65dBUnEx', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc2add80dBUnEx', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc2add50dBUnEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 2 UnExperienced');
+					}
+					if (fit:AccLevel == AccLevel.Acc3  &&
+							fit:ExpLevel == ExpLevel.superexperienced  &&  
+							
+							VentOutisOpenOpen == true)
+					{
+						multCurveToTG ('FIG6Acc3Multi65dBSuExOPEN', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc3Multi80dBSuExOPEN', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc3Multi50dBSuExOPEN', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc3add65dBSuExOPEN', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc3add80dBSuExOPEN', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc3add50dBSuExOPEN', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 3 SuperExperienced for OPEN TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.experienced &&
+							VentOutisOpenOpen == true)
+					{
+						multCurveToTG ('FIG6Acc3Multi65dBExOPEN', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc3Multi80dBExOPEN', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc3Multi50dBExOPEN', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc3add65dBExOPEN', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc3add80dBExOPEN', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc3add50dBExOPEN', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 3 Experienced for OPEN TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.unexperienced &&
+							VentOutisOpenOpen == true)
+					{
+						multCurveToTG ('FIG6Acc3Multi65dBUnExOPEN', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc3Multi80dBUnExOPEN', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc3Multi50dBUnExOPEN', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc3add65dBUnExOPEN', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc3add80dBUnExOPEN', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc3add50dBUnExOPEN', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 3 UnExperienced for OPEN TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+						
+							fit:ExpLevel == ExpLevel.superexperienced   && 
+							
+							VentOutisOpenOpen == false)
+					{
+						multCurveToTG ('FIG6Acc3Multi65dBSuExCLOSED', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc3Multi80dBSuExCLOSED', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc3Multi50dBSuExCLOSED', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc3add65dBSuExCLOSED', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc3add80dBSuExCLOSED', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc3add50dBSuExCLOSED', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 3 SuperExperienced for CLOSED TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.experienced &&
+							VentOutisOpenOpen == false)
+					{
+						multCurveToTG ('FIG6Acc3Multi65dBExCLOSED', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc3Multi80dBExCLOSED', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc3Multi50dBExCLOSED', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc3add65dBExCLOSED', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc3add80dBExCLOSED', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc3add50dBExCLOSED', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 3 Experienced for CLOSED TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.unexperienced &&
+							VentOutisOpenOpen == false)
+					{
+						multCurveToTG ('FIG6Acc3Multi65dBUnExCLOSED', ToSubject.LevMed);
+						multCurveToTG ('FIG6Acc3Multi80dBUnExCLOSED', ToSubject.LevHigh);
+						multCurveToTG ('FIG6Acc3Multi50dBUnExCLOSED', ToSubject.LevLow);
+						addCurveToTG ('FIG6Acc3add65dBUnExCLOSED', ToSubject.LevMed);
+						addCurveToTG ('FIG6Acc3add80dBUnExCLOSED', ToSubject.LevHigh);
+						addCurveToTG ('FIG6Acc3add50dBUnExCLOSED', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit ALMfit Fig6 Acc 3 UnExperienced for CLOSED TIPS/DOMES');
+					}
+				} //Closes SelectableFormula = BinaxFit and CalculationFormula = FIG6
+
+			} //Closes ALM fit curves
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~XCELfit target curve modifications~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+			//XCELfit only applicable for either PP100 or PP75 with an 'open' vent. (i.e. SirionFit 'open')
+			if (cap:PricePoint == PricePoint.PP100 ||
+					(cap:PricePoint == PricePoint.PP75 &&
+						VentOutisOpen == true))
+			{
+				if (fit:SelectableFormula == SelectableFormula.BinaxFit &&
+						fit:CalculationFormula == CalculationFormula.NalRp)
+				{
+					if (fit:AccLevel == AccLevel.Acc4 &&
+							fit:ExpLevel == ExpLevel.unexperienced)
+					{ //check FR59404- if excepted this shall be used for GMax >= 80 && fit:ExpLevel == ExpLevel.unexperienced => "more linear" acc level for SP-Fit
+						multCurveToTG ('XcelRPAcc4Multi65dBUnEx', ToSubject.LevMed);
+						multCurveToTG ('XcelRPAcc4Multi80dBUnEx', ToSubject.LevHigh);
+						multCurveToTG ('XcelRPAcc4Multi50dBUnEx', ToSubject.LevLow);
+						addCurveToTG ('XcelRPAcc4add65dBUnEx', ToSubject.LevMed);
+						addCurveToTG ('XcelRPAcc4add80dBUnEx', ToSubject.LevHigh);
+						addCurveToTG ('XcelRPAcc4add50dBUnEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit Xcelfit NalRp Acc 4 UnExperienced');
+					}
+				} //Closes SelectableFormula = BinaxFit and CalculationFormula = NAL-RP
+
+				//SelectableFormula = BinaxFit and CalculationFormula = NalBall
+				if (fit:SelectableFormula == SelectableFormula.BinaxFit &&
+						fit:CalculationFormula == CalculationFormula.NalBall)
+				{
+				if (fit:AccLevel == AccLevel.Acc3  &&
+							fit:ExpLevel == ExpLevel.superexperienced    
+							)
+					{
+						multCurveToTG ('XcelBALLAcc3Multi65dBSuEx', ToSubject.LevMed);
+						multCurveToTG ('XcelBALLAcc3Multi80dBSuEx', ToSubject.LevHigh);
+						multCurveToTG ('XcelBALLAcc3Multi50dBSuEx', ToSubject.LevLow);
+						addCurveToTG ('XcelBALLAcc3add65dBSuEx', ToSubject.LevMed);
+						addCurveToTG ('XcelBALLAcc3add80dBSuEx', ToSubject.LevHigh);
+						addCurveToTG ('XcelBALLAcc3add50dBSuEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit NalBall Acc 3 SuperExperienced');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.experienced)
+					{
+						multCurveToTG ('XcelBALLAcc3Multi65dBEx', ToSubject.LevMed);
+						multCurveToTG ('XcelBALLAcc3Multi80dBEx', ToSubject.LevHigh);
+						multCurveToTG ('XcelBALLAcc3Multi50dBEx', ToSubject.LevLow);
+						addCurveToTG ('XcelBALLAcc3add65dBEx', ToSubject.LevMed);
+						addCurveToTG ('XcelBALLAcc3add80dBEx', ToSubject.LevHigh);
+						addCurveToTG ('XcelBALLAcc3add50dBEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit NalBall Acc 3 Experienced');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.unexperienced)
+					{
+						multCurveToTG ('XcelBALLAcc3Multi65dBUnEx', ToSubject.LevMed);
+						multCurveToTG ('XcelBALLAcc3Multi80dBUnEx', ToSubject.LevHigh);
+						multCurveToTG ('XcelBALLAcc3Multi50dBUnEx', ToSubject.LevLow);
+						addCurveToTG ('XcelBALLAcc3add65dBUnEx', ToSubject.LevMed);
+						addCurveToTG ('XcelBALLAcc3add80dBUnEx', ToSubject.LevHigh);
+						addCurveToTG ('XcelBALLAcc3add50dBUnEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit NalBall Acc 3 UnExperienced');
+					}
+					if (fit:AccLevel == AccLevel.Acc4 &&
+							fit:ExpLevel == ExpLevel.experienced)
+					{ //for GMax >= 80 && fit:ExpLevel == ExpLevel.experienced => "more compressive" acc level for SP-Fit
+						multCurveToTG ('XcelBALLAcc4Multi65dBEx', ToSubject.LevMed);
+						multCurveToTG ('XcelBALLAcc4Multi80dBEx', ToSubject.LevHigh);
+						multCurveToTG ('XcelBALLAcc4Multi50dBEx', ToSubject.LevLow);
+						addCurveToTG ('XcelBALLAcc4add65dBEx', ToSubject.LevMed);
+						addCurveToTG ('XcelBALLAcc4add80dBEx', ToSubject.LevHigh);
+						addCurveToTG ('XcelBALLAcc4add50dBEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit Xcelfit NalBall Acc 4 Experienced');
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit Xcelfit NalBall Acc 4 Experienced should only work for GMax >= 80');
+					}
+				} //Closes SelectableFormula = BinaxFit and CalculationFormula = NAL-BALL
+
+				//SelectableFormula = BinaxFit and CalculationFormula = Fig6
+				if (fit:SelectableFormula == SelectableFormula.BinaxFit &&
+						fit:CalculationFormula == CalculationFormula.Fig6)
+				{
+				if (fit:AccLevel == AccLevel.Acc1  &&
+							fit:ExpLevel == ExpLevel.superexperienced  
+							 &&
+							VentOutisOpenOpen == true)
+					{
+						multCurveToTG ('XcelFIG6Acc1Multi65dBSuExOPEN', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc1Multi80dBSuExOPEN', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc1Multi50dBSuExOPEN', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc1add65dBSuExOPEN', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc1add80dBSuExOPEN', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc1add50dBSuExOPEN', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 1 SuperExperienced for OPEN TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc1 &&
+							fit:ExpLevel == ExpLevel.experienced &&
+							VentOutisOpenOpen == true)
+					{
+						multCurveToTG ('XcelFIG6Acc1Multi65dBExOPEN', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc1Multi80dBExOPEN', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc1Multi50dBExOPEN', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc1add65dBExOPEN', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc1add80dBExOPEN', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc1add50dBExOPEN', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 1 Experienced for OPEN TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc1 &&
+							fit:ExpLevel == ExpLevel.unexperienced &&
+							VentOutisOpenOpen == true)
+					{
+						multCurveToTG ('XcelFIG6Acc1Multi65dBUnExOPEN', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc1Multi80dBUnExOPEN', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc1Multi50dBUnExOPEN', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc1add65dBUnExOPEN', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc1add80dBUnExOPEN', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc1add50dBUnExOPEN', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 1 UnExperienced for OPEN TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc1  &&
+							fit:ExpLevel == ExpLevel.superexperienced  && VentOutisOpenOpen == false)
+					{
+						multCurveToTG ('XcelFIG6Acc1Multi65dBSuExCL', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc1Multi80dBSuExCL', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc1Multi50dBSuExCL', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc1add65dBSuExCLOSED', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc1add80dBSuExCLOSED', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc1add50dBSuExCLOSED', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 1 SuperExperienced for CLOSED TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc1 &&
+							fit:ExpLevel == ExpLevel.experienced &&
+							VentOutisOpenOpen == false)
+					{
+						multCurveToTG ('XcelFIG6Acc1Multi65dBExCLOSED', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc1Multi80dBExCLOSED', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc1Multi50dBExCLOSED', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc1add65dBExCLOSED', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc1add80dBExCLOSED', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc1add50dBExCLOSED', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 1 Experienced for CLOSED TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc1 &&
+							fit:ExpLevel == ExpLevel.unexperienced &&
+							VentOutisOpenOpen == false)
+					{
+						multCurveToTG ('XcelFIG6Acc1Multi65dBUnExCL', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc1Multi80dBUnExCL', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc1Multi50dBUnExCL', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc1add65dBUnExCLOSED', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc1add80dBUnExCLOSED', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc1add50dBUnExCLOSED', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 1 UnExperienced for CLOSED TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc2 &&
+							fit:ExpLevel == ExpLevel.superexperienced 
+							)
+					{
+						multCurveToTG ('XcelFIG6Acc2Multi65dBSuEx', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc2Multi80dBSuEx', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc2Multi50dBSuEx', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc2add65dBSuEx', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc2add80dBSuEx', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc2add50dBSuEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 2 SuperExperienced');
+					}
+					if (fit:AccLevel == AccLevel.Acc2 &&
+							fit:ExpLevel == ExpLevel.experienced)
+					{
+						multCurveToTG ('XcelFIG6Acc2Multi65dBEx', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc2Multi80dBEx', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc2Multi50dBEx', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc2add65dBEx', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc2add80dBEx', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc2add50dBEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 2 Experienced');
+					}
+					if (fit:AccLevel == AccLevel.Acc2 &&
+							fit:ExpLevel == ExpLevel.unexperienced)
+					{
+						multCurveToTG ('XcelFIG6Acc2Multi65dBUnEx', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc2Multi80dBUnEx', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc2Multi50dBUnEx', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc2add65dBUnEx', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc2add80dBUnEx', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc2add50dBUnEx', ToSubject.LevLow);
+						println ('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 2 UnExperienced');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.superexperienced &&
+							
+							VentOutisOpenOpen == true)
+					{
+						multCurveToTG ('XcelFIG6Acc3Multi65dBSuExOPEN', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc3Multi80dBSuExOPEN', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc3Multi50dBSuExOPEN', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc3add65dBSuExOPEN', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc3add80dBSuExOPEN', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc3add50dBSuExOPEN', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 3 SuperExperienced for OPEN TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.experienced &&
+							VentOutisOpenOpen == true)
+					{
+						multCurveToTG ('XcelFIG6Acc3Multi65dBExOPEN', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc3Multi80dBExOPEN', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc3Multi50dBExOPEN', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc3add65dBExOPEN', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc3add80dBExOPEN', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc3add50dBExOPEN', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 3 Experienced for OPEN TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.unexperienced &&
+							VentOutisOpenOpen == true)
+					{
+						multCurveToTG ('XcelFIG6Acc3Multi65dBUnExOPEN', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc3Multi80dBUnExOPEN', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc3Multi50dBUnExOPEN', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc3add65dBUnExOPEN', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc3add80dBUnExOPEN', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc3add50dBUnExOPEN', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 3 UnExperienced for OPEN TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc3  &&
+							fit:ExpLevel == ExpLevel.superexperienced  
+							 &&
+							VentOutisOpenOpen == false)
+					{
+						multCurveToTG ('XcelFIG6Acc3Multi65dBSuExCL', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc3Multi80dBSuExCL', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc3Multi50dBSuExCL', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc3add65dBSuExCLOSED', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc3add80dBSuExCLOSED', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc3add50dBSuExCLOSED', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 3 SuperExperienced for CLOSED TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.experienced &&
+							VentOutisOpenOpen == false)
+					{
+						multCurveToTG ('XcelFIG6Acc3Multi65dBExCLOSED', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc3Multi80dBExCLOSED', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc3Multi50dBExCLOSED', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc3add65dBExCLOSED', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc3add80dBExCLOSED', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc3add50dBExCLOSED', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 3 Experienced for CLOSED TIPS/DOMES');
+					}
+					if (fit:AccLevel == AccLevel.Acc3 &&
+							fit:ExpLevel == ExpLevel.unexperienced &&
+							VentOutisOpenOpen == false)
+					{
+						multCurveToTG ('XcelFIG6Acc3Multi65dBUnExCL', ToSubject.LevMed);
+						multCurveToTG ('XcelFIG6Acc3Multi80dBUnExCL', ToSubject.LevHigh);
+						multCurveToTG ('XcelFIG6Acc3Multi50dBUnExCL', ToSubject.LevLow);
+						addCurveToTG ('XcelFIG6Acc3add65dBUnExCLOSED', ToSubject.LevMed);
+						addCurveToTG ('XcelFIG6Acc3add80dBUnExCLOSED', ToSubject.LevHigh);
+						addCurveToTG ('XcelFIG6Acc3add50dBUnExCLOSED', ToSubject.LevLow);
+						println
+						('[HAL] TARGETS OFFSET APPLIED: BinaxFit XCELfit Fig6 Acc 3 UnExperienced for CLOSED TIPS/DOMES');
+					}
+				} //Closes SelectableFormula = BinaxFit and CalculationFormula = FIG6
+
+			} //Closes XCELfit curves
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Traditional Formula Modification~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//				
+
+			//NAL-NL1* formula				
+			if (fit:SelectableFormula == SelectableFormula.NalNl1X &&
+					fit:CalculationFormula == CalculationFormula.NalNl1X)
+			{ // If NalNl1 is selected
+				if (fit:AccLevel == AccLevel.Acc1)
+				{
+					multCurveToTG ('traditonal Acc1', ToSubject.LevALL);
+					println ('[HAL] TARGETS OFFSET APPLIED: traditional NAL-NL* 1 ACC 1');
+				}
+				else if (fit:AccLevel == AccLevel.Acc2)
+				{
+					multCurveToTG ('traditonal Acc2', ToSubject.LevALL);
+					println ('[HAL] TARGETS OFFSET APPLIED: traditional NAL-NL* 1 ACC 2');
+				}
+				else if (fit:AccLevel == AccLevel.Acc3)
+				{
+					multCurveToTG ('traditonal Acc3', ToSubject.LevALL);
+					println ('[HAL] TARGETS OFFSET APPLIED: traditional NAL-NL* 1 ACC 3');
+				}
+			} //Closes NAL-NL1* formula
+			if (fit:SelectableFormula == SelectableFormula.BinaxFit &&
+			fit:CalculationFormula == CalculationFormula.NalNl1X &&
+			cap:PricePoint == PricePoint.PP75 &&
+			VentOutisOpen == false)
+			{
+				if (fit:ExpLevel == ExpLevel.unexperienced)
+				{
+					multCurveToTG ('traditonal Acc2', ToSubject.LevALL);
+					println ('[HAL] TARGETS OFFSET APPLIED: SirionFit closed path ACC 2');
+				}
+				else if (fit:ExpLevel == ExpLevel.superexperienced)
+				{
+					multCurveToTG ('traditonal Acc5', ToSubject.LevALL);
+					println ('[HAL] TARGETS OFFSET APPLIED: SirionFit closed path ACC 5');
+				}
+			}
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Terzo Formula Modification~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+			// Terzo Fit, 1/3 Gain Formula
+			if (fit:CalculationFormula == CalculationFormula.Gain3)
+			{
+				if (fit:AccLevel == AccLevel.Acc1)
+				{
+					multCurveToTG ('traditonal Acc1', ToSubject.LevALL);
+					println ('[HAL] TARGETS OFFSET APPLIED: Terzo ACC1');
+				}
+				if (fit:AccLevel == AccLevel.Acc2)
+				{
+					multCurveToTG ('traditonal Acc2', ToSubject.LevALL);
+					println ('[HAL] TARGETS OFFSET APPLIED: Terzo ACC2');
+				}
+				if (fit:AccLevel == AccLevel.Acc3)
+				{
+					multCurveToTG ('traditonal Acc3', ToSubject.LevALL);
+					println ('[HAL] TARGETS OFFSET APPLIED: Terzo ACC3');
+				}
+			} //Close Terzo Fit, 1/3 Gain Formula
+
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Additional Target Modifications~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+			// Modification for binaural fitting
+			// Not applicable to NAL-NL2 and neither DSL	(taken straight from dll) 
+			if (env:DetHi == DetHi.BothSides &&
+					(fit:SelectableFormula == SelectableFormula.BinaxFit ||
+						fit:SelectableFormula == SelectableFormula.NalNl1X))
+			{
+				addCurveToTG ('binaural trade off', ToSubject.LevALL);
+				println ('[HAL] TARGETS: Binaural trade off was applied');
+			}
+
+			// HifiFit modification - N.A. for traditional formulas			
+			if (fit:SelectableFormula != SelectableFormula.BinaxFit)
+			{
+				multCurveToTG ('No HifiFit', ToSubject.LevALL);
+				println ('[HAL] TARGETS: No HifiFit is applied!');
+			}
+
+			/*$---------------------------------------------------------------------------------------------------------------*
+// 		Modification for BinaxFit: reduce Target gain if Target going above FOG
+// 		Applicable to all levels (low, med, high) 
+-----------------------------------------------------------------------------------------------------------------$*/
+			if (fit:SelectableFormula == SelectableFormula.BinaxFit)
+			{
+				int j = 0; //Array-Index
+				int FOG_counter = crv:FOG->Count;
+				println ('[HAL] TARGETS: TG PostTargetprocessing: FOG curve length = ' + FOG_counter);
+				int TG_counter2 = levelcrv:TG->Count;
+				println ('[HAL] TARGETS: TG PostTargetprocessing: TG curve length = ' + TG_counter2);
+				if (crv:FOG->Count == levelcrv:TG->Count)
+				{
+					println ('[HAL] TARGETS: TG PostTargetProcessing: Started LOW curve FOG ');
+					while (j < levelcrv:TG->Count)
+					{
+						if (crv:FOG [ j ]->g < levelcrv:TG [ j ]->g_low)
+						{ //then FOG is smaller than TG at 50 dB
+							println ('[HAL] TARGETS: TG is manipulated due to the FOG in low levels ' +
+								'new TG Gain value ' + crv:FOG [ j ]->g + '  frequency ' + crv:FOG [ j ]->f);
+							levelcrv:TG [ j ]->g_low = crv:FOG [ j ]->g;
+						} // closing if loop for low levels
+						++ j; // go to next curvepoint
+
+					} // closing while loop
+					j = 0;
+					println ('[HAL] TARGETS: TG PostTargetprocessing: Started MED curve FOG ');
+					while (j < levelcrv:TG->Count)
+					{
+						if (crv:FOG [ j ]->g < levelcrv:TG [ j ]->g_med)
+						{ //then FOG is smaller than TG at 65 dB
+							println ('[HAL] TARGETS: TG is manipulated due to the FOG in med levels' +
+								'new TG Gain value ' + crv:FOG [ j ]->g + '  frequency ' + crv:FOG [ j ]->f);
+							levelcrv:TG [ j ]->g_med = crv:FOG [ j ]->g;
+						} // closing if loop for med levels
+						++ j; // go to next curvepoint
+
+					} // closing while loop
+					j = 0;
+					println ('[HAL] TARGETS: TG PostTargetProcessing: Started HIGH curve FOG ');
+					while (j < levelcrv:TG->Count)
+					{
+						if (crv:FOG [ j ]->g < levelcrv:TG [ j ]->g_high)
+						{ //then OLG is smaller than TG at 80 dB
+							println ('[HAL] TARGETS: TG is manipulated due to the FOG in high levels' +
+								'new TG Gain value ' + crv:FOG [ j ]->g + ' frequency ' + crv:FOG [ j ]->f);
+							levelcrv:TG [ j ]->g_high = crv:FOG [ j ]->g;
+						} // closing if loop for high levels
+						++ j; // go to next curvepoint
+
+					} // closing while loop						
+
+				} // closing if loop for FOG and TG count
+
+			} // closing if loop for BinaxFit				
+
+			/*$---------------------------------------------------------------------------------------------------------------*
+// 		Modifiaction for BinaxFit: reduce Target gain in case OLG is cutting
+// 		Applicable to all levels (low, med, high) 
+-----------------------------------------------------------------------------------------------------------------$*/
+			if (fit:SelectableFormula == SelectableFormula.BinaxFit)
+			{
+				int i = 0; //Array-Index
+				// if ((BasicLibrary_Curves.VentOutisOpen() == true) || (BasicLibrary_Curves.VentOutisDoubleTipDome() == true))
+				// {
+				//   println('[HAL] TARGETS: TG PostTargetProcessing: OpenVent case started');
+				println
+				('[HAL] TARGETS: TG PostTargetProcessing: ALL - REDUCE TARGET GAIN IN CASE OLG IS CUTTING');
+				int OLG_counter = crv:OLG->Count;
+				println ('[HAL] TARGETS: TG PostTargetProcessing: OLG curve length = ' + OLG_counter);
+				int TG_counter = levelcrv:TG->Count;
+				println ('[HAL] TARGETS: TG PostTargetProcessing: TG curve length = ' + TG_counter);
+				if (crv:OLG->Count == levelcrv:TG->Count)
+				{
+					println ('[HAL] TARGETS: TG PostTargetProcessing: Started LOW curve OLG ');
+					while (i < levelcrv:TG->Count)
+					{
+						if (crv:OLG [ i ]->g < levelcrv:TG [ i ]->g_low)
+						{ //then OLG is smaller than TG at 50 dB
+							println ('[HAL] TARGETS: TG is manipulated due to the OLG in low levels ' +
+								'new TG Gain value ' + crv:OLG [ i ]->g + '  frequency ' + crv:OLG [ i ]->f);
+							levelcrv:TG [ i ]->g_low = crv:OLG [ i ]->g;
+						} // closing if loop for low levels
+						++ i; // go to next curvepoint
+
+					} // closing while loop
+					i = 0;
+					println ('[HAL] TARGETS: TG PostTargetprocessing: Started MED curve OLG ');
+					while (i < levelcrv:TG->Count)
+					{
+						if (crv:OLG [ i ]->g < levelcrv:TG [ i ]->g_med)
+						{ //then OLG is smaller than TG at 65 dB
+							println ('[HAL] TARGETS: TG is manipulated due to the OLG in med levels' +
+								'new TG Gain value ' + crv:OLG [ i ]->g + '  frequency ' + crv:OLG [ i ]->f);
+							levelcrv:TG [ i ]->g_med = crv:OLG [ i ]->g;
+						} // closing if loop for med levels
+						++ i; // go to next curvepoint
+
+					} // closing while loop
+					i = 0;
+					println ('[HAL] TARGETS: TG PostTargetprocessing: Started HIGH curve OLG ');
+					while (i < levelcrv:TG->Count)
+					{
+						if (crv:OLG [ i ]->g < levelcrv:TG [ i ]->g_high)
+						{ //then OLG is smaller than TG at 80 dB
+							println ('[HAL] TARGETS: TG is manipulated due to the OLG in high levels' +
+								'new TG Gain value ' + crv:OLG [ i ]->g + ' frequency ' + crv:OLG [ i ]->f);
+							levelcrv:TG [ i ]->g_high = crv:OLG [ i ]->g;
+						} // closing if loop for high levels
+						++ i; // go to next curvepoint
+
+					} // closing while loop						
+
+				} // closing if loop for OLG and TG count
+				//} // closing if loop for VentOut function  // due to FR58214 - FIFI - Critical Gain Measurement is not used for FF with ACP's <=1.6 mm
+
+			} // closing if loop for connexx fit		
+			println ('[HAL] TARGETS: END of PostTargetProcessing() macro');
+		} // closing TGS.PostTargetProcessing()
+
+	} //package FirstFit
+
+} //namespace shs.sat

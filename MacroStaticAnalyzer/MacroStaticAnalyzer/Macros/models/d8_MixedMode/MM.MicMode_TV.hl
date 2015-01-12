@@ -1,0 +1,60 @@
+/*----------------------------------------------------------------------------------------------------------------
+// CXX UI:                        MicMode panel for TV program
+//----------------------------------------------------------------------------------------------------------------
+// Initial Version                						     							: 2013-11-12 Raymond
+// Added method call for Getter and Setter												: 2013-11-28 Raymond
+// Added MaxPhysicalPos                                                               	: 2014-02-04 Al
+// Removed MaxPhysicalPos & IsVisiblePhysicalPos, replaced with IsEnabledPos          	: 2014-03-10 Al 
+// Removed commented-out code                                                         	: 2014-04-16 Al
+//---------------------------------------------------------------------------------------------------------------*/
+
+namespace shs_sat 
+{
+	using shs_sat.*;
+	
+	package MixedMode Mic_Mode_TV
+	{
+		application function bool IsVisible() 
+		{
+			bool retVal = true;
+			println('[HAL]MM - Mic_Mode_TV.IsVisible = ' + retVal);
+			return retVal;
+		}
+	    
+	    application function int MaxPos()
+		{
+			int retVal = 1;
+			println('[HAL]MM - Mic_Mode_TV.MaxPos = ' + retVal);
+			return retVal;
+		}
+		
+		application function bool IsEnabled()
+		{
+			// NOTE: HICOSS & invalid mic mode greying-out conditions are covered by the Mic_Mode_Selection.	
+			bool retVal = true;
+			println('[HAL]MM - Mic_Mode_TV.IsEnabled = ' + retVal);		
+			return retVal; 
+		}
+		
+		application function bool IsEnabledPos(int pos)
+		{
+			// NOTE: HICOSS & invalid mic mode greying-out conditions are covered by the Mic_Mode_Selection.
+			bool retVal = Mid_Level_Library_Mic_Mode.TVProgIsEnabledPos(pos);
+			println('[HAL]MM - Mic_Mode_TV.IsEnabled = ' + retVal);
+            return retVal; 
+		}
+				
+		application function int GetPos()
+		{
+			int retVal = High_Level_Library_Mic_Mode.TV_GetPos();
+			println('[HAL]MM - Mic_Mode_TV.GetPos = ' + retVal);
+			return retVal;
+		}
+		
+		application function void SetPos(int pos)
+		{			
+			println('[HAL]MM - Mic_Mode_TV.SetPos = ' + pos);
+			High_Level_Library_Mic_Mode.Mic_Mode_Set_TV(pos);
+		}
+	}
+}
